@@ -9,6 +9,8 @@ export default function HomePage() {
         <Link href="/report">Submit a report</Link>
         {" | "}
         <Link href="/dashboard">View dashboard</Link>
+        {" | "}
+        <Link href="/chat">Open chat</Link>
       </p>
     </main>
   );
