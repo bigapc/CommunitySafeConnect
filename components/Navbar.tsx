@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AccessSessionControls from "@/components/AccessSessionControls";
 
 export default function Navbar() {
   return (
@@ -9,7 +10,9 @@ export default function Navbar() {
           <Link href="/report">Report</Link>
           <Link href="/dashboard">Dashboard</Link>
           <Link href="/chat">Chat</Link>
+          <Link href="/command-center">Command Center</Link>
         </div>
+        <AccessSessionControls />
       </div>
     </nav>
   );

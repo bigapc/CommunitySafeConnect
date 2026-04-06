@@ -11,6 +11,8 @@ export default function HomePage() {
         <Link href="/dashboard">View dashboard</Link>
         {" | "}
         <Link href="/chat">Open chat</Link>
+        {" | "}
+        <Link href="/command-center">Open command center</Link>
       </p>
     </main>
   );
