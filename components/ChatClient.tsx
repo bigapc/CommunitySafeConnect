@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 
 interface ChatMessage {
   id: string;
@@ -21,25 +21,7 @@ export default function ChatClient({ initialMessages }: ChatClientProps) {
   const [errorMessage, setErrorMessage] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!sessionUsername) {
-      return;
-    }
-
-    const intervalId = window.setInterval(() => {
-      void fetchMessages();
-    }, 5000);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
-  }, [sessionUsername]);
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  async function fetchMessages() {
+  const fetchMessages = useCallback(async () => {
     const response = await fetch("/api/chat/messages", {
       cache: "no-store",
     });
@@ -55,7 +37,25 @@ export default function ChatClient({ initialMessages }: ChatClientProps) {
 
     setMessages(payload?.messages || []);
     setErrorMessage("");
-  }
+  }, []);
+
+  useEffect(() => {
+    if (!sessionUsername) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      void fetchMessages();
+    }, 5000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [fetchMessages, sessionUsername]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   function openSession(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

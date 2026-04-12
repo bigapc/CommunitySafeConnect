@@ -1,7 +1,10 @@
 import Link from "next/link";
 import AccessSessionControls from "@/components/AccessSessionControls";
+import { hasAdminAccess } from "@/lib/access";
 
-export default function Navbar() {
+export default async function Navbar() {
+  const isAdmin = await hasAdminAccess();
+
   return (
     <nav className="navbar">
       <div className="navbar-inner">
@@ -10,7 +13,7 @@ export default function Navbar() {
           <Link href="/report">Report</Link>
           <Link href="/dashboard">Dashboard</Link>
           <Link href="/chat">Chat</Link>
-          <Link href="/command-center">Command Center</Link>
+          {isAdmin && <Link href="/command-center">Command Center</Link>}
         </div>
         <AccessSessionControls />
       </div>

@@ -6,6 +6,7 @@ export default function ReportForm() {
   const [description, setDescription] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -28,17 +29,23 @@ export default function ReportForm() {
       return;
     }
 
-    alert("Report submitted securely");
-    setDescription("");
-    setIsSubmitting(false);
+      setSubmitted(true);
+      setDescription("");
+      setIsSubmitting(false);
   }
 
   return (
+    <>
+      {submitted && (
+        <p style={{ color: "#86efac", marginBottom: "0.75rem" }}>
+          Report submitted securely.
+        </p>
+      )}
     <form onSubmit={handleSubmit}>
       <textarea
         placeholder="Describe the situation..."
         value={description}
-        onChange={(event) => setDescription(event.target.value)}
+        onChange={(event) => { setDescription(event.target.value); setSubmitted(false); }}
         required
       />
       <button type="submit" disabled={isSubmitting}>
@@ -46,5 +53,6 @@ export default function ReportForm() {
       </button>
       {errorMessage && <p style={{ color: "#fca5a5" }}>{errorMessage}</p>}
     </form>
+    </>
   );
 }
