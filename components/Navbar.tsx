@@ -8,6 +8,7 @@ export default function Navbar() {
         <div className="navbar-links">
           <Link href="/report">Report</Link>
           <Link href="/dashboard">Dashboard</Link>
+          <Link href="/login">Sign In</Link>
         </div>
       </div>
     </nav>
