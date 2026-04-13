@@ -10,6 +10,7 @@ interface AccessFormProps {
 export default function AccessForm({ nextPath }: AccessFormProps) {
   const router = useRouter();
   const [accessCode, setAccessCode] = useState("");
+  const [organizationId, setOrganizationId] = useState("community-demo-org");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const isDevelopment = process.env.NODE_ENV !== "production";
@@ -32,6 +33,7 @@ export default function AccessForm({ nextPath }: AccessFormProps) {
       body: JSON.stringify({
         code: accessCode,
         scope,
+        organizationId,
       }),
     });
 
@@ -58,7 +60,17 @@ export default function AccessForm({ nextPath }: AccessFormProps) {
           Demo code: {scope === "admin" ? "community-admin-demo" : "community-org-demo"}
         </p>
       )}
+      <p style={{ marginTop: "-0.25rem" }}>
+        Organization ID (tenant):
+      </p>
       <form onSubmit={handleSubmit} className="access-form-row">
+        <input
+          type="text"
+          value={organizationId}
+          onChange={(event) => setOrganizationId(event.target.value)}
+          placeholder="community-demo-org"
+          required
+        />
         <input
           type="password"
           value={accessCode}

@@ -1,7 +1,4 @@
 import {
-  AccessAuditLogRow,
-  ChatMessageRow,
-  ReportRow,
   listAuditLogs,
   listChatMessages,
   listReports,
@@ -15,8 +12,8 @@ function includesQuery(value: string | null | undefined, query: string) {
   return (value || "").toLowerCase().includes(query);
 }
 
-export async function getCommandCenterReports(query: string) {
-  const reports = listReports({ ascending: false, limit: 100 }).filter((report) => {
+export async function getCommandCenterReports(organizationId: string, query: string) {
+  const reports = listReports(organizationId, { ascending: false, limit: 100 }).filter((report) => {
     return includesQuery(report.description, query);
   });
 
@@ -26,8 +23,8 @@ export async function getCommandCenterReports(query: string) {
   };
 }
 
-export async function getCommandCenterMessages(query: string) {
-  const messages = listChatMessages({ ascending: false, limit: 100 }).filter((message) => {
+export async function getCommandCenterMessages(organizationId: string, query: string) {
+  const messages = listChatMessages(organizationId, { ascending: false, limit: 100 }).filter((message) => {
     return includesQuery(message.username, query) || includesQuery(message.message, query);
   });
 
@@ -37,8 +34,8 @@ export async function getCommandCenterMessages(query: string) {
   };
 }
 
-export async function getCommandCenterAuditLogs(query: string) {
-  const auditLogs = listAuditLogs({ ascending: false, limit: 100 }).filter((log) => {
+export async function getCommandCenterAuditLogs(organizationId: string, query: string) {
+  const auditLogs = listAuditLogs(organizationId, { ascending: false, limit: 100 }).filter((log) => {
     return (
       includesQuery(log.action, query) ||
       includesQuery(log.scope, query) ||

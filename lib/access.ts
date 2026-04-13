@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 export const ORGANIZATION_COOKIE_NAME = "communitysafeconnect_org";
 export const ADMIN_COOKIE_NAME = "communitysafeconnect_admin";
 export const MFA_VERIFIED_COOKIE_NAME = "communitysafeconnect_mfa_verified";
+export const ORGANIZATION_CONTEXT_COOKIE_NAME = "communitysafeconnect_org_ctx";
 
 const DEFAULT_SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
 const DEFAULT_MFA_SESSION_MAX_AGE_SECONDS = 60 * 30; // 30 minutes
@@ -12,6 +13,7 @@ const DEFAULT_POLICY_RETENTION_SECONDS = 60 * 60 * 24;
 const DEV_DEFAULT_SESSION_SECRET = "communitysafeconnect-dev-secret";
 const DEV_DEFAULT_ORGANIZATION_ACCESS_CODE = "community-org-demo";
 const DEV_DEFAULT_ADMIN_ACCESS_CODE = "community-admin-demo";
+const DEV_DEFAULT_ORGANIZATION_ID = "community-demo-org";
 
 export type AccessScope = "organization" | "admin";
 
@@ -66,6 +68,58 @@ export function createSessionCookieValue(scope: AccessScope) {
   return getSignedValue(scope);
 }
 
+function sanitizeOrganizationId(input: string | undefined) {
+  const value = (input || "").trim().toLowerCase();
+
+  if (!value) {
+    return DEV_DEFAULT_ORGANIZATION_ID;
+  }
+
+  const normalized = value.replace(/[^a-z0-9-_]/g, "-").slice(0, 64);
+  return normalized || DEV_DEFAULT_ORGANIZATION_ID;
+}
+
+function getOrganizationSignature(organizationId: string) {
+  return createHmac("sha256", getRequiredEnv("ACCESS_SESSION_SECRET"))
+    .update(`org:${organizationId}`)
+    .digest("hex");
+}
+
+export function createOrganizationContextCookieValue(organizationId: string) {
+  const sanitized = sanitizeOrganizationId(organizationId);
+  const signature = getOrganizationSignature(sanitized);
+  return `${sanitized}.${signature}`;
+}
+
+function parseOrganizationContextCookie(value: string | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  const splitIndex = value.lastIndexOf(".");
+
+  if (splitIndex <= 0) {
+    return null;
+  }
+
+  const organizationId = value.slice(0, splitIndex);
+  const signature = value.slice(splitIndex + 1);
+  const expected = getOrganizationSignature(organizationId);
+
+  const actualBuffer = Buffer.from(signature);
+  const expectedBuffer = Buffer.from(expected);
+
+  if (actualBuffer.length !== expectedBuffer.length) {
+    return null;
+  }
+
+  if (!timingSafeEqual(actualBuffer, expectedBuffer)) {
+    return null;
+  }
+
+  return organizationId;
+}
+
 function readPositiveNumber(value: string | undefined, fallbackValue: number) {
   const parsed = Number(value);
 
@@ -113,6 +167,12 @@ export async function hasAdminAccess() {
   const cookieStore = await cookies();
 
   return matchesSignedValue(cookieStore.get(ADMIN_COOKIE_NAME)?.value, "admin");
+}
+
+export async function getCurrentOrganizationId() {
+  const cookieStore = await cookies();
+  const value = cookieStore.get(ORGANIZATION_CONTEXT_COOKIE_NAME)?.value;
+  return parseOrganizationContextCookie(value) || DEV_DEFAULT_ORGANIZATION_ID;
 }
 
 export async function requireOrganizationAccess(pathname: string) {

@@ -1,10 +1,11 @@
-import { requireOrganizationAccess } from "@/lib/access";
+import { getCurrentOrganizationId, requireOrganizationAccess } from "@/lib/access";
 import { listReports } from "@/lib/localDataStore";
 
 export default async function Dashboard() {
   await requireOrganizationAccess("/dashboard");
+  const organizationId = await getCurrentOrganizationId();
 
-  const reports = listReports({ ascending: false, limit: 100 });
+  const reports = listReports(organizationId, { ascending: false, limit: 100 });
 
   return (
     <main className="container">

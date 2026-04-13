@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { hasAdminAccess } from "@/lib/access";
+import { getCurrentOrganizationId, hasAdminAccess } from "@/lib/access";
 import { markReportReviewed } from "@/lib/localDataStore";
 
 function sanitizeReturnTo(value: string | null) {
@@ -19,11 +19,12 @@ export async function POST(
   }
 
   const { id } = await context.params;
+  const organizationId = await getCurrentOrganizationId();
   const formData = await request.formData();
   const returnTo = sanitizeReturnTo(formData.get("returnTo")?.toString() || null);
 
   try {
-    const updated = markReportReviewed(id, "command-center");
+    const updated = markReportReviewed(organizationId, id, "command-center");
 
     if (!updated) {
       return NextResponse.json({ error: "Report not found." }, { status: 404 });

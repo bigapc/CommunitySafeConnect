@@ -1,4 +1,5 @@
 import { getCommandCenterAuditLogs } from "@/lib/commandCenterData";
+import { getCurrentOrganizationId } from "@/lib/access";
 
 interface CommandCenterAuditPageProps {
   searchParams: Promise<{
@@ -9,8 +10,9 @@ interface CommandCenterAuditPageProps {
 export default async function CommandCenterAuditPage({ searchParams }: CommandCenterAuditPageProps) {
   const params = await searchParams;
   const query = (params.q || "").trim().toLowerCase();
+  const organizationId = await getCurrentOrganizationId();
 
-  const { auditLogs, error } = await getCommandCenterAuditLogs(query);
+  const { auditLogs, error } = await getCommandCenterAuditLogs(organizationId, query);
 
   return (
     <section>

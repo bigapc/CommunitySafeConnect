@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { hasOrganizationAccess } from "@/lib/access";
+import { getCurrentOrganizationId, hasOrganizationAccess } from "@/lib/access";
 import { createReport } from "@/lib/localDataStore";
 import { checkPermission } from "@/lib/authorization";
 
@@ -16,6 +16,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const organizationId = await getCurrentOrganizationId();
     const body = (await request.json()) as { description?: string };
     const description = body.description?.trim();
 
@@ -23,7 +24,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Description is required." }, { status: 400 });
     }
 
-    createReport(description);
+    createReport(organizationId, description);
 
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch (error) {

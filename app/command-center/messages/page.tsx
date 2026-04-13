@@ -1,4 +1,5 @@
 import { getCommandCenterMessages } from "@/lib/commandCenterData";
+import { getCurrentOrganizationId } from "@/lib/access";
 
 interface CommandCenterMessagesPageProps {
   searchParams: Promise<{
@@ -9,9 +10,10 @@ interface CommandCenterMessagesPageProps {
 export default async function CommandCenterMessagesPage({ searchParams }: CommandCenterMessagesPageProps) {
   const params = await searchParams;
   const query = (params.q || "").trim().toLowerCase();
+  const organizationId = await getCurrentOrganizationId();
   const returnTo = `/command-center/messages${params.q ? `?q=${encodeURIComponent(params.q)}` : ""}`;
 
-  const { messages, error } = await getCommandCenterMessages(query);
+  const { messages, error } = await getCommandCenterMessages(organizationId, query);
 
   return (
     <section>

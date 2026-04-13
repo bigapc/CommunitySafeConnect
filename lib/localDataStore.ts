@@ -1,5 +1,6 @@
 export interface ReportRow {
   id: string;
+  organization_id: string;
   description: string | null;
   created_at: string;
   reviewed: boolean;
@@ -9,6 +10,7 @@ export interface ReportRow {
 
 export interface ChatMessageRow {
   id: string;
+  organization_id: string;
   username: string;
   message: string;
   created_at: string;
@@ -20,6 +22,7 @@ export interface ChatMessageRow {
 
 export interface AccessAuditLogRow {
   id: string;
+  organization_id: string;
   action: string;
   scope: string;
   retention_mode: string;
@@ -55,6 +58,7 @@ function createId(prefix: string) {
 const reports: ReportRow[] = [
   {
     id: createId("rep"),
+    organization_id: "community-demo-org",
     description: "Broken streetlight at 7th and Maple; area is very dark at night.",
     created_at: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
     reviewed: false,
@@ -63,6 +67,7 @@ const reports: ReportRow[] = [
   },
   {
     id: createId("rep"),
+    organization_id: "community-demo-org",
     description: "Suspicious vehicle circling the school zone after hours.",
     created_at: new Date(Date.now() - 1000 * 60 * 220).toISOString(),
     reviewed: true,
@@ -74,6 +79,7 @@ const reports: ReportRow[] = [
 const chatMessages: ChatMessageRow[] = [
   {
     id: createId("msg"),
+    organization_id: "community-demo-org",
     username: "NeighborWatch01",
     message: "We just saw a blocked crosswalk near the market.",
     created_at: new Date(Date.now() - 1000 * 60 * 40).toISOString(),
@@ -84,6 +90,7 @@ const chatMessages: ChatMessageRow[] = [
   },
   {
     id: createId("msg"),
+    organization_id: "community-demo-org",
     username: "CommunityLead",
     message: "Reminder: safety walk starts at 6pm in Zone B.",
     created_at: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
@@ -103,15 +110,22 @@ function sortByCreatedAt<T extends { created_at: string }>(items: T[], ascending
   });
 }
 
-export function listReports(options?: { ascending?: boolean; limit?: number }) {
+export function listReports(
+  organizationId: string,
+  options?: { ascending?: boolean; limit?: number }
+) {
   const ascending = options?.ascending ?? false;
   const limit = options?.limit ?? 100;
-  return sortByCreatedAt(reports, ascending).slice(0, limit);
+  return sortByCreatedAt(
+    reports.filter((report) => report.organization_id === organizationId),
+    ascending
+  ).slice(0, limit);
 }
 
-export function createReport(description: string) {
+export function createReport(organizationId: string, description: string) {
   const report: ReportRow = {
     id: createId("rep"),
+    organization_id: organizationId,
     description,
     created_at: new Date().toISOString(),
     reviewed: false,
@@ -123,8 +137,14 @@ export function createReport(description: string) {
   return report;
 }
 
-export function markReportReviewed(id: string, reviewedBy = "command-center") {
-  const report = reports.find((item) => item.id === id);
+export function markReportReviewed(
+  organizationId: string,
+  id: string,
+  reviewedBy = "command-center"
+) {
+  const report = reports.find(
+    (item) => item.id === id && item.organization_id === organizationId
+  );
 
   if (!report) {
     return false;
@@ -136,15 +156,22 @@ export function markReportReviewed(id: string, reviewedBy = "command-center") {
   return true;
 }
 
-export function listChatMessages(options?: { ascending?: boolean; limit?: number }) {
+export function listChatMessages(
+  organizationId: string,
+  options?: { ascending?: boolean; limit?: number }
+) {
   const ascending = options?.ascending ?? true;
   const limit = options?.limit ?? 100;
-  return sortByCreatedAt(chatMessages, ascending).slice(0, limit);
+  return sortByCreatedAt(
+    chatMessages.filter((message) => message.organization_id === organizationId),
+    ascending
+  ).slice(0, limit);
 }
 
-export function createChatMessage(username: string, message: string) {
+export function createChatMessage(organizationId: string, username: string, message: string) {
   const chatMessage: ChatMessageRow = {
     id: createId("msg"),
+    organization_id: organizationId,
     username,
     message,
     created_at: new Date().toISOString(),
@@ -158,8 +185,14 @@ export function createChatMessage(username: string, message: string) {
   return chatMessage;
 }
 
-export function setMessageFlag(id: string, mode: "flag" | "unflag") {
-  const chatMessage = chatMessages.find((item) => item.id === id);
+export function setMessageFlag(
+  organizationId: string,
+  id: string,
+  mode: "flag" | "unflag"
+) {
+  const chatMessage = chatMessages.find(
+    (item) => item.id === id && item.organization_id === organizationId
+  );
 
   if (!chatMessage) {
     return false;
@@ -180,15 +213,25 @@ export function setMessageFlag(id: string, mode: "flag" | "unflag") {
   return true;
 }
 
-export function listAuditLogs(options?: { ascending?: boolean; limit?: number }) {
+export function listAuditLogs(
+  organizationId: string,
+  options?: { ascending?: boolean; limit?: number }
+) {
   const ascending = options?.ascending ?? false;
   const limit = options?.limit ?? 100;
-  return sortByCreatedAt(auditLogs, ascending).slice(0, limit);
+  return sortByCreatedAt(
+    auditLogs.filter((log) => log.organization_id === organizationId),
+    ascending
+  ).slice(0, limit);
 }
 
-export function createAuditLog(entry: Omit<AccessAuditLogRow, "id" | "created_at">) {
+export function createAuditLog(
+  organizationId: string,
+  entry: Omit<AccessAuditLogRow, "id" | "created_at" | "organization_id">
+) {
   const log: AccessAuditLogRow = {
     id: createId("audit"),
+    organization_id: organizationId,
     created_at: new Date().toISOString(),
     ...entry,
   };

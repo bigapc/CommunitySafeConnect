@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   ADMIN_COOKIE_NAME,
   AccessScope,
+  ORGANIZATION_CONTEXT_COOKIE_NAME,
   ORGANIZATION_COOKIE_NAME,
+  createOrganizationContextCookieValue,
   createSessionCookieValue,
+  getCurrentOrganizationId,
   getExpectedAccessCode,
   getPolicyRetentionMaxAgeSeconds,
   getSessionCookieOptions,
@@ -33,9 +36,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = (await request.json()) as { code?: string; scope?: AccessScope };
+    const body = (await request.json()) as {
+      code?: string;
+      scope?: AccessScope;
+      organizationId?: string;
+    };
     const code = body.code?.trim();
     const scope: AccessScope = body.scope === "admin" ? "admin" : "organization";
+    const organizationId = (body.organizationId || "community-demo-org").trim().toLowerCase();
 
     if (!code) {
       return NextResponse.json({ error: "Access code is required." }, { status: 400 });
@@ -58,6 +66,12 @@ export async function POST(request: NextRequest) {
       response.cookies.set(ADMIN_COOKIE_NAME, createSessionCookieValue("admin"), cookieOptions);
     }
 
+    response.cookies.set(
+      ORGANIZATION_CONTEXT_COOKIE_NAME,
+      createOrganizationContextCookieValue(organizationId),
+      cookieOptions
+    );
+
     return response;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to create session.";
@@ -75,8 +89,9 @@ export async function DELETE(request: NextRequest) {
   const retainedUntil = retentionSeconds
     ? new Date(Date.now() + retentionSeconds * 1000).toISOString()
     : null;
+  const organizationId = await getCurrentOrganizationId();
 
-  createAuditLog({
+  createAuditLog(organizationId, {
     action: "logout",
     scope,
     retention_mode: retentionMode,
@@ -105,11 +120,18 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    response.cookies.set(
+      ORGANIZATION_CONTEXT_COOKIE_NAME,
+      createOrganizationContextCookieValue(organizationId),
+      policyCookieOptions
+    );
+
     return response;
   }
 
   response.cookies.delete(ORGANIZATION_COOKIE_NAME);
   response.cookies.delete(ADMIN_COOKIE_NAME);
+  response.cookies.delete(ORGANIZATION_CONTEXT_COOKIE_NAME);
 
   return response;
 }

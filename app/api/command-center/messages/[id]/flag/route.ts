@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { hasAdminAccess } from "@/lib/access";
+import { getCurrentOrganizationId, hasAdminAccess } from "@/lib/access";
 import { setMessageFlag } from "@/lib/localDataStore";
 
 function sanitizeReturnTo(value: string | null) {
@@ -19,12 +19,13 @@ export async function POST(
   }
 
   const { id } = await context.params;
+  const organizationId = await getCurrentOrganizationId();
   const formData = await request.formData();
   const returnTo = sanitizeReturnTo(formData.get("returnTo")?.toString() || null);
   const mode = formData.get("mode")?.toString() === "unflag" ? "unflag" : "flag";
 
   try {
-    const updated = setMessageFlag(id, mode);
+    const updated = setMessageFlag(organizationId, id, mode);
 
     if (!updated) {
       return NextResponse.json({ error: "Message not found." }, { status: 404 });
