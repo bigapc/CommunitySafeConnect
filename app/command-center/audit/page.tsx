@@ -42,8 +42,14 @@ export default async function CommandCenterAuditPage({ searchParams }: CommandCe
           {" "}redisConfigured={String(securityHealth.checks.alertState.redisConfigured)}
         </p>
         <p style={{ margin: "0.3rem 0", color: "#cbd5e1" }}>
-          OIDC configured: {String(securityHealth.checks.oidc.configured)}
+          OIDC configured: {String(securityHealth.checks.oidc.configured)} discoveryConnected={String(securityHealth.checks.oidc.discoveryConnected)}
+          {" "}jwksConnected={String(securityHealth.checks.oidc.jwksConnected)}
         </p>
+        {securityHealth.checks.oidc.discoveredJwksUri && (
+          <p style={{ margin: "0.3rem 0", color: "#94a3b8" }}>
+            discoveredJwksUri={securityHealth.checks.oidc.discoveredJwksUri}
+          </p>
+        )}
       </div>
       {integrity && !integrity.valid && (
         <p style={{ color: "#ffb3bf" }}>

@@ -75,6 +75,7 @@ In non-mock mode, callback handling enforces strict ID token verification:
 Security health endpoint:
 
 - `GET /api/health/security` returns security readiness checks, including alert-state driver connectivity.
+- The endpoint is admin-only and also reports live OIDC discovery/JWKS connectivity when OIDC is configured.
 
 ## Tamper-Evident Audit Integrity
 
