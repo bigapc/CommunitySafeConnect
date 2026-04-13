@@ -70,6 +70,46 @@ export default async function CommandCenterAuditPage({ searchParams }: CommandCe
           Alert state: driver={securityHealth.checks.alertState.driver} connected={String(securityHealth.checks.alertState.connected)}
           {" "}redisConfigured={String(securityHealth.checks.alertState.redisConfigured)}
         </p>
+        <div
+          style={{
+            marginTop: "0.7rem",
+            padding: "0.75rem",
+            border: "1px solid rgba(148, 163, 184, 0.25)",
+            borderRadius: "0.75rem",
+            background: "rgba(15, 23, 42, 0.35)",
+          }}
+        >
+          <h5 style={{ margin: "0 0 0.45rem", color: "#e2e8f0" }}>Session Enforcement</h5>
+          <p style={{ margin: "0.25rem 0", color: "#cbd5e1" }}>
+            Requested driver: <strong>{securityHealth.checks.sessionState.requestedDriver}</strong>
+            {" "}| Active driver: <strong>{securityHealth.checks.sessionState.activeDriver}</strong>
+          </p>
+          <p style={{ margin: "0.25rem 0", color: "#cbd5e1" }}>
+            Backend connected: <strong>{String(securityHealth.checks.sessionState.connected)}</strong>
+            {" "}| Redis configured: <strong>{String(securityHealth.checks.sessionState.redisConfigured)}</strong>
+          </p>
+          <p style={{ margin: "0.25rem 0", color: "#cbd5e1" }}>
+            Revocation enforced: <strong>{String(securityHealth.checks.sessionState.revocationEnforced)}</strong>
+            {" "}| Distributed consistency: <strong>{String(securityHealth.checks.sessionState.distributedConsistency)}</strong>
+          </p>
+          <p
+            style={{
+              margin: "0.35rem 0 0",
+              color:
+                securityHealth.checks.sessionState.distributedConsistency
+                  ? "#86efac"
+                  : securityHealth.checks.sessionState.requestedDriver === "redis"
+                    ? "#ffd88a"
+                    : "#94a3b8",
+            }}
+          >
+            {securityHealth.checks.sessionState.distributedConsistency
+              ? "Session revocation is shared across instances."
+              : securityHealth.checks.sessionState.requestedDriver === "redis"
+                ? "Redis-backed session consistency was requested but is not currently available."
+                : "Session revocation is enforced locally within this app instance."}
+          </p>
+        </div>
         <p style={{ margin: "0.3rem 0", color: "#cbd5e1" }}>
           OIDC configured: {String(securityHealth.checks.oidc.configured)} discoveryConnected={String(securityHealth.checks.oidc.discoveryConnected)}
           {" "}jwksConnected={String(securityHealth.checks.oidc.jwksConnected)}
