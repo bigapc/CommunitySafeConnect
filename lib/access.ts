@@ -1,11 +1,13 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { getSessionRecord, isSessionRevoked } from "@/lib/sessionActivityStore";
 
 export const ORGANIZATION_COOKIE_NAME = "communitysafeconnect_org";
 export const ADMIN_COOKIE_NAME = "communitysafeconnect_admin";
 export const MFA_VERIFIED_COOKIE_NAME = "communitysafeconnect_mfa_verified";
 export const ORGANIZATION_CONTEXT_COOKIE_NAME = "communitysafeconnect_org_ctx";
+export const SESSION_ACTIVITY_COOKIE_NAME = "communitysafeconnect_session_activity";
 
 const DEFAULT_SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
 const DEFAULT_MFA_SESSION_MAX_AGE_SECONDS = 60 * 30; // 30 minutes
@@ -66,6 +68,46 @@ export function getExpectedAccessCode(scope: AccessScope) {
 
 export function createSessionCookieValue(scope: AccessScope) {
   return getSignedValue(scope);
+}
+
+function getSessionActivitySignature(sessionId: string) {
+  return createHmac("sha256", getRequiredEnv("ACCESS_SESSION_SECRET"))
+    .update(`session:${sessionId}`)
+    .digest("hex");
+}
+
+export function createSessionActivityCookieValue(sessionId: string) {
+  const signature = getSessionActivitySignature(sessionId);
+  return `${sessionId}.${signature}`;
+}
+
+function parseSessionActivityCookie(value: string | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  const splitIndex = value.lastIndexOf(".");
+
+  if (splitIndex <= 0) {
+    return null;
+  }
+
+  const sessionId = value.slice(0, splitIndex);
+  const signature = value.slice(splitIndex + 1);
+  const expected = getSessionActivitySignature(sessionId);
+
+  const actualBuffer = Buffer.from(signature);
+  const expectedBuffer = Buffer.from(expected);
+
+  if (actualBuffer.length !== expectedBuffer.length) {
+    return null;
+  }
+
+  if (!timingSafeEqual(actualBuffer, expectedBuffer)) {
+    return null;
+  }
+
+  return sessionId;
 }
 
 function sanitizeOrganizationId(input: string | undefined) {
@@ -154,19 +196,50 @@ export function getSessionCookieOptions(maxAge = getAccessSessionMaxAgeSeconds()
   };
 }
 
+async function hasValidSessionActivity() {
+  const cookieStore = await cookies();
+  const sessionId = parseSessionActivityCookie(
+    cookieStore.get(SESSION_ACTIVITY_COOKIE_NAME)?.value
+  );
+
+  if (!sessionId) {
+    return false;
+  }
+
+  if (await isSessionRevoked(sessionId)) {
+    return false;
+  }
+
+  return !!(await getSessionRecord(sessionId));
+}
+
 export async function hasOrganizationAccess() {
   const cookieStore = await cookies();
 
-  return (
+  const hasSignedAccess =
     matchesSignedValue(cookieStore.get(ORGANIZATION_COOKIE_NAME)?.value, "organization") ||
-    matchesSignedValue(cookieStore.get(ADMIN_COOKIE_NAME)?.value, "admin")
-  );
+    matchesSignedValue(cookieStore.get(ADMIN_COOKIE_NAME)?.value, "admin");
+
+  if (!hasSignedAccess) {
+    return false;
+  }
+
+  return hasValidSessionActivity();
 }
 
 export async function hasAdminAccess() {
   const cookieStore = await cookies();
 
-  return matchesSignedValue(cookieStore.get(ADMIN_COOKIE_NAME)?.value, "admin");
+  if (!matchesSignedValue(cookieStore.get(ADMIN_COOKIE_NAME)?.value, "admin")) {
+    return false;
+  }
+
+  return hasValidSessionActivity();
+}
+
+export async function getCurrentSessionActivityId() {
+  const cookieStore = await cookies();
+  return parseSessionActivityCookie(cookieStore.get(SESSION_ACTIVITY_COOKIE_NAME)?.value);
 }
 
 export async function getCurrentOrganizationId() {

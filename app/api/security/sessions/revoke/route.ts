@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const session = getSessionRecord(sessionId);
+    const session = await getSessionRecord(sessionId);
     if (!session) {
       return NextResponse.json(
         {
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const revoked = revokeSession(sessionId);
+    const revoked = await revokeSession(sessionId);
 
     if (revoked) {
       // Log the revocation as a security event

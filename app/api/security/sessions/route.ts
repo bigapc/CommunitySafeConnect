@@ -40,13 +40,13 @@ export async function GET(request: NextRequest) {
   // Admins see admin sessions; org users see their org's sessions
   let sessions;
   if (hasAdmin) {
-    sessions = getActiveSessions(undefined, scopeFilter || "admin");
+    sessions = await getActiveSessions(undefined, scopeFilter || "admin");
   } else {
     const orgId = await getCurrentOrganizationId();
-    sessions = getActiveSessions(orgId, scopeFilter || "organization");
+    sessions = await getActiveSessions(orgId, scopeFilter || "organization");
   }
 
-  const count = getSessionCount();
+  const count = await getSessionCount();
 
   return NextResponse.json(sessions, {
     headers: {
@@ -64,7 +64,7 @@ export async function HEAD(request: NextRequest) {
     return new NextResponse(null, { status: 403 });
   }
 
-  const count = getSessionCount();
+  const count = await getSessionCount();
 
   return new NextResponse(null, {
     status: 200,

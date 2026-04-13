@@ -10,6 +10,36 @@ import assert from "node:assert/strict";
 const BASE_URL = process.env.TEST_BASE_URL || "http://localhost:3000";
 const ADMIN_CODE = process.env.ADMIN_ACCESS_CODE || "community-admin-demo";
 const ORG_CODE = process.env.ORGANIZATION_ACCESS_CODE || "community-org-demo";
+const SESSION_ACTIVITY_COOKIE_NAME = "communitysafeconnect_session_activity";
+
+function getCookieValue(cookies, cookieName) {
+  const cookie = cookies.find((entry) => entry.startsWith(`${cookieName}=`));
+
+  if (!cookie) {
+    return null;
+  }
+
+  const firstSegment = cookie.split(";")[0] || "";
+  return firstSegment.slice(cookieName.length + 1) || null;
+}
+
+function getSessionIdFromCookies(cookies) {
+  const signedValue = getCookieValue(cookies, SESSION_ACTIVITY_COOKIE_NAME);
+
+  if (!signedValue) {
+    return null;
+  }
+
+  const splitIndex = signedValue.lastIndexOf(".");
+  return splitIndex > 0 ? signedValue.slice(0, splitIndex) : null;
+}
+
+function assertSessionLedgerCookie(cookies) {
+  const sessionId = getSessionIdFromCookies(cookies);
+  assert.ok(sessionId, "Missing signed session activity cookie");
+  assert.ok(/^[a-f0-9]{32}$/.test(sessionId), "Session activity cookie must contain a 32-char hex session ID");
+  return sessionId;
+}
 
 async function createAdminSession() {
   const sessionRes = await fetch(`${BASE_URL}/api/access/session`, {
@@ -158,6 +188,19 @@ async function testSessionRevocation(adminCookies, targetSessionId) {
   assert.ok(result.message, "Revocation should include message");
 }
 
+async function testRevokedSessionLosesAccess(adminCookies, orgCookies) {
+  const targetSessionId = assertSessionLedgerCookie(orgCookies);
+  await testSessionRevocation(adminCookies, targetSessionId);
+
+  const sessionsRes = await fetch(`${BASE_URL}/api/security/sessions`, {
+    headers: {
+      Cookie: orgCookies.join("; "),
+    },
+  });
+
+  assert.strictEqual(sessionsRes.status, 403, "Revoked session should lose authenticated access");
+}
+
 async function testNonAdminCannotRevoke(orgCookies) {
   const revokeRes = await fetch(`${BASE_URL}/api/security/sessions/revoke`, {
     method: "POST",
@@ -215,10 +258,12 @@ async function runTests() {
 
     console.log("Test 2: Creating admin session...");
     const adminCookies = await createAdminSession();
+    assertSessionLedgerCookie(adminCookies);
     console.log("  ✓ Admin session created\n");
 
     console.log("Test 3: Creating org session...");
     const orgCookies = await createOrgSession();
+    assertSessionLedgerCookie(orgCookies);
     console.log("  ✓ Org session created\n");
 
     console.log("Test 4: Checking sessions list structure...");
@@ -234,7 +279,11 @@ async function runTests() {
     await testNonAdminCannotRevoke(orgCookies);
     console.log("  ✓ Non-admin cannot revoke sessions\n");
 
-    console.log("Test 7: Testing revocation error handling...");
+    console.log("Test 7: Testing active revocation enforcement...");
+    await testRevokedSessionLosesAccess(adminCookies, orgCookies);
+    console.log("  ✓ Revoked session immediately loses protected access\n");
+
+    console.log("Test 8: Testing revocation error handling...");
     await testRevocationErrorHandling(adminCookies);
     console.log("  ✓ Error handling works (404 for missing, 400 for bad request)\n");
 

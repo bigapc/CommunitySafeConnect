@@ -159,11 +159,21 @@ Real-time session management for operational security and compliance:
   - Admin-only effective filtering: admins see admin scope; org users see their org's sessions.
   - Response includes `X-Session-Count` header with total active session count.
   - Response sets `Cache-Control: no-store` for real-time visibility.
+  - Access is enforced through a signed session-ledger cookie, so revoked sessions lose access on subsequent requests.
 
 - `POST /api/security/sessions/revoke` force-logs out a specific session (admin-only).
   - Request body: `{ "sessionId": "...", "reason": "optional_reason" }`
   - Returns: `{ "success": true, "message": "Session revoked" }` on 200.
   - Returns 404 if session not found, 400 if sessionId missing, 403 if not admin.
   - Revocation is logged as a security event for compliance audit.
+
+- `DELETE /api/access/session` now revokes the current signed session-ledger cookie on hard logout.
+- `DELETE /api/access/session?retain=policy...` preserves the signed session-ledger cookie for the policy retention window.
+- Session state driver configuration:
+  - `SESSION_STATE_DRIVER` (`memory` or `redis`, default: `memory`)
+  - `SESSION_STATE_NAMESPACE` (default: `csc_session_state`)
+  - `SESSION_STATE_REDIS_REST_URL` (or `UPSTASH_REDIS_REST_URL`)
+  - `SESSION_STATE_REDIS_REST_TOKEN` (or `UPSTASH_REDIS_REST_TOKEN`)
+  - When Redis is configured, session listing and revocation work across multiple app instances.
 
 Canonical JSON schema for sessions response: `docs/security-sessions.schema.json`.

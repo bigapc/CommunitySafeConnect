@@ -4,9 +4,12 @@ import {
   AccessScope,
   ORGANIZATION_CONTEXT_COOKIE_NAME,
   ORGANIZATION_COOKIE_NAME,
+  SESSION_ACTIVITY_COOKIE_NAME,
   createOrganizationContextCookieValue,
+  createSessionActivityCookieValue,
   createSessionCookieValue,
   getCurrentOrganizationId,
+  getCurrentSessionActivityId,
   getExpectedAccessCode,
   getPolicyRetentionMaxAgeSeconds,
   getSessionCookieOptions,
@@ -19,7 +22,7 @@ import {
   registerSecurityFailure,
 } from "@/lib/securityRateLimit";
 import { logSecurityEvent } from "@/lib/securityLogger";
-import { recordSessionActivity } from "@/lib/sessionActivityStore";
+import { recordSessionActivity, revokeSession } from "@/lib/sessionActivityStore";
 
 export async function POST(request: NextRequest) {
   try {
@@ -104,7 +107,12 @@ export async function POST(request: NextRequest) {
 
     // Record this session in the activity store for audit/revocation
     const userAgent = request.headers.get("user-agent") || "unknown";
-    recordSessionActivity(organizationId, scope, clientIp, userAgent);
+    const sessionActivityId = await recordSessionActivity(organizationId, scope, clientIp, userAgent);
+    response.cookies.set(
+      SESSION_ACTIVITY_COOKIE_NAME,
+      createSessionActivityCookieValue(sessionActivityId),
+      cookieOptions
+    );
 
     logSecurityEvent(request, {
       event: "auth.login",
@@ -140,6 +148,7 @@ export async function DELETE(request: NextRequest) {
     ? new Date(Date.now() + retentionSeconds * 1000).toISOString()
     : null;
   const organizationId = await getCurrentOrganizationId();
+  const sessionActivityId = await getCurrentSessionActivityId();
 
   createAuditLog(organizationId, {
     action: "logout",
@@ -185,12 +194,25 @@ export async function DELETE(request: NextRequest) {
       policyCookieOptions
     );
 
+    if (sessionActivityId) {
+      response.cookies.set(
+        SESSION_ACTIVITY_COOKIE_NAME,
+        createSessionActivityCookieValue(sessionActivityId),
+        policyCookieOptions
+      );
+    }
+
     return response;
+  }
+
+  if (sessionActivityId) {
+    await revokeSession(sessionActivityId);
   }
 
   response.cookies.delete(ORGANIZATION_COOKIE_NAME);
   response.cookies.delete(ADMIN_COOKIE_NAME);
   response.cookies.delete(ORGANIZATION_CONTEXT_COOKIE_NAME);
+  response.cookies.delete(SESSION_ACTIVITY_COOKIE_NAME);
 
   return response;
 }
