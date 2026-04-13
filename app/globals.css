@@ -1,17 +1,147 @@
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap");
+
+:root {
+  --bg: #f4efe4;
+  --card: #fffaf0;
+  --ink: #1f2933;
+  --muted: #5f6b76;
+  --line: #d8c8ac;
+  --signal: #d1495b;
+  --signal-2: #2f6f7e;
+  --shadow: 0 16px 40px rgba(47, 38, 25, 0.14);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background: #0f172a;
-  color: white;
+  min-height: 100%;
+}
+
+body {
+  font-family: "Archivo", sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 420px at -10% -20%, #f9d9a8 0%, transparent 55%),
+    radial-gradient(1200px 420px at 120% 120%, #b5d9df 0%, transparent 55%),
+    var(--bg);
+}
+
+a {
+  color: var(--signal-2);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.app-shell {
+  width: min(1120px, 100% - 2rem);
+  margin: 1rem auto 2rem;
+}
+
+.navbar {
+  margin-top: 1rem;
+  background: linear-gradient(130deg, #fff5df, #fffaf2);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+}
+
+.navbar-inner {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1rem;
+  flex-wrap: wrap;
+}
+
+.navbar-brand {
+  margin: 0;
+  font-size: 1.08rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #7c352d;
+}
+
+.navbar-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
 }
 
 .container {
-  padding: 2rem;
+  margin-top: 1rem;
+  padding: 1.4rem;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+h2,
+h3 {
+  margin-top: 0;
+}
+
+p,
+small {
+  color: var(--muted);
+}
+
+input,
+textarea {
+  width: 100%;
+  border: 1px solid #c9b693;
+  border-radius: 12px;
+  padding: 0.72rem 0.8rem;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+}
+
+textarea {
+  min-height: 130px;
+  resize: vertical;
 }
 
 button {
-  background: #00c2ff;
-  border: none;
-  padding: 10px 20px;
+  border: 1px solid #873f3a;
+  border-radius: 10px;
+  padding: 0.62rem 0.9rem;
+  background: linear-gradient(180deg, #dd5f66 0%, #c64258 100%);
+  color: #fff;
+  font-weight: 700;
   cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+article {
+  border: 1px solid var(--line) !important;
+  background: #fffdf7 !important;
+  border-radius: 14px !important;
+}
+
+code {
+  font-family: "IBM Plex Mono", monospace;
+}
+
+@media (max-width: 760px) {
+  .app-shell {
+    width: calc(100% - 1rem);
+  }
+
+  .container {
+    padding: 1rem;
+  }
+
+  .navbar-inner {
+    padding: 0.8rem;
+  }
 }
