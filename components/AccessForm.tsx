@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 
 interface AccessFormProps {
   nextPath: string;
+  ssoError?: string;
 }
 
-export default function AccessForm({ nextPath }: AccessFormProps) {
+export default function AccessForm({ nextPath, ssoError = "" }: AccessFormProps) {
   const router = useRouter();
   const [accessCode, setAccessCode] = useState("");
   const [organizationId, setOrganizationId] = useState("community-demo-org");
@@ -49,6 +50,16 @@ export default function AccessForm({ nextPath }: AccessFormProps) {
     router.refresh();
   }
 
+  function handleEnterpriseSso() {
+    const params = new URLSearchParams({
+      next: nextPath,
+      scope,
+      org: organizationId,
+    });
+
+    window.location.assign(`/api/sso/oidc/start?${params.toString()}`);
+  }
+
   return (
     <main className="container">
       <h2>{scope === "admin" ? "Admin Access" : "Organization Access"}</h2>
@@ -82,6 +93,12 @@ export default function AccessForm({ nextPath }: AccessFormProps) {
           {isSubmitting ? "Checking..." : "Continue"}
         </button>
       </form>
+      <div style={{ marginTop: "0.75rem" }}>
+        <button type="button" onClick={handleEnterpriseSso} disabled={isSubmitting}>
+          Continue with Enterprise SSO
+        </button>
+      </div>
+      {ssoError && <p className="report-feedback error">SSO sign-in error: {ssoError}</p>}
       {errorMessage && <p className="report-feedback error">{errorMessage}</p>}
     </main>
   );

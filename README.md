@@ -30,3 +30,20 @@
 
 - Logout actions are recorded in `public.access_audit_logs` with action, scope, retention mode, request path, IP, user-agent, and timestamp.
 - Run migration `20260406_create_access_audit_logs.sql` before relying on production audit entries.
+
+## Enterprise SSO Scaffold
+
+- OIDC start endpoint: `GET /api/sso/oidc/start`
+- OIDC callback endpoint: `GET /api/sso/oidc/callback`
+- SAML-ready placeholder endpoint: `GET /api/sso/saml/start`
+
+Set these variables in `.env.local` for real IdP integration:
+
+- `OIDC_ISSUER_URL`
+- `OIDC_CLIENT_ID`
+- `OIDC_CLIENT_SECRET`
+- `OIDC_AUTHORIZATION_ENDPOINT` (optional override)
+- `OIDC_TOKEN_ENDPOINT` (optional override)
+- `OIDC_REDIRECT_URI` (optional override)
+
+For local testing only, `OIDC_MOCK_MODE=true` can be used to bypass real token exchange.
