@@ -13,6 +13,9 @@ export default async function CommandCenterAuditPage({ searchParams }: CommandCe
   const query = (params.q || "").trim().toLowerCase();
   const organizationId = await getCurrentOrganizationId();
   const securityHealth = await getSecurityHealthSnapshot();
+  const sessionRedisRequestedButUnavailable =
+    securityHealth.checks.sessionState.requestedDriver === "redis" &&
+    !securityHealth.checks.sessionState.distributedConsistency;
 
   const { auditLogs, integrity, alerts, alertHistory, error } = await getCommandCenterAuditLogs(organizationId, query);
 
@@ -31,6 +34,23 @@ export default async function CommandCenterAuditPage({ searchParams }: CommandCe
         <p style={{ color: "#ffb3bf" }}>
           Audit logs could not be loaded. Apply the audit migration if needed.
         </p>
+      )}
+      {sessionRedisRequestedButUnavailable && (
+        <div
+          style={{
+            marginTop: "0.7rem",
+            marginBottom: "0.8rem",
+            padding: "0.8rem",
+            borderRadius: "0.75rem",
+            border: "1px solid rgba(251, 191, 36, 0.5)",
+            background: "rgba(120, 53, 15, 0.35)",
+            color: "#fde68a",
+          }}
+        >
+          <strong>Session Consistency Warning:</strong>{" "}
+          Redis-backed session consistency is configured but not currently available. Session revocation is enforced,
+          but only within this instance until Redis connectivity is restored.
+        </div>
       )}
       <div style={{ marginTop: "0.8rem", marginBottom: "0.8rem" }}>
         <h4 style={{ marginBottom: "0.4rem" }}>Security Readiness</h4>
