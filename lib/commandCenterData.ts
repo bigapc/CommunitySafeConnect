@@ -2,6 +2,7 @@ import {
   listAuditLogs,
   listChatMessages,
   listReports,
+  verifyAuditLogChain,
 } from "@/lib/localDataStore";
 
 function includesQuery(value: string | null | undefined, query: string) {
@@ -43,9 +44,11 @@ export async function getCommandCenterAuditLogs(organizationId: string, query: s
       includesQuery(log.request_path, query)
     );
   });
+  const integrity = verifyAuditLogChain(organizationId);
 
   return {
     auditLogs,
+    integrity,
     error: null,
   };
 }

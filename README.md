@@ -71,3 +71,12 @@ In non-mock mode, callback handling enforces strict ID token verification:
 	- MFA verify/backup verification
 	- OIDC callback success/failure paths
 - Logs include timestamp, request ID, method, path, source IP, user-agent, outcome, and reason.
+
+## Tamper-Evident Audit Integrity
+
+- Audit events are chained per organization with:
+	- `previous_hash` (link to prior entry)
+	- `integrity_hash` (HMAC-SHA256 signature of the event payload + previous hash)
+- Chain verification is available in memory via `verifyAuditLogChain(organizationId)`.
+- Command-center audit view now displays chain status and per-entry hash snippets.
+- Optional secret for production hardening: `AUDIT_INTEGRITY_SECRET`.

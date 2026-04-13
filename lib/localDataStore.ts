@@ -1,3 +1,5 @@
+import { computeAuditIntegrityHash } from "@/lib/auditIntegrity";
+
 export interface ReportRow {
   id: string;
   organization_id: string;
@@ -30,6 +32,8 @@ export interface AccessAuditLogRow {
   request_path: string | null;
   ip_address: string | null;
   user_agent: string | null;
+  previous_hash: string | null;
+  integrity_hash: string;
   created_at: string;
 }
 
@@ -227,17 +231,89 @@ export function listAuditLogs(
 
 export function createAuditLog(
   organizationId: string,
-  entry: Omit<AccessAuditLogRow, "id" | "created_at" | "organization_id">
+  entry: Omit<
+    AccessAuditLogRow,
+    "id" | "created_at" | "organization_id" | "previous_hash" | "integrity_hash"
+  >
 ) {
+  const previousLog = auditLogs.find((log) => log.organization_id === organizationId);
+  const previousHash = previousLog?.integrity_hash || null;
+  const createdAt = new Date().toISOString();
+  const id = createId("audit");
+
+  const integrityHash = computeAuditIntegrityHash({
+    organizationId,
+    id,
+    action: entry.action,
+    scope: entry.scope,
+    retentionMode: entry.retention_mode,
+    retainedUntil: entry.retained_until,
+    requestPath: entry.request_path,
+    ipAddress: entry.ip_address,
+    userAgent: entry.user_agent,
+    createdAt,
+    previousHash,
+  });
+
   const log: AccessAuditLogRow = {
-    id: createId("audit"),
+    id,
     organization_id: organizationId,
-    created_at: new Date().toISOString(),
+    created_at: createdAt,
+    previous_hash: previousHash,
+    integrity_hash: integrityHash,
     ...entry,
   };
 
   auditLogs.unshift(log);
   return log;
+}
+
+export function verifyAuditLogChain(organizationId: string) {
+  const scopedLogs = auditLogs
+    .filter((log) => log.organization_id === organizationId)
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+  let expectedPreviousHash: string | null = null;
+
+  for (const log of scopedLogs) {
+    if (log.previous_hash !== expectedPreviousHash) {
+      return {
+        valid: false,
+        brokenLogId: log.id,
+        reason: "previous_hash_mismatch",
+      };
+    }
+
+    const expectedIntegrity = computeAuditIntegrityHash({
+      organizationId: log.organization_id,
+      id: log.id,
+      action: log.action,
+      scope: log.scope,
+      retentionMode: log.retention_mode,
+      retainedUntil: log.retained_until,
+      requestPath: log.request_path,
+      ipAddress: log.ip_address,
+      userAgent: log.user_agent,
+      createdAt: log.created_at,
+      previousHash: log.previous_hash,
+    });
+
+    if (expectedIntegrity !== log.integrity_hash) {
+      return {
+        valid: false,
+        brokenLogId: log.id,
+        reason: "integrity_hash_mismatch",
+      };
+    }
+
+    expectedPreviousHash = log.integrity_hash;
+  }
+
+  return {
+    valid: true,
+    brokenLogId: null,
+    reason: null,
+  };
 }
 
 // ============ User Management & RBAC ============

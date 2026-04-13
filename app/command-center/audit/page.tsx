@@ -12,7 +12,7 @@ export default async function CommandCenterAuditPage({ searchParams }: CommandCe
   const query = (params.q || "").trim().toLowerCase();
   const organizationId = await getCurrentOrganizationId();
 
-  const { auditLogs, error } = await getCommandCenterAuditLogs(organizationId, query);
+  const { auditLogs, integrity, error } = await getCommandCenterAuditLogs(organizationId, query);
 
   return (
     <section>
@@ -28,6 +28,16 @@ export default async function CommandCenterAuditPage({ searchParams }: CommandCe
       {error && (
         <p style={{ color: "#ffb3bf" }}>
           Audit logs could not be loaded. Apply the audit migration if needed.
+        </p>
+      )}
+      {integrity && !integrity.valid && (
+        <p style={{ color: "#ffb3bf" }}>
+          Audit integrity warning: chain validation failed at log {integrity.brokenLogId || "unknown"} ({integrity.reason || "unknown reason"}).
+        </p>
+      )}
+      {integrity && integrity.valid && (
+        <p style={{ color: "#86efac" }}>
+          Audit integrity: verified (tamper-evident chain intact).
         </p>
       )}
 
@@ -47,6 +57,9 @@ export default async function CommandCenterAuditPage({ searchParams }: CommandCe
             </small>
             <small className="control-meta" style={{ display: "block" }}>
               path={log.request_path || "n/a"} ip={log.ip_address || "n/a"}
+            </small>
+            <small className="control-meta" style={{ display: "block" }}>
+              hash={log.integrity_hash.slice(0, 16)}... prev={log.previous_hash ? `${log.previous_hash.slice(0, 16)}...` : "genesis"}
             </small>
             {log.retained_until && (
               <small className="control-meta" style={{ display: "block" }}>
