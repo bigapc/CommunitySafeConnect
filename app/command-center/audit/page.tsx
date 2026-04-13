@@ -38,6 +38,14 @@ export default async function CommandCenterAuditPage({ searchParams }: CommandCe
           Status: <strong>{securityHealth.status.toUpperCase()}</strong>
         </p>
         <p style={{ margin: "0.3rem 0", color: "#cbd5e1" }}>
+          Degradation reason: {securityHealth.primaryDegradationReason || "none"}
+        </p>
+        {securityHealth.degradationReasons.length > 1 && (
+          <p style={{ margin: "0.3rem 0", color: "#94a3b8" }}>
+            All reasons: {securityHealth.degradationReasons.join(", ")}
+          </p>
+        )}
+        <p style={{ margin: "0.3rem 0", color: "#cbd5e1" }}>
           Alert state: driver={securityHealth.checks.alertState.driver} connected={String(securityHealth.checks.alertState.connected)}
           {" "}redisConfigured={String(securityHealth.checks.alertState.redisConfigured)}
         </p>

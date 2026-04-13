@@ -29,6 +29,13 @@ interface ProbeResult {
   timedOut: boolean;
 }
 
+type SecurityDegradationReason =
+  | "alert_state_redis_disconnected"
+  | "oidc_discovery_unreachable"
+  | "oidc_jwks_unreachable"
+  | "oidc_discovery_slow"
+  | "oidc_jwks_slow";
+
 function getOidcSlowThresholdMs() {
   const parsed = Number(process.env.OIDC_HEALTH_SLOW_THRESHOLD_MS);
 
@@ -158,15 +165,31 @@ export async function getSecurityHealthSnapshot() {
   const alertState = await getAlertStateHealth();
   const oidcConfigured = hasOidcConfigured();
   const oidcConnectivity = await getOidcConnectivity();
+  const degradationReasons: SecurityDegradationReason[] = [];
 
-  const hasAlertStateIssue = alertState.driver === "redis" && !alertState.connected;
-  const hasOidcIssue =
-    oidcConfigured &&
-    (!oidcConnectivity.discoveryConnected || !oidcConnectivity.jwksConnected);
-  const hasOidcLatencyRisk =
-    oidcConfigured && (oidcConnectivity.discoverySlow || oidcConnectivity.jwksSlow);
+  if (alertState.driver === "redis" && !alertState.connected) {
+    degradationReasons.push("alert_state_redis_disconnected");
+  }
 
-  const status = hasAlertStateIssue || hasOidcIssue || hasOidcLatencyRisk ? "degraded" : "ok";
+  if (oidcConfigured) {
+    if (!oidcConnectivity.discoveryConnected) {
+      degradationReasons.push("oidc_discovery_unreachable");
+    }
+
+    if (!oidcConnectivity.jwksConnected) {
+      degradationReasons.push("oidc_jwks_unreachable");
+    }
+
+    if (oidcConnectivity.discoverySlow) {
+      degradationReasons.push("oidc_discovery_slow");
+    }
+
+    if (oidcConnectivity.jwksSlow) {
+      degradationReasons.push("oidc_jwks_slow");
+    }
+  }
+
+  const status = degradationReasons.length > 0 ? "degraded" : "ok";
 
   return {
     status,
@@ -195,6 +218,8 @@ export async function getSecurityHealthSnapshot() {
         auditHashChainEnabled: true,
       },
     },
+    degradationReasons,
+    primaryDegradationReason: degradationReasons[0] || null,
     timestamp: new Date().toISOString(),
   };
 }
