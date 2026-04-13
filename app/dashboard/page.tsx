@@ -1,32 +1,10 @@
 import { requireOrganizationAccess } from "@/lib/access";
-import { createSupabaseAdminClient } from "@/lib/supabaseAdmin";
-
-interface ReportRow {
-  id: string;
-  description: string | null;
-  created_at: string;
-}
+import { listReports } from "@/lib/localDataStore";
 
 export default async function Dashboard() {
   await requireOrganizationAccess("/dashboard");
 
-  const supabase = createSupabaseAdminClient();
-  const { data, error } = await supabase
-    .from("reports")
-    .select("id, description, created_at")
-    .order("created_at", { ascending: false })
-    .limit(100);
-
-  if (error) {
-    return (
-      <main className="container">
-        <h2>Organization Reports</h2>
-        <p style={{ color: "#fca5a5" }}>Could not load reports.</p>
-      </main>
-    );
-  }
-
-  const reports = (data || []) as ReportRow[];
+  const reports = listReports({ ascending: false, limit: 100 });
 
   return (
     <main className="container">

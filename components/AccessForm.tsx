@@ -12,6 +12,7 @@ export default function AccessForm({ nextPath }: AccessFormProps) {
   const [accessCode, setAccessCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const isDevelopment = process.env.NODE_ENV !== "production";
 
   const scope = useMemo(
     () => (nextPath.startsWith("/admin") || nextPath.startsWith("/command-center") ? "admin" : "organization"),
@@ -52,6 +53,11 @@ export default function AccessForm({ nextPath }: AccessFormProps) {
       <p>
         Enter the {scope === "admin" ? "admin" : "organization"} access code to continue.
       </p>
+      {isDevelopment && (
+        <p style={{ color: "#94a3b8", marginTop: "-0.25rem" }}>
+          Demo code: {scope === "admin" ? "community-admin-demo" : "community-org-demo"}
+        </p>
+      )}
       <form onSubmit={handleSubmit} style={{ display: "flex", gap: "0.5rem", maxWidth: "520px" }}>
         <input
           type="password"

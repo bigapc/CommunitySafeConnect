@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hasAdminAccess } from "@/lib/access";
-import { createSupabaseAdminClient } from "@/lib/supabaseAdmin";
+import { setMessageFlag } from "@/lib/localDataStore";
 
 function sanitizeReturnTo(value: string | null) {
   if (!value || !value.startsWith("/command-center")) {
@@ -24,30 +24,10 @@ export async function POST(
   const mode = formData.get("mode")?.toString() === "unflag" ? "unflag" : "flag";
 
   try {
-    const supabase = createSupabaseAdminClient();
-    const { error } =
-      mode === "flag"
-        ? await supabase
-            .from("chat_messages")
-            .update({
-              flagged: true,
-              flagged_at: new Date().toISOString(),
-              flagged_reason: "manual command-center review",
-              flagged_by: "command-center",
-            })
-            .eq("id", id)
-        : await supabase
-            .from("chat_messages")
-            .update({
-              flagged: false,
-              flagged_at: null,
-              flagged_reason: null,
-              flagged_by: null,
-            })
-            .eq("id", id);
+    const updated = setMessageFlag(id, mode);
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (!updated) {
+      return NextResponse.json({ error: "Message not found." }, { status: 404 });
     }
 
     return NextResponse.redirect(new URL(returnTo, request.url), 303);

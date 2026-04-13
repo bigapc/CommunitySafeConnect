@@ -8,7 +8,7 @@ import {
   getPolicyRetentionMaxAgeSeconds,
   getSessionCookieOptions,
 } from "@/lib/access";
-import { createSupabaseAdminClient } from "@/lib/supabaseAdmin";
+import { createAuditLog } from "@/lib/localDataStore";
 
 function getClientIp(request: NextRequest) {
   const forwardedFor = request.headers.get("x-forwarded-for");
@@ -62,34 +62,17 @@ export async function DELETE(request: NextRequest) {
     ? new Date(Date.now() + retentionSeconds * 1000).toISOString()
     : null;
 
-  let auditWarning = "";
+  createAuditLog({
+    action: "logout",
+    scope,
+    retention_mode: retentionMode,
+    retained_until: retainedUntil,
+    request_path: `${request.nextUrl.pathname}${request.nextUrl.search}`,
+    ip_address: getClientIp(request),
+    user_agent: request.headers.get("user-agent"),
+  });
 
-  try {
-    const supabase = createSupabaseAdminClient();
-    const { error } = await supabase.from("access_audit_logs").insert([
-      {
-        action: "logout",
-        scope,
-        retention_mode: retentionMode,
-        retained_until: retainedUntil,
-        request_path: `${request.nextUrl.pathname}${request.nextUrl.search}`,
-        ip_address: getClientIp(request),
-        user_agent: request.headers.get("user-agent"),
-      },
-    ]);
-
-    if (error) {
-      auditWarning = "Access updated, but audit logging failed.";
-    }
-  } catch {
-    auditWarning = "Access updated, but audit logging failed.";
-  }
-
-  const response = NextResponse.json(
-    auditWarning
-      ? { ok: true, auditLogged: false, warning: auditWarning }
-      : { ok: true, auditLogged: true }
-  );
+  const response = NextResponse.json({ ok: true, auditLogged: true });
 
   if (retainPolicy) {
     const policyCookieOptions = getSessionCookieOptions(retentionSeconds || undefined);

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hasAdminAccess } from "@/lib/access";
-import { createSupabaseAdminClient } from "@/lib/supabaseAdmin";
+import { markReportReviewed } from "@/lib/localDataStore";
 
 function sanitizeReturnTo(value: string | null) {
   if (!value || !value.startsWith("/command-center")) {
@@ -23,18 +23,10 @@ export async function POST(
   const returnTo = sanitizeReturnTo(formData.get("returnTo")?.toString() || null);
 
   try {
-    const supabase = createSupabaseAdminClient();
-    const { error } = await supabase
-      .from("reports")
-      .update({
-        reviewed: true,
-        reviewed_at: new Date().toISOString(),
-        reviewed_by: "command-center",
-      })
-      .eq("id", id);
+    const updated = markReportReviewed(id, "command-center");
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (!updated) {
+      return NextResponse.json({ error: "Report not found." }, { status: 404 });
     }
 
     return NextResponse.redirect(new URL(returnTo, request.url), 303);

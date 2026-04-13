@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hasOrganizationAccess } from "@/lib/access";
-import { createSupabaseAdminClient } from "@/lib/supabaseAdmin";
+import { createReport } from "@/lib/localDataStore";
 
 export async function POST(request: NextRequest) {
   if (!(await hasOrganizationAccess())) {
@@ -15,12 +15,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Description is required." }, { status: 400 });
     }
 
-    const supabase = createSupabaseAdminClient();
-    const { error } = await supabase.from("reports").insert([{ description }]);
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+    createReport(description);
 
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch (error) {

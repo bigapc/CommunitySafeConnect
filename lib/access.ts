@@ -7,6 +7,9 @@ export const ADMIN_COOKIE_NAME = "communitysafeconnect_admin";
 
 const DEFAULT_SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
 const DEFAULT_POLICY_RETENTION_SECONDS = 60 * 60 * 24;
+const DEV_DEFAULT_SESSION_SECRET = "communitysafeconnect-dev-secret";
+const DEV_DEFAULT_ORGANIZATION_ACCESS_CODE = "community-org-demo";
+const DEV_DEFAULT_ADMIN_ACCESS_CODE = "community-admin-demo";
 
 export type AccessScope = "organization" | "admin";
 
@@ -14,6 +17,18 @@ function getRequiredEnv(name: "ACCESS_SESSION_SECRET" | "ORGANIZATION_ACCESS_COD
   const value = process.env[name];
 
   if (!value) {
+    if (process.env.NODE_ENV !== "production") {
+      if (name === "ACCESS_SESSION_SECRET") {
+        return DEV_DEFAULT_SESSION_SECRET;
+      }
+
+      if (name === "ORGANIZATION_ACCESS_CODE") {
+        return DEV_DEFAULT_ORGANIZATION_ACCESS_CODE;
+      }
+
+      return DEV_DEFAULT_ADMIN_ACCESS_CODE;
+    }
+
     throw new Error(`${name} is not configured.`);
   }
 
