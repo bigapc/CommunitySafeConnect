@@ -19,6 +19,7 @@ import {
   registerSecurityFailure,
 } from "@/lib/securityRateLimit";
 import { logSecurityEvent } from "@/lib/securityLogger";
+import { recordSessionActivity } from "@/lib/sessionActivityStore";
 
 export async function POST(request: NextRequest) {
   try {
@@ -100,6 +101,10 @@ export async function POST(request: NextRequest) {
       createOrganizationContextCookieValue(organizationId),
       cookieOptions
     );
+
+    // Record this session in the activity store for audit/revocation
+    const userAgent = request.headers.get("user-agent") || "unknown";
+    recordSessionActivity(organizationId, scope, clientIp, userAgent);
 
     logSecurityEvent(request, {
       event: "auth.login",

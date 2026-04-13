@@ -146,3 +146,24 @@ Optional shared-state settings for multi-instance consistency:
 - `ALERT_STATE_NAMESPACE` (default: `csc_alert_state`)
 - `ALERT_STATE_REDIS_REST_URL` (or `UPSTASH_REDIS_REST_URL`)
 - `ALERT_STATE_REDIS_REST_TOKEN` (or `UPSTASH_REDIS_REST_TOKEN`)
+
+## Session Activity Ledger
+
+Real-time session management for operational security and compliance:
+
+- `GET /api/security/sessions` returns all active sessions (authenticated users).
+  - Org users see their organization's sessions.
+  - Admins see admin sessions.
+  - Optional query param: `?scope=admin` or `?scope=organization` to filter.
+  - Returns array of `SessionRecord` objects with: `sessionId`, `organizationId`, `scope`, `ipAddress`, `userAgent`, `createdAt`, `lastActivityAt`.
+  - Admin-only effective filtering: admins see admin scope; org users see their org's sessions.
+  - Response includes `X-Session-Count` header with total active session count.
+  - Response sets `Cache-Control: no-store` for real-time visibility.
+
+- `POST /api/security/sessions/revoke` force-logs out a specific session (admin-only).
+  - Request body: `{ "sessionId": "...", "reason": "optional_reason" }`
+  - Returns: `{ "success": true, "message": "Session revoked" }` on 200.
+  - Returns 404 if session not found, 400 if sessionId missing, 403 if not admin.
+  - Revocation is logged as a security event for compliance audit.
+
+Canonical JSON schema for sessions response: `docs/security-sessions.schema.json`.

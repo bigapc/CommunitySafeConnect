@@ -9,7 +9,8 @@
     "lint": "next lint",
     "test:contract": "node tests/security-health-contract.test.mjs",
     "test:config-contract": "node tests/security-config-contract.test.mjs",
-    "test:contracts": "npm run test:contract && npm run test:config-contract"
+    "test:sessions-contract": "node tests/security-sessions-contract.test.mjs",
+    "test:contracts": "npm run test:contract && npm run test:config-contract && npm run test:sessions-contract"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
