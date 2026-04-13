@@ -13,6 +13,11 @@ interface SecurityAlert {
   description: string;
 }
 
+interface SuppressedSecurityAlert extends SecurityAlert {
+  suppressedAt: string;
+  nextEligibleAt: string;
+}
+
 const alertLastEmittedAt = new Map<string, number>();
 
 function readPositiveNumber(value: string | undefined, fallbackValue: number) {
@@ -66,12 +71,18 @@ function applyAlertSuppression(
   const now = Date.now();
   const suppressionMs = suppressionMinutes * 60 * 1000;
   const emitted: SecurityAlert[] = [];
+  const suppressed: SuppressedSecurityAlert[] = [];
 
   for (const alert of alerts) {
     const key = `${organizationId}:${alert.id}`;
     const lastEmitted = alertLastEmittedAt.get(key) || 0;
 
     if (now - lastEmitted < suppressionMs) {
+      suppressed.push({
+        ...alert,
+        suppressedAt: new Date(now).toISOString(),
+        nextEligibleAt: new Date(lastEmitted + suppressionMs).toISOString(),
+      });
       continue;
     }
 
@@ -79,10 +90,13 @@ function applyAlertSuppression(
     emitted.push(alert);
   }
 
-  return emitted;
+  return {
+    activeAlerts: emitted,
+    suppressedAlerts: suppressed,
+  };
 }
 
-function detectSecurityAlerts(organizationId: string): SecurityAlert[] {
+function detectSecurityAlerts(organizationId: string) {
   const config = getAlertConfig();
   const now = Date.now();
   const allRecent = listSecurityEvents({ limit: 500 });
@@ -210,12 +224,16 @@ export async function getCommandCenterAuditLogs(organizationId: string, query: s
     );
   });
   const integrity = verifyAuditLogChain(organizationId);
-  const alerts = detectSecurityAlerts(organizationId);
+  const { activeAlerts, suppressedAlerts } = detectSecurityAlerts(organizationId);
 
   return {
     auditLogs,
     integrity,
-    alerts,
+    alerts: activeAlerts,
+    alertHistory: {
+      active: activeAlerts,
+      suppressed: suppressedAlerts,
+    },
     error: null,
   };
 }

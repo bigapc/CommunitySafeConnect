@@ -88,6 +88,7 @@ In non-mock mode, callback handling enforces strict ID token verification:
 	- Failed login spike (15 min window)
 	- Failed MFA spike (15 min window)
 	- Suspicious cross-tenant login pattern (same IP across 3+ tenants within 30 min)
+- Command center audit view also shows recently suppressed alerts with the next eligible re-emit time.
 
 Optional environment variables to tune alert sensitivity:
 
