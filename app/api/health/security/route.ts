@@ -7,5 +7,9 @@ export async function GET() {
     return NextResponse.json({ error: "Admin access required." }, { status: 403 });
   }
 
-  return NextResponse.json(await getSecurityHealthSnapshot());
+  return NextResponse.json(await getSecurityHealthSnapshot(), {
+    headers: {
+      "Cache-Control": "no-store",
+    },
+  });
 }

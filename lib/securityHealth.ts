@@ -46,6 +46,16 @@ const SECURITY_REASON_SEVERITY: Record<SecurityDegradationReason, SecurityDegrad
   oidc_jwks_slow: "warning",
 };
 
+const SECURITY_REASON_ACTION: Record<SecurityDegradationReason, string> = {
+  alert_state_redis_disconnected: "Check ALERT_STATE_REDIS_REST_URL/TOKEN and Redis network reachability.",
+  oidc_discovery_unreachable: "Verify OIDC_ISSUER_URL and IdP availability for discovery endpoint.",
+  oidc_jwks_unreachable: "Verify OIDC_JWKS_URI or IdP JWKS endpoint availability.",
+  oidc_discovery_slow: "Investigate IdP discovery latency and upstream network performance.",
+  oidc_jwks_slow: "Investigate IdP JWKS latency and consider CDN/cache strategy.",
+};
+
+const SECURITY_HEALTH_SCHEMA_VERSION = "2026-04-13.1";
+
 function getOverallSeverity(
   reasonSeverities: Array<{ reason: SecurityDegradationReason; severity: SecurityDegradationSeverity }>
 ) {
@@ -232,8 +242,10 @@ export async function getSecurityHealthSnapshot() {
   }));
   const overallSeverity = getOverallSeverity(degradationReasonSeverities);
   const overallSeverityScore = getOverallSeverityScore(overallSeverity);
+  const recommendedActions = degradationReasons.map((reason) => SECURITY_REASON_ACTION[reason]);
 
   return {
+    schemaVersion: SECURITY_HEALTH_SCHEMA_VERSION,
     status,
     checks: {
       alertState: {
@@ -265,6 +277,7 @@ export async function getSecurityHealthSnapshot() {
     primaryDegradationReason: degradationReasons[0] || null,
     overallSeverity,
     overallSeverityScore,
+    recommendedActions,
     timestamp: new Date().toISOString(),
   };
 }

@@ -34,6 +34,9 @@ export default async function CommandCenterAuditPage({ searchParams }: CommandCe
       )}
       <div style={{ marginTop: "0.8rem", marginBottom: "0.8rem" }}>
         <h4 style={{ marginBottom: "0.4rem" }}>Security Readiness</h4>
+        <p style={{ margin: "0.3rem 0", color: "#94a3b8" }}>
+          Schema version: {securityHealth.schemaVersion}
+        </p>
         <p style={{ margin: "0.3rem 0", color: securityHealth.status === "ok" ? "#86efac" : "#ffd88a" }}>
           Status: <strong>{securityHealth.status.toUpperCase()}</strong>
         </p>
@@ -56,6 +59,11 @@ export default async function CommandCenterAuditPage({ searchParams }: CommandCe
             Reason severities: {securityHealth.degradationReasonSeverities
               .map((entry) => `${entry.reason}:${entry.severity}`)
               .join(", ")}
+          </p>
+        )}
+        {securityHealth.recommendedActions.length > 0 && (
+          <p style={{ margin: "0.3rem 0", color: "#94a3b8" }}>
+            Recommended actions: {securityHealth.recommendedActions.join(" | ")}
           </p>
         )}
         <p style={{ margin: "0.3rem 0", color: "#cbd5e1" }}>
