@@ -9,9 +9,17 @@ import {
   getClientIp,
   registerSecurityFailure,
 } from "@/lib/securityRateLimit";
+import { logSecurityEvent } from "@/lib/securityLogger";
 
 export async function POST(request: NextRequest) {
   if (!(await hasAdminAccess())) {
+    logSecurityEvent(request, {
+      event: "mfa.verify",
+      level: "warn",
+      outcome: "failure",
+      reason: "unauthorized",
+    });
+
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -20,6 +28,14 @@ export async function POST(request: NextRequest) {
     const precheck = checkSecurityRateLimit("mfa_verify", clientIp);
 
     if (!precheck.allowed) {
+      logSecurityEvent(request, {
+        event: "mfa.verify",
+        level: "warn",
+        outcome: "failure",
+        reason: "rate_limited",
+        metadata: { retryAfterSeconds: precheck.retryAfterSeconds },
+      });
+
       return NextResponse.json(
         { error: "Too many MFA attempts. Please try again later." },
         {
@@ -44,6 +60,13 @@ export async function POST(request: NextRequest) {
     const backupCodes = body.backupCodes || [];
 
     if (!token || !secret) {
+      logSecurityEvent(request, {
+        event: "mfa.verify",
+        level: "warn",
+        outcome: "failure",
+        reason: "missing_token_or_secret",
+      });
+
       return NextResponse.json(
         { error: "Token and secret required" },
         { status: 400 }
@@ -54,7 +77,20 @@ export async function POST(request: NextRequest) {
     const isValid = verifyTOTPToken(token, secret);
 
     if (!isValid) {
-      registerSecurityFailure("mfa_verify", clientIp);
+      const failure = registerSecurityFailure("mfa_verify", clientIp);
+
+      logSecurityEvent(request, {
+        event: "mfa.verify",
+        level: "warn",
+        outcome: "failure",
+        reason: "invalid_totp",
+        metadata: {
+          remainingAttempts: failure.remainingAttempts,
+          locked: failure.locked,
+          retryAfterSeconds: failure.retryAfterSeconds,
+        },
+      });
+
       return NextResponse.json(
         { error: "Invalid MFA token" },
         { status: 401 }
@@ -76,6 +112,13 @@ export async function POST(request: NextRequest) {
     // Store encrypted MFA secret and backup codes
     updateUserMFA(username, secret, backupCodes, encryptData);
 
+    logSecurityEvent(request, {
+      event: "mfa.verify",
+      level: "info",
+      outcome: "success",
+      user: username,
+    });
+
     const response = NextResponse.json({
       ok: true,
       message: "MFA enabled successfully",
@@ -90,6 +133,14 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
+    logSecurityEvent(request, {
+      event: "mfa.verify",
+      level: "error",
+      outcome: "failure",
+      reason: "exception",
+      metadata: { message: error instanceof Error ? error.message : "unknown" },
+    });
+
     const message = error instanceof Error ? error.message : "MFA verification failed";
     return NextResponse.json({ error: message }, { status: 500 });
   }

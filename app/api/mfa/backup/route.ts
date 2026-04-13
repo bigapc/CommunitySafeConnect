@@ -9,9 +9,17 @@ import {
   getClientIp,
   registerSecurityFailure,
 } from "@/lib/securityRateLimit";
+import { logSecurityEvent } from "@/lib/securityLogger";
 
 export async function POST(request: NextRequest) {
   if (!(await hasAdminAccess())) {
+    logSecurityEvent(request, {
+      event: "mfa.backup",
+      level: "warn",
+      outcome: "failure",
+      reason: "unauthorized",
+    });
+
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -20,6 +28,14 @@ export async function POST(request: NextRequest) {
     const precheck = checkSecurityRateLimit("mfa_backup", clientIp);
 
     if (!precheck.allowed) {
+      logSecurityEvent(request, {
+        event: "mfa.backup",
+        level: "warn",
+        outcome: "failure",
+        reason: "rate_limited",
+        metadata: { retryAfterSeconds: precheck.retryAfterSeconds },
+      });
+
       return NextResponse.json(
         { error: "Too many backup-code attempts. Please try again later." },
         {
@@ -40,6 +56,13 @@ export async function POST(request: NextRequest) {
     const backupCode = body.backup_code?.trim();
 
     if (!backupCode) {
+      logSecurityEvent(request, {
+        event: "mfa.backup",
+        level: "warn",
+        outcome: "failure",
+        reason: "missing_backup_code",
+      });
+
       return NextResponse.json(
         { error: "Backup code required" },
         { status: 400 }
@@ -69,7 +92,20 @@ export async function POST(request: NextRequest) {
     const isValid = verifyBackupCode(backupCode, backupCodes);
 
     if (!isValid) {
-      registerSecurityFailure("mfa_backup", clientIp);
+      const failure = registerSecurityFailure("mfa_backup", clientIp);
+
+      logSecurityEvent(request, {
+        event: "mfa.backup",
+        level: "warn",
+        outcome: "failure",
+        reason: "invalid_backup_code",
+        metadata: {
+          remainingAttempts: failure.remainingAttempts,
+          locked: failure.locked,
+          retryAfterSeconds: failure.retryAfterSeconds,
+        },
+      });
+
       return NextResponse.json(
         { error: "Invalid backup code" },
         { status: 401 }
@@ -77,6 +113,13 @@ export async function POST(request: NextRequest) {
     }
 
     clearSecurityFailures("mfa_backup", clientIp);
+
+    logSecurityEvent(request, {
+      event: "mfa.backup",
+      level: "info",
+      outcome: "success",
+      user: username,
+    });
 
     const response = NextResponse.json({
       ok: true,
@@ -92,6 +135,14 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
+    logSecurityEvent(request, {
+      event: "mfa.backup",
+      level: "error",
+      outcome: "failure",
+      reason: "exception",
+      metadata: { message: error instanceof Error ? error.message : "unknown" },
+    });
+
     const message = error instanceof Error ? error.message : "Backup code verification failed";
     return NextResponse.json({ error: message }, { status: 500 });
   }

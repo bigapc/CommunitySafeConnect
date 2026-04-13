@@ -9,6 +9,7 @@ import {
 } from "@/lib/access";
 import { createAuditLog } from "@/lib/localDataStore";
 import { getClientIp } from "@/lib/securityRateLimit";
+import { logSecurityEvent } from "@/lib/securityLogger";
 import { getSsoConfig, validateOidcIdToken, verifyOidcState } from "@/lib/sso";
 
 export async function GET(request: NextRequest) {
@@ -19,10 +20,26 @@ export async function GET(request: NextRequest) {
   const context = verifyOidcState(state);
 
   if (!context) {
+    logSecurityEvent(request, {
+      event: "sso.oidc.callback",
+      level: "warn",
+      outcome: "failure",
+      reason: "invalid_state",
+    });
+
     return NextResponse.redirect(new URL("/access?sso_error=invalid_state", request.url), 303);
   }
 
   if (error || !code) {
+    logSecurityEvent(request, {
+      event: "sso.oidc.callback",
+      level: "warn",
+      outcome: "failure",
+      reason: error || "missing_code",
+      organizationId: context.organizationId,
+      scope: context.scope,
+    });
+
     const redirectUrl = new URL("/access", request.url);
     redirectUrl.searchParams.set("next", context.nextPath);
     redirectUrl.searchParams.set("sso_error", error || "missing_code");
@@ -32,6 +49,15 @@ export async function GET(request: NextRequest) {
   const config = getSsoConfig(request.nextUrl.origin);
 
   if (!config.mockMode && (!config.clientId || !config.clientSecret || !config.tokenEndpoint || !config.redirectUri)) {
+    logSecurityEvent(request, {
+      event: "sso.oidc.callback",
+      level: "error",
+      outcome: "failure",
+      reason: "oidc_not_configured",
+      organizationId: context.organizationId,
+      scope: context.scope,
+    });
+
     const redirectUrl = new URL("/access", request.url);
     redirectUrl.searchParams.set("next", context.nextPath);
     redirectUrl.searchParams.set("sso_error", "oidc_not_configured");
@@ -55,6 +81,15 @@ export async function GET(request: NextRequest) {
       });
 
       if (!tokenResponse.ok) {
+        logSecurityEvent(request, {
+          event: "sso.oidc.callback",
+          level: "warn",
+          outcome: "failure",
+          reason: "token_exchange_failed",
+          organizationId: context.organizationId,
+          scope: context.scope,
+        });
+
         const redirectUrl = new URL("/access", request.url);
         redirectUrl.searchParams.set("next", context.nextPath);
         redirectUrl.searchParams.set("sso_error", "token_exchange_failed");
@@ -75,12 +110,30 @@ export async function GET(request: NextRequest) {
       );
 
       if (!validation.valid) {
+        logSecurityEvent(request, {
+          event: "sso.oidc.callback",
+          level: "warn",
+          outcome: "failure",
+          reason: validation.error,
+          organizationId: context.organizationId,
+          scope: context.scope,
+        });
+
         const redirectUrl = new URL("/access", request.url);
         redirectUrl.searchParams.set("next", context.nextPath);
         redirectUrl.searchParams.set("sso_error", validation.error);
         return NextResponse.redirect(redirectUrl, 303);
       }
     } catch {
+      logSecurityEvent(request, {
+        event: "sso.oidc.callback",
+        level: "error",
+        outcome: "failure",
+        reason: "oidc_validation_failed",
+        organizationId: context.organizationId,
+        scope: context.scope,
+      });
+
       const redirectUrl = new URL("/access", request.url);
       redirectUrl.searchParams.set("next", context.nextPath);
       redirectUrl.searchParams.set("sso_error", "oidc_validation_failed");
@@ -120,6 +173,14 @@ export async function GET(request: NextRequest) {
     request_path: `${request.nextUrl.pathname}${request.nextUrl.search}`,
     ip_address: getClientIp(request),
     user_agent: request.headers.get("user-agent"),
+  });
+
+  logSecurityEvent(request, {
+    event: "sso.oidc.callback",
+    level: "info",
+    outcome: "success",
+    organizationId: context.organizationId,
+    scope: context.scope,
   });
 
   return response;

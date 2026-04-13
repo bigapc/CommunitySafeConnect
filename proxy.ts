@@ -25,6 +25,10 @@ function buildContentSecurityPolicy() {
 }
 
 export function proxy(request: NextRequest) {
+  const requestId = request.headers.get("x-request-id") || crypto.randomUUID();
+  const forwardedRequestHeaders = new Headers(request.headers);
+  forwardedRequestHeaders.set("x-request-id", requestId);
+
   const isApiRoute = request.nextUrl.pathname.startsWith("/api");
   const isMutating = MUTATING_METHODS.has(request.method.toUpperCase());
 
@@ -38,19 +42,25 @@ export function proxy(request: NextRequest) {
     if (origin && origin !== expectedOrigin) {
       return NextResponse.json(
         { error: "CSRF check failed (origin mismatch)." },
-        { status: 403 }
+        { status: 403, headers: { "x-request-id": requestId } }
       );
     }
 
     if (!origin && fetchSite === "cross-site") {
       return NextResponse.json(
         { error: "CSRF check failed (cross-site request blocked)." },
-        { status: 403 }
+        { status: 403, headers: { "x-request-id": requestId } }
       );
     }
   }
 
-  const response = NextResponse.next();
+  const response = NextResponse.next({
+    request: {
+      headers: forwardedRequestHeaders,
+    },
+  });
+
+  response.headers.set("x-request-id", requestId);
 
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-Frame-Options", "DENY");

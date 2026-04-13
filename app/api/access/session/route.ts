@@ -18,6 +18,7 @@ import {
   getClientIp,
   registerSecurityFailure,
 } from "@/lib/securityRateLimit";
+import { logSecurityEvent } from "@/lib/securityLogger";
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,6 +26,14 @@ export async function POST(request: NextRequest) {
     const precheck = checkSecurityRateLimit("access_login", clientIp);
 
     if (!precheck.allowed) {
+      logSecurityEvent(request, {
+        event: "auth.login",
+        level: "warn",
+        outcome: "failure",
+        reason: "rate_limited",
+        metadata: { retryAfterSeconds: precheck.retryAfterSeconds },
+      });
+
       return NextResponse.json(
         { error: "Too many login attempts. Please try again later." },
         {
@@ -46,11 +55,31 @@ export async function POST(request: NextRequest) {
     const organizationId = (body.organizationId || "community-demo-org").trim().toLowerCase();
 
     if (!code) {
+      logSecurityEvent(request, {
+        event: "auth.login",
+        level: "warn",
+        outcome: "failure",
+        reason: "missing_access_code",
+      });
+
       return NextResponse.json({ error: "Access code is required." }, { status: 400 });
     }
 
     if (code !== getExpectedAccessCode(scope)) {
       const failure = registerSecurityFailure("access_login", clientIp);
+
+      logSecurityEvent(request, {
+        event: "auth.login",
+        level: "warn",
+        outcome: "failure",
+        reason: "invalid_access_code",
+        scope,
+        metadata: {
+          remainingAttempts: failure.remainingAttempts,
+          locked: failure.locked,
+          retryAfterSeconds: failure.retryAfterSeconds,
+        },
+      });
 
       return NextResponse.json({ error: "Invalid access code." }, { status: 401 });
     }
@@ -72,8 +101,24 @@ export async function POST(request: NextRequest) {
       cookieOptions
     );
 
+    logSecurityEvent(request, {
+      event: "auth.login",
+      level: "info",
+      outcome: "success",
+      scope,
+      organizationId,
+    });
+
     return response;
   } catch (error) {
+    logSecurityEvent(request, {
+      event: "auth.login",
+      level: "error",
+      outcome: "failure",
+      reason: "exception",
+      metadata: { message: error instanceof Error ? error.message : "unknown" },
+    });
+
     const message = error instanceof Error ? error.message : "Unable to create session.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
@@ -99,6 +144,15 @@ export async function DELETE(request: NextRequest) {
     request_path: `${request.nextUrl.pathname}${request.nextUrl.search}`,
     ip_address: getClientIp(request),
     user_agent: request.headers.get("user-agent"),
+  });
+
+  logSecurityEvent(request, {
+    event: "auth.logout",
+    level: "info",
+    outcome: "success",
+    scope,
+    organizationId,
+    metadata: { retentionMode },
   });
 
   const response = NextResponse.json({ ok: true, auditLogged: true });

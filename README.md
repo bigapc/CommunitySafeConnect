@@ -62,3 +62,12 @@ In non-mock mode, callback handling enforces strict ID token verification:
 - Requests to `/api/*` are rejected with `403` when `Origin` does not match the app origin.
 - Requests marked as `sec-fetch-site: cross-site` are rejected when `Origin` is absent.
 - This protection is applied centrally via `proxy.ts`.
+
+## Security Observability
+
+- A correlation ID (`x-request-id`) is attached to every request in `proxy.ts` and returned in responses.
+- Structured JSON security logs are emitted for high-risk auth paths:
+	- Access login/logout
+	- MFA verify/backup verification
+	- OIDC callback success/failure paths
+- Logs include timestamp, request ID, method, path, source IP, user-agent, outcome, and reason.
