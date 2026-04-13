@@ -6,6 +6,15 @@
  */
 
 import { randomBytes } from "node:crypto";
+import {
+  buildRedisRestConfig,
+  redisDel,
+  redisHDel,
+  redisHGet,
+  redisHGetAll,
+  redisHSet,
+  type RedisRestConfig,
+} from "./redisRestClient";
 
 export type SessionScope = "organization" | "admin";
 
@@ -21,10 +30,6 @@ export interface SessionRecord {
 
 export type SessionStateDriver = "memory" | "redis";
 
-interface RedisResult<T> {
-  result?: T;
-}
-
 const DEFAULT_REVOKED_SESSION_RETENTION_MS = 60 * 60 * 1000;
 
 function getConfiguredSessionStateDriver(): SessionStateDriver {
@@ -33,31 +38,24 @@ function getConfiguredSessionStateDriver(): SessionStateDriver {
 }
 
 async function deleteRevokedSessionFromRedis(sessionId: string) {
-  await fetchRedis(
-    `/hdel/${encodeURIComponent(getRevokedHashKey())}/${encodeURIComponent(sessionId)}`
-  );
+  const config = getRedisClientConfig();
+  if (!config) return;
+  await redisHDel(config, getRevokedHashKey(), sessionId);
 }
 
 function getSessionStateNamespace() {
   return process.env.SESSION_STATE_NAMESPACE || "csc_session_state";
 }
 
-function getRedisConfig() {
-  const baseUrl = process.env.SESSION_STATE_REDIS_REST_URL || process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.SESSION_STATE_REDIS_REST_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-
-  if (!baseUrl || !token) {
-    return null;
-  }
-
-  return {
-    baseUrl: baseUrl.replace(/\/$/, ""),
-    token,
-  };
+function getRedisClientConfig(): RedisRestConfig | null {
+  return buildRedisRestConfig(
+    ["SESSION_STATE_REDIS_REST_URL", "UPSTASH_REDIS_REST_URL"],
+    ["SESSION_STATE_REDIS_REST_TOKEN", "UPSTASH_REDIS_REST_TOKEN"]
+  );
 }
 
 export function isRedisSessionStateConfigured() {
-  return !!getRedisConfig();
+  return !!getRedisClientConfig();
 }
 
 export function getSessionStateDriver(): SessionStateDriver {
@@ -74,105 +72,54 @@ function getRevokedHashKey() {
   return `${getSessionStateNamespace()}:revoked`;
 }
 
-async function fetchRedis<T>(path: string): Promise<T | null> {
-  const config = getRedisConfig();
-
-  if (!config) {
-    return null;
-  }
-
-  try {
-    const response = await fetch(`${config.baseUrl}${path}`, {
-      headers: {
-        Authorization: `Bearer ${config.token}`,
-      },
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    return (await response.json()) as T;
-  } catch {
-    return null;
-  }
-}
-
-function parseHashResult(result: unknown) {
-  if (!Array.isArray(result)) {
-    return [] as Array<[string, string]>;
-  }
-
-  const entries: Array<[string, string]> = [];
-
-  for (let index = 0; index < result.length; index += 2) {
-    const key = result[index];
-    const value = result[index + 1];
-
-    if (typeof key === "string" && typeof value === "string") {
-      entries.push([key, value]);
-    }
-  }
-
-  return entries;
-}
-
 async function getSessionRecordFromRedis(sessionId: string): Promise<SessionRecord | null> {
-  const payload = await fetchRedis<RedisResult<string | null>>(
-    `/hget/${encodeURIComponent(getSessionHashKey())}/${encodeURIComponent(sessionId)}`
-  );
+  const config = getRedisClientConfig();
+  if (!config) return null;
 
-  if (!payload?.result || typeof payload.result !== "string") {
-    return null;
-  }
+  const value = await redisHGet(config, getSessionHashKey(), sessionId);
+  if (!value) return null;
 
   try {
-    return JSON.parse(payload.result) as SessionRecord;
+    return JSON.parse(value) as SessionRecord;
   } catch {
     return null;
   }
 }
 
 async function saveSessionRecordToRedis(record: SessionRecord) {
-  await fetchRedis(
-    `/hset/${encodeURIComponent(getSessionHashKey())}/${encodeURIComponent(record.sessionId)}/${encodeURIComponent(
-      JSON.stringify(record)
-    )}`
-  );
+  const config = getRedisClientConfig();
+  if (!config) return;
+  await redisHSet(config, getSessionHashKey(), record.sessionId, JSON.stringify(record));
 }
 
 async function deleteSessionRecordFromRedis(sessionId: string) {
-  await fetchRedis(
-    `/hdel/${encodeURIComponent(getSessionHashKey())}/${encodeURIComponent(sessionId)}`
-  );
+  const config = getRedisClientConfig();
+  if (!config) return;
+  await redisHDel(config, getSessionHashKey(), sessionId);
 }
 
 async function getRevokedSessionTimestampFromRedis(sessionId: string) {
-  const payload = await fetchRedis<RedisResult<string | null>>(
-    `/hget/${encodeURIComponent(getRevokedHashKey())}/${encodeURIComponent(sessionId)}`
-  );
+  const config = getRedisClientConfig();
+  if (!config) return 0;
 
-  if (!payload?.result || typeof payload.result !== "string") {
-    return 0;
-  }
+  const value = await redisHGet(config, getRevokedHashKey(), sessionId);
+  if (!value) return 0;
 
-  const parsed = Number(payload.result);
+  const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
 async function saveRevokedSessionToRedis(sessionId: string, timestamp: number) {
-  await fetchRedis(
-    `/hset/${encodeURIComponent(getRevokedHashKey())}/${encodeURIComponent(sessionId)}/${encodeURIComponent(String(timestamp))}`
-  );
+  const config = getRedisClientConfig();
+  if (!config) return;
+  await redisHSet(config, getRevokedHashKey(), sessionId, String(timestamp));
 }
 
 async function loadSessionsFromRedis(): Promise<SessionRecord[]> {
-  const payload = await fetchRedis<RedisResult<unknown>>(
-    `/hgetall/${encodeURIComponent(getSessionHashKey())}`
-  );
+  const config = getRedisClientConfig();
+  if (!config) return [];
 
-  const entries = parseHashResult(payload?.result);
+  const entries = await redisHGetAll(config, getSessionHashKey());
   const sessions: SessionRecord[] = [];
 
   for (const [, value] of entries) {
@@ -187,8 +134,10 @@ async function loadSessionsFromRedis(): Promise<SessionRecord[]> {
 }
 
 async function clearRedisSessions() {
-  await fetchRedis(`/del/${encodeURIComponent(getSessionHashKey())}`);
-  await fetchRedis(`/del/${encodeURIComponent(getRevokedHashKey())}`);
+  const config = getRedisClientConfig();
+  if (!config) return;
+  await redisDel(config, getSessionHashKey());
+  await redisDel(config, getRevokedHashKey());
 }
 
 export async function getSessionStateHealth() {

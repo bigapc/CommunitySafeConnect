@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
+import { buildRedisRestConfig, redisGet, redisSet, type RedisRestConfig } from "./redisRestClient";
 
 interface AlertStateFile {
   version: number;
@@ -20,22 +21,15 @@ function getAlertStateNamespace() {
   return process.env.ALERT_STATE_NAMESPACE || "csc_alert_state";
 }
 
-function getRedisConfig() {
-  const baseUrl = process.env.ALERT_STATE_REDIS_REST_URL || process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.ALERT_STATE_REDIS_REST_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-
-  if (!baseUrl || !token) {
-    return null;
-  }
-
-  return {
-    baseUrl: baseUrl.replace(/\/$/, ""),
-    token,
-  };
+function getAlertRedisConfig(): RedisRestConfig | null {
+  return buildRedisRestConfig(
+    ["ALERT_STATE_REDIS_REST_URL", "UPSTASH_REDIS_REST_URL"],
+    ["ALERT_STATE_REDIS_REST_TOKEN", "UPSTASH_REDIS_REST_TOKEN"]
+  );
 }
 
 export function isRedisAlertStateConfigured() {
-  return !!getRedisConfig();
+  return !!getAlertRedisConfig();
 }
 
 function getRedisKey(key: string) {
@@ -70,59 +64,30 @@ async function saveState(state: AlertStateFile) {
 }
 
 async function getAlertLastEmittedAtFromRedis(key: string) {
-  const config = getRedisConfig();
+  const config = getAlertRedisConfig();
 
   if (!config) {
     return 0;
   }
 
-  const redisKey = encodeURIComponent(getRedisKey(key));
+  const value = await redisGet(config, getRedisKey(key));
+  const parsed = Number(value || 0);
 
-  try {
-    const response = await fetch(`${config.baseUrl}/get/${redisKey}`, {
-      headers: {
-        Authorization: `Bearer ${config.token}`,
-      },
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      return 0;
-    }
-
-    const payload = (await response.json()) as { result?: string | null };
-    const parsed = Number(payload.result || 0);
-
-    if (!Number.isFinite(parsed) || parsed <= 0) {
-      return 0;
-    }
-
-    return Math.floor(parsed);
-  } catch {
+  if (!Number.isFinite(parsed) || parsed <= 0) {
     return 0;
   }
+
+  return Math.floor(parsed);
 }
 
 async function setAlertLastEmittedAtToRedis(key: string, timestamp: number) {
-  const config = getRedisConfig();
+  const config = getAlertRedisConfig();
 
   if (!config) {
     return;
   }
 
-  const redisKey = encodeURIComponent(getRedisKey(key));
-  const value = encodeURIComponent(String(timestamp));
-
-  try {
-    await fetch(`${config.baseUrl}/set/${redisKey}/${value}`, {
-      headers: {
-        Authorization: `Bearer ${config.token}`,
-      },
-      cache: "no-store",
-    });
-  } catch {
-    // Fall back silently. Detection should still work in-memory/file mode.
-  }
+  await redisSet(config, getRedisKey(key), String(timestamp));
 }
 
 export async function getAlertLastEmittedAt(key: string) {
