@@ -38,11 +38,21 @@ export default async function CommandCenterAuditPage({ searchParams }: CommandCe
           Status: <strong>{securityHealth.status.toUpperCase()}</strong>
         </p>
         <p style={{ margin: "0.3rem 0", color: "#cbd5e1" }}>
+          Overall severity: <strong>{securityHealth.overallSeverity.toUpperCase()}</strong>
+        </p>
+        <p style={{ margin: "0.3rem 0", color: "#cbd5e1" }}>
           Degradation reason: {securityHealth.primaryDegradationReason || "none"}
         </p>
         {securityHealth.degradationReasons.length > 1 && (
           <p style={{ margin: "0.3rem 0", color: "#94a3b8" }}>
             All reasons: {securityHealth.degradationReasons.join(", ")}
+          </p>
+        )}
+        {securityHealth.degradationReasonSeverities.length > 0 && (
+          <p style={{ margin: "0.3rem 0", color: "#94a3b8" }}>
+            Reason severities: {securityHealth.degradationReasonSeverities
+              .map((entry) => `${entry.reason}:${entry.severity}`)
+              .join(", ")}
           </p>
         )}
         <p style={{ margin: "0.3rem 0", color: "#cbd5e1" }}>

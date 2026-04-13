@@ -78,6 +78,7 @@ Security health endpoint:
 - The endpoint is admin-only and also reports live OIDC discovery/JWKS connectivity when OIDC is configured.
 - Optional: `OIDC_HEALTH_SLOW_THRESHOLD_MS` (default: `1500`) to flag OIDC latency risk in readiness output.
 - The response includes `degradationReasons` and `primaryDegradationReason` for machine-readable alert routing.
+- The response also includes `degradationReasonSeverities` and `overallSeverity` (`none` | `warning` | `critical`).
 
 ## Tamper-Evident Audit Integrity
 

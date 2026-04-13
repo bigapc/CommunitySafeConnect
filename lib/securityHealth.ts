@@ -36,6 +36,30 @@ type SecurityDegradationReason =
   | "oidc_discovery_slow"
   | "oidc_jwks_slow";
 
+type SecurityDegradationSeverity = "warning" | "critical";
+
+const SECURITY_REASON_SEVERITY: Record<SecurityDegradationReason, SecurityDegradationSeverity> = {
+  alert_state_redis_disconnected: "critical",
+  oidc_discovery_unreachable: "critical",
+  oidc_jwks_unreachable: "critical",
+  oidc_discovery_slow: "warning",
+  oidc_jwks_slow: "warning",
+};
+
+function getOverallSeverity(
+  reasonSeverities: Array<{ reason: SecurityDegradationReason; severity: SecurityDegradationSeverity }>
+) {
+  if (reasonSeverities.some((item) => item.severity === "critical")) {
+    return "critical" as const;
+  }
+
+  if (reasonSeverities.some((item) => item.severity === "warning")) {
+    return "warning" as const;
+  }
+
+  return "none" as const;
+}
+
 function getOidcSlowThresholdMs() {
   const parsed = Number(process.env.OIDC_HEALTH_SLOW_THRESHOLD_MS);
 
@@ -190,6 +214,11 @@ export async function getSecurityHealthSnapshot() {
   }
 
   const status = degradationReasons.length > 0 ? "degraded" : "ok";
+  const degradationReasonSeverities = degradationReasons.map((reason) => ({
+    reason,
+    severity: SECURITY_REASON_SEVERITY[reason],
+  }));
+  const overallSeverity = getOverallSeverity(degradationReasonSeverities);
 
   return {
     status,
@@ -219,7 +248,9 @@ export async function getSecurityHealthSnapshot() {
       },
     },
     degradationReasons,
+    degradationReasonSeverities,
     primaryDegradationReason: degradationReasons[0] || null,
+    overallSeverity,
     timestamp: new Date().toISOString(),
   };
 }
