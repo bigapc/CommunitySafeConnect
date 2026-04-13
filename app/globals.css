@@ -145,3 +145,94 @@ code {
     padding: 0.8rem;
   }
 }
+
+.control-room {
+  background: linear-gradient(180deg, #132b3f 0%, #102636 100%);
+  border-color: #35506a;
+  color: #deebf5;
+}
+
+.control-room h2,
+.control-room h3 {
+  color: #f4fbff;
+}
+
+.control-room p,
+.control-room small {
+  color: #aac2d6;
+}
+
+.control-room-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 1rem 0;
+}
+
+.control-room-nav a {
+  text-decoration: none;
+  color: #ddf5ff;
+  border: 1px solid #4f6c87;
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.9rem;
+}
+
+.control-search {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.control-search input {
+  min-width: 280px;
+  background: #0c1f2e;
+  border-color: #3f5b75;
+  color: #eef8ff;
+}
+
+.control-list {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.control-card {
+  border: 1px solid #3f5b75 !important;
+  border-radius: 12px !important;
+  background: #102232 !important;
+  color: #e2edf6;
+  margin: 0 !important;
+}
+
+.control-meta {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.8rem;
+  color: #9db6ca !important;
+}
+
+.status-pill {
+  display: inline-flex;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.status-pill.pending {
+  background: #62430d;
+  color: #ffd58d;
+}
+
+.status-pill.reviewed,
+.status-pill.clean {
+  background: #17422c;
+  color: #9de6bb;
+}
+
+.status-pill.flagged {
+  background: #59202a;
+  color: #ffb3bf;
+}
