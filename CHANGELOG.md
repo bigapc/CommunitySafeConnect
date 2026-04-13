@@ -15,3 +15,4 @@
   - `recommendedActions`
 - Added contract version marker: `schemaVersion` (`2026-04-13.1`).
 - Added JSON schema file at `docs/security-health.schema.json` for integration consumers.
+- Added schema endpoint at `GET /api/health/security/schema` and `schemaPath` field in health responses.

@@ -5,6 +5,7 @@
   "type": "object",
   "required": [
     "schemaVersion",
+    "schemaPath",
     "status",
     "checks",
     "degradationReasons",
@@ -20,6 +21,10 @@
     "schemaVersion": {
       "type": "string",
       "const": "2026-04-13.1"
+    },
+    "schemaPath": {
+      "type": "string",
+      "const": "/api/health/security/schema"
     },
     "status": {
       "type": "string",

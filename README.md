@@ -75,6 +75,7 @@ In non-mock mode, callback handling enforces strict ID token verification:
 Security health endpoint:
 
 - `GET /api/health/security` returns security readiness checks, including alert-state driver connectivity.
+- `GET /api/health/security/schema` returns the canonical JSON schema for readiness responses.
 - The endpoint is admin-only and also reports live OIDC discovery/JWKS connectivity when OIDC is configured.
 - The endpoint sets `Cache-Control: no-store` so readiness data is always fresh.
 - Optional: `OIDC_HEALTH_SLOW_THRESHOLD_MS` (default: `1500`) to flag OIDC latency risk in readiness output.
@@ -83,6 +84,7 @@ Security health endpoint:
 - The response includes `overallSeverityScore` (`0` none, `1` warning, `2` critical) for numeric alert thresholds.
 - The response includes `schemaVersion` and `recommendedActions` for stable parsing and operator remediation guidance.
 - Canonical JSON schema for this response: `docs/security-health.schema.json`.
+- Health responses include `schemaPath` so consumers can discover the active contract endpoint.
 
 ## Release Notes
 

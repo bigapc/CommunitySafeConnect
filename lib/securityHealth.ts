@@ -55,6 +55,7 @@ const SECURITY_REASON_ACTION: Record<SecurityDegradationReason, string> = {
 };
 
 const SECURITY_HEALTH_SCHEMA_VERSION = "2026-04-13.1";
+const SECURITY_HEALTH_SCHEMA_PATH = "/api/health/security/schema";
 
 function getOverallSeverity(
   reasonSeverities: Array<{ reason: SecurityDegradationReason; severity: SecurityDegradationSeverity }>
@@ -246,6 +247,7 @@ export async function getSecurityHealthSnapshot() {
 
   return {
     schemaVersion: SECURITY_HEALTH_SCHEMA_VERSION,
+    schemaPath: SECURITY_HEALTH_SCHEMA_PATH,
     status,
     checks: {
       alertState: {
