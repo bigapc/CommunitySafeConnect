@@ -79,6 +79,7 @@ Security health endpoint:
 - Optional: `OIDC_HEALTH_SLOW_THRESHOLD_MS` (default: `1500`) to flag OIDC latency risk in readiness output.
 - The response includes `degradationReasons` and `primaryDegradationReason` for machine-readable alert routing.
 - The response also includes `degradationReasonSeverities` and `overallSeverity` (`none` | `warning` | `critical`).
+- The response includes `overallSeverityScore` (`0` none, `1` warning, `2` critical) for numeric alert thresholds.
 
 ## Tamper-Evident Audit Integrity
 

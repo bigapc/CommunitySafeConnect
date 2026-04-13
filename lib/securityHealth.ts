@@ -60,6 +60,18 @@ function getOverallSeverity(
   return "none" as const;
 }
 
+function getOverallSeverityScore(overallSeverity: "none" | "warning" | "critical") {
+  if (overallSeverity === "critical") {
+    return 2;
+  }
+
+  if (overallSeverity === "warning") {
+    return 1;
+  }
+
+  return 0;
+}
+
 function getOidcSlowThresholdMs() {
   const parsed = Number(process.env.OIDC_HEALTH_SLOW_THRESHOLD_MS);
 
@@ -219,6 +231,7 @@ export async function getSecurityHealthSnapshot() {
     severity: SECURITY_REASON_SEVERITY[reason],
   }));
   const overallSeverity = getOverallSeverity(degradationReasonSeverities);
+  const overallSeverityScore = getOverallSeverityScore(overallSeverity);
 
   return {
     status,
@@ -251,6 +264,7 @@ export async function getSecurityHealthSnapshot() {
     degradationReasonSeverities,
     primaryDegradationReason: degradationReasons[0] || null,
     overallSeverity,
+    overallSeverityScore,
     timestamp: new Date().toISOString(),
   };
 }

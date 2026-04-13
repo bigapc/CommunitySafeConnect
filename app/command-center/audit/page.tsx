@@ -41,6 +41,9 @@ export default async function CommandCenterAuditPage({ searchParams }: CommandCe
           Overall severity: <strong>{securityHealth.overallSeverity.toUpperCase()}</strong>
         </p>
         <p style={{ margin: "0.3rem 0", color: "#cbd5e1" }}>
+          Overall severity score: <strong>{securityHealth.overallSeverityScore}</strong>
+        </p>
+        <p style={{ margin: "0.3rem 0", color: "#cbd5e1" }}>
           Degradation reason: {securityHealth.primaryDegradationReason || "none"}
         </p>
         {securityHealth.degradationReasons.length > 1 && (
