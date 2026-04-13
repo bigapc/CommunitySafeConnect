@@ -9,20 +9,30 @@ import {
   getSessionCookieOptions,
 } from "@/lib/access";
 import { createAuditLog } from "@/lib/localDataStore";
-
-function getClientIp(request: NextRequest) {
-  const forwardedFor = request.headers.get("x-forwarded-for");
-
-  if (forwardedFor) {
-    return forwardedFor.split(",")[0]?.trim() || null;
-  }
-
-  const realIp = request.headers.get("x-real-ip");
-  return realIp?.trim() || null;
-}
+import {
+  checkSecurityRateLimit,
+  clearSecurityFailures,
+  getClientIp,
+  registerSecurityFailure,
+} from "@/lib/securityRateLimit";
 
 export async function POST(request: NextRequest) {
   try {
+    const clientIp = getClientIp(request);
+    const precheck = checkSecurityRateLimit("access_login", clientIp);
+
+    if (!precheck.allowed) {
+      return NextResponse.json(
+        { error: "Too many login attempts. Please try again later." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(precheck.retryAfterSeconds),
+          },
+        }
+      );
+    }
+
     const body = (await request.json()) as { code?: string; scope?: AccessScope };
     const code = body.code?.trim();
     const scope: AccessScope = body.scope === "admin" ? "admin" : "organization";
@@ -32,8 +42,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (code !== getExpectedAccessCode(scope)) {
+      const failure = registerSecurityFailure("access_login", clientIp);
+
       return NextResponse.json({ error: "Invalid access code." }, { status: 401 });
     }
+
+    clearSecurityFailures("access_login", clientIp);
 
     const response = NextResponse.json({ ok: true });
     const cookieOptions = getSessionCookieOptions();

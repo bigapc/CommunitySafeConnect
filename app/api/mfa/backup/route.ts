@@ -3,6 +3,12 @@ import { verifyBackupCode } from "@/lib/mfa";
 import { decryptData } from "@/lib/encryption";
 import { hasAdminAccess, MFA_VERIFIED_COOKIE_NAME, getMFASessionCookieOptions } from "@/lib/access";
 import { getUserByUsername } from "@/lib/localDataStore";
+import {
+  checkSecurityRateLimit,
+  clearSecurityFailures,
+  getClientIp,
+  registerSecurityFailure,
+} from "@/lib/securityRateLimit";
 
 export async function POST(request: NextRequest) {
   if (!(await hasAdminAccess())) {
@@ -10,6 +16,21 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const clientIp = getClientIp(request);
+    const precheck = checkSecurityRateLimit("mfa_backup", clientIp);
+
+    if (!precheck.allowed) {
+      return NextResponse.json(
+        { error: "Too many backup-code attempts. Please try again later." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(precheck.retryAfterSeconds),
+          },
+        }
+      );
+    }
+
     const body = (await request.json()) as {
       username?: string;
       backup_code?: string;
@@ -48,11 +69,14 @@ export async function POST(request: NextRequest) {
     const isValid = verifyBackupCode(backupCode, backupCodes);
 
     if (!isValid) {
+      registerSecurityFailure("mfa_backup", clientIp);
       return NextResponse.json(
         { error: "Invalid backup code" },
         { status: 401 }
       );
     }
+
+    clearSecurityFailures("mfa_backup", clientIp);
 
     const response = NextResponse.json({
       ok: true,

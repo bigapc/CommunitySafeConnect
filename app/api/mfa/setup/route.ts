@@ -1,11 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateMFASecret } from "@/lib/mfa";
 import { hasAdminAccess } from "@/lib/access";
+import { checkSecurityRateLimit, getClientIp } from "@/lib/securityRateLimit";
 
 export async function POST(request: NextRequest) {
   // Only admin users can initiate MFA setup
   if (!(await hasAdminAccess())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const clientIp = getClientIp(request);
+  const precheck = checkSecurityRateLimit("mfa_setup", clientIp);
+
+  if (!precheck.allowed) {
+    return NextResponse.json(
+      { error: "Too many MFA setup attempts. Please try again later." },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(precheck.retryAfterSeconds),
+        },
+      }
+    );
   }
 
   try {

@@ -3,6 +3,12 @@ import { verifyTOTPToken, verifyBackupCode } from "@/lib/mfa";
 import { encryptData, decryptData } from "@/lib/encryption";
 import { hasAdminAccess, MFA_VERIFIED_COOKIE_NAME, getMFASessionCookieOptions } from "@/lib/access";
 import { getUserByUsername, updateUserMFA } from "@/lib/localDataStore";
+import {
+  checkSecurityRateLimit,
+  clearSecurityFailures,
+  getClientIp,
+  registerSecurityFailure,
+} from "@/lib/securityRateLimit";
 
 export async function POST(request: NextRequest) {
   if (!(await hasAdminAccess())) {
@@ -10,6 +16,21 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const clientIp = getClientIp(request);
+    const precheck = checkSecurityRateLimit("mfa_verify", clientIp);
+
+    if (!precheck.allowed) {
+      return NextResponse.json(
+        { error: "Too many MFA attempts. Please try again later." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(precheck.retryAfterSeconds),
+          },
+        }
+      );
+    }
+
     const body = (await request.json()) as {
       username?: string;
       token?: string;
@@ -33,11 +54,14 @@ export async function POST(request: NextRequest) {
     const isValid = verifyTOTPToken(token, secret);
 
     if (!isValid) {
+      registerSecurityFailure("mfa_verify", clientIp);
       return NextResponse.json(
         { error: "Invalid MFA token" },
         { status: 401 }
       );
     }
+
+    clearSecurityFailures("mfa_verify", clientIp);
 
     // Get user and update MFA settings
     const user = getUserByUsername(username);
