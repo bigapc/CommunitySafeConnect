@@ -17,11 +17,32 @@ interface OidcConnectivity {
   discoveryConnected: boolean;
   jwksConnected: boolean;
   discoveredJwksUri: string | null;
+  discoveryLatencyMs: number | null;
+  jwksLatencyMs: number | null;
+  discoverySlow: boolean;
+  jwksSlow: boolean;
 }
 
-async function fetchJsonWithTimeout(url: string, timeoutMs = 4000) {
+interface ProbeResult {
+  payload: unknown;
+  latencyMs: number | null;
+  timedOut: boolean;
+}
+
+function getOidcSlowThresholdMs() {
+  const parsed = Number(process.env.OIDC_HEALTH_SLOW_THRESHOLD_MS);
+
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return 1500;
+  }
+
+  return Math.floor(parsed);
+}
+
+async function fetchJsonWithTimeout(url: string, timeoutMs = 4000): Promise<ProbeResult> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  const startTime = Date.now();
 
   try {
     const response = await fetch(url, {
@@ -32,12 +53,24 @@ async function fetchJsonWithTimeout(url: string, timeoutMs = 4000) {
     });
 
     if (!response.ok) {
-      return null;
+      return {
+        payload: null,
+        latencyMs: Date.now() - startTime,
+        timedOut: false,
+      };
     }
 
-    return await response.json();
-  } catch {
-    return null;
+    return {
+      payload: await response.json(),
+      latencyMs: Date.now() - startTime,
+      timedOut: false,
+    };
+  } catch (error) {
+    return {
+      payload: null,
+      latencyMs: Date.now() - startTime,
+      timedOut: error instanceof Error && error.name === "AbortError",
+    };
   } finally {
     clearTimeout(timeout);
   }
@@ -45,24 +78,38 @@ async function fetchJsonWithTimeout(url: string, timeoutMs = 4000) {
 
 async function getOidcConnectivity(): Promise<OidcConnectivity> {
   const config = getSsoConfig();
+  const slowThresholdMs = getOidcSlowThresholdMs();
 
   if (!hasOidcConfigured() || !config.issuerUrl) {
     return {
       discoveryConnected: false,
       jwksConnected: false,
       discoveredJwksUri: null,
+      discoveryLatencyMs: null,
+      jwksLatencyMs: null,
+      discoverySlow: false,
+      jwksSlow: false,
     };
   }
 
   const issuer = config.issuerUrl.replace(/\/$/, "");
   const discoveryUrl = `${issuer}/.well-known/openid-configuration`;
-  const discoveryPayload = await fetchJsonWithTimeout(discoveryUrl);
+  const discoveryProbe = await fetchJsonWithTimeout(discoveryUrl);
+  const discoveryPayload = discoveryProbe.payload;
+  const discoverySlow =
+    !discoveryProbe.timedOut &&
+    typeof discoveryProbe.latencyMs === "number" &&
+    discoveryProbe.latencyMs > slowThresholdMs;
 
   if (!discoveryPayload || typeof discoveryPayload !== "object") {
     return {
       discoveryConnected: false,
       jwksConnected: false,
       discoveredJwksUri: null,
+      discoveryLatencyMs: discoveryProbe.latencyMs,
+      jwksLatencyMs: null,
+      discoverySlow,
+      jwksSlow: false,
     };
   }
 
@@ -78,19 +125,32 @@ async function getOidcConnectivity(): Promise<OidcConnectivity> {
       discoveryConnected: true,
       jwksConnected: false,
       discoveredJwksUri,
+      discoveryLatencyMs: discoveryProbe.latencyMs,
+      jwksLatencyMs: null,
+      discoverySlow,
+      jwksSlow: false,
     };
   }
 
-  const jwksPayload = await fetchJsonWithTimeout(jwksUrl);
+  const jwksProbe = await fetchJsonWithTimeout(jwksUrl);
+  const jwksPayload = jwksProbe.payload;
   const jwksConnected =
     !!jwksPayload &&
     typeof jwksPayload === "object" &&
     Array.isArray((jwksPayload as { keys?: unknown }).keys);
+  const jwksSlow =
+    !jwksProbe.timedOut &&
+    typeof jwksProbe.latencyMs === "number" &&
+    jwksProbe.latencyMs > slowThresholdMs;
 
   return {
     discoveryConnected: true,
     jwksConnected,
     discoveredJwksUri,
+    discoveryLatencyMs: discoveryProbe.latencyMs,
+    jwksLatencyMs: jwksProbe.latencyMs,
+    discoverySlow,
+    jwksSlow,
   };
 }
 
@@ -103,8 +163,10 @@ export async function getSecurityHealthSnapshot() {
   const hasOidcIssue =
     oidcConfigured &&
     (!oidcConnectivity.discoveryConnected || !oidcConnectivity.jwksConnected);
+  const hasOidcLatencyRisk =
+    oidcConfigured && (oidcConnectivity.discoverySlow || oidcConnectivity.jwksSlow);
 
-  const status = hasAlertStateIssue || hasOidcIssue ? "degraded" : "ok";
+  const status = hasAlertStateIssue || hasOidcIssue || hasOidcLatencyRisk ? "degraded" : "ok";
 
   return {
     status,
@@ -120,6 +182,11 @@ export async function getSecurityHealthSnapshot() {
         discoveryConnected: oidcConnectivity.discoveryConnected,
         jwksConnected: oidcConnectivity.jwksConnected,
         discoveredJwksUri: oidcConnectivity.discoveredJwksUri,
+        discoveryLatencyMs: oidcConnectivity.discoveryLatencyMs,
+        jwksLatencyMs: oidcConnectivity.jwksLatencyMs,
+        discoverySlow: oidcConnectivity.discoverySlow,
+        jwksSlow: oidcConnectivity.jwksSlow,
+        slowThresholdMs: getOidcSlowThresholdMs(),
       },
       securityTelemetry: {
         requestIdsEnabled: true,

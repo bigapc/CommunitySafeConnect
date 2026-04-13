@@ -45,6 +45,14 @@ export default async function CommandCenterAuditPage({ searchParams }: CommandCe
           OIDC configured: {String(securityHealth.checks.oidc.configured)} discoveryConnected={String(securityHealth.checks.oidc.discoveryConnected)}
           {" "}jwksConnected={String(securityHealth.checks.oidc.jwksConnected)}
         </p>
+        <p style={{ margin: "0.3rem 0", color: "#cbd5e1" }}>
+          OIDC latency: discoveryMs={String(securityHealth.checks.oidc.discoveryLatencyMs)}
+          {" "}jwksMs={String(securityHealth.checks.oidc.jwksLatencyMs)} thresholdMs={securityHealth.checks.oidc.slowThresholdMs}
+        </p>
+        <p style={{ margin: "0.3rem 0", color: "#cbd5e1" }}>
+          OIDC slow flags: discoverySlow={String(securityHealth.checks.oidc.discoverySlow)}
+          {" "}jwksSlow={String(securityHealth.checks.oidc.jwksSlow)}
+        </p>
         {securityHealth.checks.oidc.discoveredJwksUri && (
           <p style={{ margin: "0.3rem 0", color: "#94a3b8" }}>
             discoveredJwksUri={securityHealth.checks.oidc.discoveredJwksUri}

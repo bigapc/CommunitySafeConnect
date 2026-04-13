@@ -76,6 +76,7 @@ Security health endpoint:
 
 - `GET /api/health/security` returns security readiness checks, including alert-state driver connectivity.
 - The endpoint is admin-only and also reports live OIDC discovery/JWKS connectivity when OIDC is configured.
+- Optional: `OIDC_HEALTH_SLOW_THRESHOLD_MS` (default: `1500`) to flag OIDC latency risk in readiness output.
 
 ## Tamper-Evident Audit Integrity
 
