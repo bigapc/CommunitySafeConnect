@@ -30,6 +30,20 @@ export interface AccessAuditLogRow {
   created_at: string;
 }
 
+export type UserRole = "user" | "operator" | "admin";
+
+export interface UserRow {
+  id: string;
+  username: string;
+  email: string;
+  role: UserRole;
+  mfa_enabled: boolean;
+  mfa_secret_encrypted: string | null;
+  backup_codes_encrypted: string | null;
+  last_login: string | null;
+  created_at: string;
+}
+
 function createId(prefix: string) {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return `${prefix}_${crypto.randomUUID()}`;
@@ -181,4 +195,111 @@ export function createAuditLog(entry: Omit<AccessAuditLogRow, "id" | "created_at
 
   auditLogs.unshift(log);
   return log;
+}
+
+// ============ User Management & RBAC ============
+
+const users: UserRow[] = [
+  {
+    id: createId("usr"),
+    username: "community-admin",
+    email: "admin@communitysafeconnect.local",
+    role: "admin",
+    mfa_enabled: false,
+    mfa_secret_encrypted: null,
+    backup_codes_encrypted: null,
+    last_login: null,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: createId("usr"),
+    username: "command-center",
+    email: "operator@communitysafeconnect.local",
+    role: "operator",
+    mfa_enabled: false,
+    mfa_secret_encrypted: null,
+    backup_codes_encrypted: null,
+    last_login: null,
+    created_at: new Date().toISOString(),
+  },
+];
+
+export function getUserByUsername(username: string): UserRow | undefined {
+  return users.find((u) => u.username === username);
+}
+
+export function createUser(username: string, email: string, role: UserRole): UserRow {
+  const user: UserRow = {
+    id: createId("usr"),
+    username,
+    email,
+    role,
+    mfa_enabled: false,
+    mfa_secret_encrypted: null,
+    backup_codes_encrypted: null,
+    last_login: null,
+    created_at: new Date().toISOString(),
+  };
+
+  users.push(user);
+  return user;
+}
+
+export function updateUserMFA(
+  username: string,
+  mfaSecret: string,
+  backupCodes: string[],
+  encryptFn: (data: string) => string
+): boolean {
+  const user = getUserByUsername(username);
+
+  if (!user) {
+    return false;
+  }
+
+  user.mfa_secret_encrypted = encryptFn(mfaSecret);
+  user.backup_codes_encrypted = encryptFn(JSON.stringify(backupCodes));
+  user.mfa_enabled = true;
+
+  return true;
+}
+
+export function disableUserMFA(username: string): boolean {
+  const user = getUserByUsername(username);
+
+  if (!user) {
+    return false;
+  }
+
+  user.mfa_enabled = false;
+  user.mfa_secret_encrypted = null;
+  user.backup_codes_encrypted = null;
+
+  return true;
+}
+
+export function updateUserLastLogin(username: string): boolean {
+  const user = getUserByUsername(username);
+
+  if (!user) {
+    return false;
+  }
+
+  user.last_login = new Date().toISOString();
+  return true;
+}
+
+export function updateUserRole(username: string, newRole: UserRole): boolean {
+  const user = getUserByUsername(username);
+
+  if (!user) {
+    return false;
+  }
+
+  user.role = newRole;
+  return true;
+}
+
+export function listUsers(): UserRow[] {
+  return [...users];
 }

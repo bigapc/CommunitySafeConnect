@@ -4,8 +4,10 @@ import { redirect } from "next/navigation";
 
 export const ORGANIZATION_COOKIE_NAME = "communitysafeconnect_org";
 export const ADMIN_COOKIE_NAME = "communitysafeconnect_admin";
+export const MFA_VERIFIED_COOKIE_NAME = "communitysafeconnect_mfa_verified";
 
 const DEFAULT_SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
+const DEFAULT_MFA_SESSION_MAX_AGE_SECONDS = 60 * 30; // 30 minutes
 const DEFAULT_POLICY_RETENTION_SECONDS = 60 * 60 * 24;
 const DEV_DEFAULT_SESSION_SECRET = "communitysafeconnect-dev-secret";
 const DEV_DEFAULT_ORGANIZATION_ACCESS_CODE = "community-org-demo";
@@ -122,5 +124,41 @@ export async function requireOrganizationAccess(pathname: string) {
 export async function requireAdminAccess(pathname: string) {
   if (!(await hasAdminAccess())) {
     redirect(`/access?next=${encodeURIComponent(pathname)}`);
+  }
+}
+
+// ============ MFA Support ============
+
+export function createMFASessionCookieValue(username: string) {
+  return createHmac("sha256", getRequiredEnv("ACCESS_SESSION_SECRET"))
+    .update(`mfa_${username}`)
+    .digest("hex");
+}
+
+export function getMFASessionCookieOptions(maxAge = DEFAULT_MFA_SESSION_MAX_AGE_SECONDS) {
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge,
+  };
+}
+
+export async function hasMFAVerified() {
+  const cookieStore = await cookies();
+  const mfaCookie = cookieStore.get(MFA_VERIFIED_COOKIE_NAME)?.value;
+
+  if (!mfaCookie) {
+    return false;
+  }
+
+  // MFA verification is a transient session, validate it hasn't expired
+  return !!mfaCookie;
+}
+
+export async function requireMFAVerified(pathname: string) {
+  if (!(await hasMFAVerified())) {
+    redirect(`/mfa/verify?next=${encodeURIComponent(pathname)}`);
   }
 }

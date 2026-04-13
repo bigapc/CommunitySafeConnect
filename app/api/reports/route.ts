@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hasOrganizationAccess } from "@/lib/access";
 import { createReport } from "@/lib/localDataStore";
+import { checkPermission } from "@/lib/authorization";
 
 export async function POST(request: NextRequest) {
   if (!(await hasOrganizationAccess())) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
+  // Check granular permission
+  const { authorized, error } = await checkPermission(request, "reports:create");
+
+  if (!authorized) {
+    return NextResponse.json({ error: error || "Permission denied." }, { status: 403 });
   }
 
   try {
