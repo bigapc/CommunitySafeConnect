@@ -13,6 +13,8 @@ interface SecurityAlert {
   description: string;
 }
 
+const alertLastEmittedAt = new Map<string, number>();
+
 function readPositiveNumber(value: string | undefined, fallbackValue: number) {
   const parsed = Number(value);
 
@@ -49,7 +51,35 @@ function getAlertConfig() {
       process.env.SEC_ALERT_CROSS_TENANT_ORG_THRESHOLD,
       3
     ),
+    suppressionMinutes: readPositiveNumber(
+      process.env.SEC_ALERT_SUPPRESSION_MINUTES,
+      10
+    ),
   };
+}
+
+function applyAlertSuppression(
+  organizationId: string,
+  alerts: SecurityAlert[],
+  suppressionMinutes: number
+) {
+  const now = Date.now();
+  const suppressionMs = suppressionMinutes * 60 * 1000;
+  const emitted: SecurityAlert[] = [];
+
+  for (const alert of alerts) {
+    const key = `${organizationId}:${alert.id}`;
+    const lastEmitted = alertLastEmittedAt.get(key) || 0;
+
+    if (now - lastEmitted < suppressionMs) {
+      continue;
+    }
+
+    alertLastEmittedAt.set(key, now);
+    emitted.push(alert);
+  }
+
+  return emitted;
 }
 
 function detectSecurityAlerts(organizationId: string): SecurityAlert[] {
@@ -133,7 +163,11 @@ function detectSecurityAlerts(organizationId: string): SecurityAlert[] {
     });
   }
 
-  return alerts;
+  return applyAlertSuppression(
+    organizationId,
+    alerts,
+    config.suppressionMinutes
+  );
 }
 
 function includesQuery(value: string | null | undefined, query: string) {

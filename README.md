@@ -97,3 +97,4 @@ Optional environment variables to tune alert sensitivity:
 - `SEC_ALERT_FAILED_MFA_THRESHOLD` (default: `5`)
 - `SEC_ALERT_CROSS_TENANT_WINDOW_MINUTES` (default: `30`)
 - `SEC_ALERT_CROSS_TENANT_ORG_THRESHOLD` (default: `3`)
+- `SEC_ALERT_SUPPRESSION_MINUTES` (default: `10`) to deduplicate repeat alerts
