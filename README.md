@@ -55,3 +55,10 @@ In non-mock mode, callback handling enforces strict ID token verification:
 - `iss` and `aud` validation
 - `exp` validation (via JWT verification)
 - `nonce` binding between start and callback
+
+## CSRF Protection
+
+- Global same-origin CSRF checks are enforced for mutating API methods: `POST`, `PUT`, `PATCH`, `DELETE`.
+- Requests to `/api/*` are rejected with `403` when `Origin` does not match the app origin.
+- Requests marked as `sec-fetch-site: cross-site` are rejected when `Origin` is absent.
+- This protection is applied centrally via `proxy.ts`.

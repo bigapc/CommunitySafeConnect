@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
 function buildContentSecurityPolicy() {
   const isDev = process.env.NODE_ENV !== "production";
   const scriptSrc = isDev ? "script-src 'self' 'unsafe-eval'" : "script-src 'self'";
@@ -23,6 +25,31 @@ function buildContentSecurityPolicy() {
 }
 
 export function proxy(request: NextRequest) {
+  const isApiRoute = request.nextUrl.pathname.startsWith("/api");
+  const isMutating = MUTATING_METHODS.has(request.method.toUpperCase());
+
+  // CSRF protection: for browser-based state-changing API requests,
+  // require Origin to match the current app origin.
+  if (isApiRoute && isMutating) {
+    const origin = request.headers.get("origin");
+    const fetchSite = request.headers.get("sec-fetch-site");
+    const expectedOrigin = request.nextUrl.origin;
+
+    if (origin && origin !== expectedOrigin) {
+      return NextResponse.json(
+        { error: "CSRF check failed (origin mismatch)." },
+        { status: 403 }
+      );
+    }
+
+    if (!origin && fetchSite === "cross-site") {
+      return NextResponse.json(
+        { error: "CSRF check failed (cross-site request blocked)." },
+        { status: 403 }
+      );
+    }
+  }
+
   const response = NextResponse.next();
 
   response.headers.set("X-Content-Type-Options", "nosniff");
@@ -36,7 +63,7 @@ export function proxy(request: NextRequest) {
   }
 
   // Apply CSP to all non-API requests.
-  if (!request.nextUrl.pathname.startsWith("/api")) {
+  if (!isApiRoute) {
     response.headers.set("Content-Security-Policy", buildContentSecurityPolicy());
   }
 
