@@ -11,7 +11,7 @@ const DEFAULT_ALERT_STATE_PATH = "/workspaces/codespaces-blank/CommunitySafeConn
 
 type AlertStateDriver = "file" | "redis";
 
-function getAlertStateDriver(): AlertStateDriver {
+export function getAlertStateDriver(): AlertStateDriver {
   const driver = (process.env.ALERT_STATE_DRIVER || "file").toLowerCase();
   return driver === "redis" ? "redis" : "file";
 }
@@ -32,6 +32,10 @@ function getRedisConfig() {
     baseUrl: baseUrl.replace(/\/$/, ""),
     token,
   };
+}
+
+export function isRedisAlertStateConfigured() {
+  return !!getRedisConfig();
 }
 
 function getRedisKey(key: string) {
@@ -140,4 +144,44 @@ export async function setAlertLastEmittedAt(key: string, timestamp: number) {
   state.entries[key] = timestamp;
   state.updatedAt = new Date().toISOString();
   await saveState(state);
+}
+
+export async function getAlertStateHealth() {
+  const driver = getAlertStateDriver();
+
+  if (driver === "file") {
+    return {
+      driver,
+      configured: true,
+      connected: true,
+    };
+  }
+
+  const configured = isRedisAlertStateConfigured();
+
+  if (!configured) {
+    return {
+      driver,
+      configured,
+      connected: false,
+    };
+  }
+
+  try {
+    const probeKey = `health_probe_${Date.now()}`;
+    await setAlertLastEmittedAtToRedis(probeKey, Date.now());
+    const value = await getAlertLastEmittedAtFromRedis(probeKey);
+
+    return {
+      driver,
+      configured,
+      connected: value > 0,
+    };
+  } catch {
+    return {
+      driver,
+      configured,
+      connected: false,
+    };
+  }
 }

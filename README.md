@@ -72,6 +72,10 @@ In non-mock mode, callback handling enforces strict ID token verification:
 	- OIDC callback success/failure paths
 - Logs include timestamp, request ID, method, path, source IP, user-agent, outcome, and reason.
 
+Security health endpoint:
+
+- `GET /api/health/security` returns security readiness checks, including alert-state driver connectivity.
+
 ## Tamper-Evident Audit Integrity
 
 - Audit events are chained per organization with:
