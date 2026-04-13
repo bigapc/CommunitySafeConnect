@@ -87,6 +87,26 @@ Security health endpoint:
 - Canonical JSON schema for this response: `docs/security-health.schema.json`.
 - Health responses include `schemaPath` so consumers can discover the active contract endpoint.
 
+Security configuration audit endpoint:
+
+- `GET /api/security/config` returns real-time snapshot of which security features are enabled/configured.
+- `GET /api/security/config/schema` returns the canonical JSON schema for config responses.
+- The endpoint is admin-only and useful for compliance verification and operational awareness.
+- The endpoint sets `Cache-Control: no-store` so config changes are immediately visible.
+- The endpoint also sets `X-Security-Config-Version` and a `Link rel=describedby` header for contract discovery.
+- The response includes a `features` array listing 8 core security features with their enabled status:
+  - `mfa_enabled`: TOTP-based multi-factor authentication
+  - `oidc_enabled`: OIDC identity provider integration
+  - `audit_logging_enabled`: Structured security event logging
+  - `audit_chain_integrity`: Tamper-evident audit log chains (HMAC-SHA256)
+  - `anomaly_detection_enabled`: Rule-based security anomaly detection
+  - `alert_suppression_enabled`: Deduplication and alert suppression
+  - `rate_limiting_enabled`: Per-tenant request rate limiting
+  - `session_secure_flags`: Secure cookie flags (httpOnly, secure, sameSite=Strict)
+- The response includes `alertStateDriver` (`file` or `redis_rest`) showing which backend persists alert state.
+- The response includes `oidcConfigured`, `rbacEnabled`, and `tenantIsolationEnabled` for high-level capability discovery.
+- Canonical JSON schema for this response: `docs/security-config.schema.json`.
+
 ## Release Notes
 
 - See `CHANGELOG.md` for security readiness contract updates and version history.
