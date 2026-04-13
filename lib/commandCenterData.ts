@@ -13,35 +13,84 @@ interface SecurityAlert {
   description: string;
 }
 
+function readPositiveNumber(value: string | undefined, fallbackValue: number) {
+  const parsed = Number(value);
+
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return fallbackValue;
+  }
+
+  return Math.floor(parsed);
+}
+
+function getAlertConfig() {
+  return {
+    failedLoginWindowMinutes: readPositiveNumber(
+      process.env.SEC_ALERT_FAILED_LOGIN_WINDOW_MINUTES,
+      15
+    ),
+    failedLoginThreshold: readPositiveNumber(
+      process.env.SEC_ALERT_FAILED_LOGIN_THRESHOLD,
+      5
+    ),
+    failedMfaWindowMinutes: readPositiveNumber(
+      process.env.SEC_ALERT_FAILED_MFA_WINDOW_MINUTES,
+      15
+    ),
+    failedMfaThreshold: readPositiveNumber(
+      process.env.SEC_ALERT_FAILED_MFA_THRESHOLD,
+      5
+    ),
+    crossTenantWindowMinutes: readPositiveNumber(
+      process.env.SEC_ALERT_CROSS_TENANT_WINDOW_MINUTES,
+      30
+    ),
+    crossTenantOrgThreshold: readPositiveNumber(
+      process.env.SEC_ALERT_CROSS_TENANT_ORG_THRESHOLD,
+      3
+    ),
+  };
+}
+
 function detectSecurityAlerts(organizationId: string): SecurityAlert[] {
+  const config = getAlertConfig();
   const now = Date.now();
   const allRecent = listSecurityEvents({ limit: 500 });
   const orgRecent = allRecent.filter((event) => event.organization_id === organizationId);
 
-  const last15m = orgRecent.filter(
-    (event) => now - new Date(event.created_at).getTime() <= 15 * 60 * 1000
+  const failedLoginWindowEvents = orgRecent.filter(
+    (event) =>
+      now - new Date(event.created_at).getTime() <=
+      config.failedLoginWindowMinutes * 60 * 1000
   );
 
-  const failedLogins = last15m.filter(
+  const failedMfaWindowEvents = orgRecent.filter(
+    (event) =>
+      now - new Date(event.created_at).getTime() <=
+      config.failedMfaWindowMinutes * 60 * 1000
+  );
+
+  const failedLogins = failedLoginWindowEvents.filter(
     (event) => event.event === "auth.login" && event.outcome === "failure"
   );
 
-  const failedMfa = last15m.filter(
+  const failedMfa = failedMfaWindowEvents.filter(
     (event) =>
       (event.event === "mfa.verify" || event.event === "mfa.backup") &&
       event.outcome === "failure"
   );
 
-  const successfulLogins30m = allRecent.filter(
+  const successfulLoginsCrossTenantWindow = allRecent.filter(
     (event) =>
       event.event === "auth.login" &&
       event.outcome === "success" &&
-      now - new Date(event.created_at).getTime() <= 30 * 60 * 1000
+      now - new Date(event.created_at).getTime() <=
+        config.crossTenantWindowMinutes * 60 * 1000
   );
 
   const ipToOrgs = new Map<string, Set<string>>();
 
-  for (const event of successfulLogins30m) {
+  for (const event of successfulLoginsCrossTenantWindow) {
     if (!event.ip_address || !event.organization_id) {
       continue;
     }
@@ -51,25 +100,27 @@ function detectSecurityAlerts(organizationId: string): SecurityAlert[] {
     ipToOrgs.set(event.ip_address, orgs);
   }
 
-  const suspiciousIpCount = [...ipToOrgs.values()].filter((orgs) => orgs.size >= 3).length;
+  const suspiciousIpCount = [...ipToOrgs.values()].filter(
+    (orgs) => orgs.size >= config.crossTenantOrgThreshold
+  ).length;
 
   const alerts: SecurityAlert[] = [];
 
-  if (failedLogins.length >= 5) {
+  if (failedLogins.length >= config.failedLoginThreshold) {
     alerts.push({
       id: "failed-logins-spike",
       severity: "high",
       title: "Failed login spike detected",
-      description: `${failedLogins.length} failed login attempts in the last 15 minutes.`,
+      description: `${failedLogins.length} failed login attempts in the last ${config.failedLoginWindowMinutes} minutes.`,
     });
   }
 
-  if (failedMfa.length >= 5) {
+  if (failedMfa.length >= config.failedMfaThreshold) {
     alerts.push({
       id: "failed-mfa-spike",
       severity: "high",
       title: "MFA abuse pattern detected",
-      description: `${failedMfa.length} failed MFA attempts in the last 15 minutes.`,
+      description: `${failedMfa.length} failed MFA attempts in the last ${config.failedMfaWindowMinutes} minutes.`,
     });
   }
 
@@ -78,7 +129,7 @@ function detectSecurityAlerts(organizationId: string): SecurityAlert[] {
       id: "cross-tenant-ip-pattern",
       severity: "medium",
       title: "Suspicious cross-tenant login pattern",
-      description: `${suspiciousIpCount} IP address(es) logged into 3+ tenants within 30 minutes.`,
+      description: `${suspiciousIpCount} IP address(es) logged into ${config.crossTenantOrgThreshold}+ tenants within ${config.crossTenantWindowMinutes} minutes.`,
     });
   }
 

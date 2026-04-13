@@ -88,3 +88,12 @@ In non-mock mode, callback handling enforces strict ID token verification:
 	- Failed login spike (15 min window)
 	- Failed MFA spike (15 min window)
 	- Suspicious cross-tenant login pattern (same IP across 3+ tenants within 30 min)
+
+Optional environment variables to tune alert sensitivity:
+
+- `SEC_ALERT_FAILED_LOGIN_WINDOW_MINUTES` (default: `15`)
+- `SEC_ALERT_FAILED_LOGIN_THRESHOLD` (default: `5`)
+- `SEC_ALERT_FAILED_MFA_WINDOW_MINUTES` (default: `15`)
+- `SEC_ALERT_FAILED_MFA_THRESHOLD` (default: `5`)
+- `SEC_ALERT_CROSS_TENANT_WINDOW_MINUTES` (default: `30`)
+- `SEC_ALERT_CROSS_TENANT_ORG_THRESHOLD` (default: `3`)
