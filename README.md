@@ -82,6 +82,11 @@ Security health endpoint:
 - The response also includes `degradationReasonSeverities` and `overallSeverity` (`none` | `warning` | `critical`).
 - The response includes `overallSeverityScore` (`0` none, `1` warning, `2` critical) for numeric alert thresholds.
 - The response includes `schemaVersion` and `recommendedActions` for stable parsing and operator remediation guidance.
+- Canonical JSON schema for this response: `docs/security-health.schema.json`.
+
+## Release Notes
+
+- See `CHANGELOG.md` for security readiness contract updates and version history.
 
 ## Tamper-Evident Audit Integrity
 

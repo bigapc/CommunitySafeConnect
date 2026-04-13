@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://communitysafeconnect.local/schemas/security-health.schema.json",
+  "title": "CommunitySafeConnect Security Health Response",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "status",
+    "checks",
+    "degradationReasons",
+    "degradationReasonSeverities",
+    "primaryDegradationReason",
+    "overallSeverity",
+    "overallSeverityScore",
+    "recommendedActions",
+    "timestamp"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "2026-04-13.1"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["ok", "degraded"]
+    },
+    "checks": {
+      "type": "object",
+      "required": ["alertState", "oidc", "securityTelemetry"],
+      "additionalProperties": false,
+      "properties": {
+        "alertState": {
+          "type": "object",
+          "required": ["driver", "configured", "connected", "redisConfigured"],
+          "additionalProperties": false,
+          "properties": {
+            "driver": {
+              "type": "string",
+              "enum": ["file", "redis"]
+            },
+            "configured": { "type": "boolean" },
+            "connected": { "type": "boolean" },
+            "redisConfigured": { "type": "boolean" }
+          }
+        },
+        "oidc": {
+          "type": "object",
+          "required": [
+            "configured",
+            "discoveryConnected",
+            "jwksConnected",
+            "discoveredJwksUri",
+            "discoveryLatencyMs",
+            "jwksLatencyMs",
+            "discoverySlow",
+            "jwksSlow",
+            "slowThresholdMs"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "configured": { "type": "boolean" },
+            "discoveryConnected": { "type": "boolean" },
+            "jwksConnected": { "type": "boolean" },
+            "discoveredJwksUri": {
+              "type": ["string", "null"],
+              "format": "uri"
+            },
+            "discoveryLatencyMs": {
+              "type": ["integer", "null"],
+              "minimum": 0
+            },
+            "jwksLatencyMs": {
+              "type": ["integer", "null"],
+              "minimum": 0
+            },
+            "discoverySlow": { "type": "boolean" },
+            "jwksSlow": { "type": "boolean" },
+            "slowThresholdMs": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "securityTelemetry": {
+          "type": "object",
+          "required": [
+            "requestIdsEnabled",
+            "structuredLoggingEnabled",
+            "anomalyDetectionEnabled",
+            "auditHashChainEnabled"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "requestIdsEnabled": { "type": "boolean" },
+            "structuredLoggingEnabled": { "type": "boolean" },
+            "anomalyDetectionEnabled": { "type": "boolean" },
+            "auditHashChainEnabled": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "degradationReasons": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "alert_state_redis_disconnected",
+          "oidc_discovery_unreachable",
+          "oidc_jwks_unreachable",
+          "oidc_discovery_slow",
+          "oidc_jwks_slow"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "degradationReasonSeverities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["reason", "severity"],
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "type": "string",
+            "enum": [
+              "alert_state_redis_disconnected",
+              "oidc_discovery_unreachable",
+              "oidc_jwks_unreachable",
+              "oidc_discovery_slow",
+              "oidc_jwks_slow"
+            ]
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["warning", "critical"]
+          }
+        }
+      }
+    },
+    "primaryDegradationReason": {
+      "type": ["string", "null"],
+      "enum": [
+        "alert_state_redis_disconnected",
+        "oidc_discovery_unreachable",
+        "oidc_jwks_unreachable",
+        "oidc_discovery_slow",
+        "oidc_jwks_slow",
+        null
+      ]
+    },
+    "overallSeverity": {
+      "type": "string",
+      "enum": ["none", "warning", "critical"]
+    },
+    "overallSeverityScore": {
+      "type": "integer",
+      "enum": [0, 1, 2]
+    },
+    "recommendedActions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}
