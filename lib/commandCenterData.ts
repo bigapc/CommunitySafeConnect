@@ -5,6 +5,7 @@ import {
   listSecurityEvents,
   verifyAuditLogChain,
 } from "@/lib/localDataStore";
+import { getAlertLastEmittedAt, setAlertLastEmittedAt } from "@/lib/alertStateStore";
 
 interface SecurityAlert {
   id: string;
@@ -17,8 +18,6 @@ interface SuppressedSecurityAlert extends SecurityAlert {
   suppressedAt: string;
   nextEligibleAt: string;
 }
-
-const alertLastEmittedAt = new Map<string, number>();
 
 function readPositiveNumber(value: string | undefined, fallbackValue: number) {
   const parsed = Number(value);
@@ -63,7 +62,7 @@ function getAlertConfig() {
   };
 }
 
-function applyAlertSuppression(
+async function applyAlertSuppression(
   organizationId: string,
   alerts: SecurityAlert[],
   suppressionMinutes: number
@@ -75,7 +74,7 @@ function applyAlertSuppression(
 
   for (const alert of alerts) {
     const key = `${organizationId}:${alert.id}`;
-    const lastEmitted = alertLastEmittedAt.get(key) || 0;
+    const lastEmitted = await getAlertLastEmittedAt(key);
 
     if (now - lastEmitted < suppressionMs) {
       suppressed.push({
@@ -86,7 +85,7 @@ function applyAlertSuppression(
       continue;
     }
 
-    alertLastEmittedAt.set(key, now);
+    await setAlertLastEmittedAt(key, now);
     emitted.push(alert);
   }
 
@@ -96,7 +95,7 @@ function applyAlertSuppression(
   };
 }
 
-function detectSecurityAlerts(organizationId: string) {
+async function detectSecurityAlerts(organizationId: string) {
   const config = getAlertConfig();
   const now = Date.now();
   const allRecent = listSecurityEvents({ limit: 500 });
@@ -224,7 +223,7 @@ export async function getCommandCenterAuditLogs(organizationId: string, query: s
     );
   });
   const integrity = verifyAuditLogChain(organizationId);
-  const { activeAlerts, suppressedAlerts } = detectSecurityAlerts(organizationId);
+  const { activeAlerts, suppressedAlerts } = await detectSecurityAlerts(organizationId);
 
   return {
     auditLogs,
