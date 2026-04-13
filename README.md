@@ -171,6 +171,13 @@ Real-time session management for operational security and compliance:
   - Returns 404 if session not found, 400 if sessionId missing, 403 if not admin.
   - Revocation is logged as a security event for compliance audit.
 
+- `POST /api/security/sessions/revoke-bulk` force-logs out multiple sessions (admin-only).
+  - Request body: `{ "scope": "admin" | "organization" | "all", "organizationId": "optional_org", "reason": "optional_reason" }`
+  - Default scope is `organization` when omitted.
+  - Returns: `{ "success": true, "revokedCount": number, "scope": string, "organizationId": string | null }`.
+  - Returns 400 for invalid scope, 403 if not admin.
+  - Supports incident response workflows from command-center UI (bulk admin/org revocation).
+
 - `DELETE /api/access/session` now revokes the current signed session-ledger cookie on hard logout.
 - `DELETE /api/access/session?retain=policy...` preserves the signed session-ledger cookie for the policy retention window.
 - Session state driver configuration:

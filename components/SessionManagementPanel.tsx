@@ -29,6 +29,7 @@ export default function SessionManagementPanel({
   const [scopeFilter, setScopeFilter] = useState<ScopeFilter>("all");
   const [error, setError] = useState<string | null>(null);
   const [activeRevokeId, setActiveRevokeId] = useState<string | null>(null);
+  const [bulkActionLoading, setBulkActionLoading] = useState<"admin" | "organization" | null>(null);
 
   const sortedSessions = useMemo(() => {
     return [...sessions].sort((a, b) => {
@@ -97,6 +98,52 @@ export default function SessionManagementPanel({
     }
   }
 
+  async function revokeBulk(scope: "admin" | "organization") {
+    if (!isAdmin) {
+      setError("Only admins can revoke sessions.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      scope === "admin"
+        ? "Revoke all admin sessions?"
+        : "Revoke all organization sessions?"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setBulkActionLoading(scope);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/security/sessions/revoke-bulk", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          scope,
+          reason: "command_center_bulk_revoke",
+        }),
+      });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        const message = typeof body.message === "string" ? body.message : "Bulk revoke failed";
+        throw new Error(`${message} (${response.status})`);
+      }
+
+      await refreshSessions();
+    } catch (bulkError) {
+      setError(bulkError instanceof Error ? bulkError.message : "Bulk revoke failed");
+    } finally {
+      setBulkActionLoading(null);
+    }
+  }
+
   return (
     <div style={{ marginTop: "0.8rem", marginBottom: "0.8rem" }}>
       <h4 style={{ marginBottom: "0.4rem" }}>Active Session Management</h4>
@@ -120,6 +167,24 @@ export default function SessionManagementPanel({
         <button type="button" onClick={() => void refreshSessions()} disabled={loading}>
           {loading ? "Refreshing..." : "Refresh Sessions"}
         </button>
+        {isAdmin && (
+          <>
+            <button
+              type="button"
+              onClick={() => void revokeBulk("admin")}
+              disabled={loading || bulkActionLoading !== null}
+            >
+              {bulkActionLoading === "admin" ? "Revoking Admin..." : "Revoke All Admin"}
+            </button>
+            <button
+              type="button"
+              onClick={() => void revokeBulk("organization")}
+              disabled={loading || bulkActionLoading !== null}
+            >
+              {bulkActionLoading === "organization" ? "Revoking Org..." : "Revoke All Organization"}
+            </button>
+          </>
+        )}
         <span style={{ color: "#94a3b8", fontSize: "0.9rem" }}>
           Showing {sortedSessions.length} session{sortedSessions.length === 1 ? "" : "s"}
         </span>
@@ -155,7 +220,7 @@ export default function SessionManagementPanel({
                   <button
                     type="button"
                     onClick={() => void revokeSession(session.sessionId)}
-                    disabled={activeRevokeId === session.sessionId || loading}
+                    disabled={activeRevokeId === session.sessionId || loading || bulkActionLoading !== null}
                   >
                     {activeRevokeId === session.sessionId ? "Revoking..." : "Revoke Session"}
                   </button>

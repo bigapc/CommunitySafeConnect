@@ -287,6 +287,58 @@ async function testRevocationErrorHandling(adminCookies) {
   assert.strictEqual(badRes.status, 400, "Missing sessionId should return 400");
 }
 
+async function testBulkRevocationAccessControl(orgCookies) {
+  const revokeRes = await fetch(`${BASE_URL}/api/security/sessions/revoke-bulk`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: orgCookies.join("; "),
+    },
+    body: JSON.stringify({
+      scope: "organization",
+      reason: "test",
+    }),
+  });
+
+  assert.strictEqual(revokeRes.status, 403, "Non-admin should not be able to bulk revoke");
+}
+
+async function testBulkRevocationValidation(adminCookies) {
+  const invalidScopeRes = await fetch(`${BASE_URL}/api/security/sessions/revoke-bulk`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: adminCookies.join("; "),
+    },
+    body: JSON.stringify({
+      scope: "invalid_scope",
+      reason: "test",
+    }),
+  });
+
+  assert.strictEqual(invalidScopeRes.status, 400, "Invalid bulk scope should return 400");
+}
+
+async function testBulkRevocationSuccess(adminCookies) {
+  const bulkRes = await fetch(`${BASE_URL}/api/security/sessions/revoke-bulk`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: adminCookies.join("; "),
+    },
+    body: JSON.stringify({
+      scope: "admin",
+      reason: "contract_test_bulk",
+    }),
+  });
+
+  assert.strictEqual(bulkRes.status, 200, "Admin bulk revocation should return 200");
+  const payload = await bulkRes.json();
+  assert.strictEqual(payload.success, true, "Bulk revocation should return success=true");
+  assert.strictEqual(payload.scope, "admin", "Bulk revocation should echo scope");
+  assert.strictEqual(typeof payload.revokedCount, "number", "Bulk revokedCount should be number");
+}
+
 async function runTests() {
   console.log("Starting security sessions contract tests...\n");
 
@@ -325,6 +377,18 @@ async function runTests() {
     console.log("Test 8: Testing revocation error handling...");
     await testRevocationErrorHandling(adminCookies);
     console.log("  ✓ Error handling works (404 for missing, 400 for bad request)\n");
+
+    console.log("Test 9: Testing bulk revocation access control...");
+    await testBulkRevocationAccessControl(orgCookies);
+    console.log("  ✓ Non-admin cannot bulk revoke sessions\n");
+
+    console.log("Test 10: Testing bulk revocation validation...");
+    await testBulkRevocationValidation(adminCookies);
+    console.log("  ✓ Bulk revocation validates scope input\n");
+
+    console.log("Test 11: Testing bulk revocation success path...");
+    await testBulkRevocationSuccess(adminCookies);
+    console.log("  ✓ Bulk revocation endpoint returns success payload\n");
 
     console.log("✅ All security sessions contract tests passed!\n");
     process.exit(0);
