@@ -35,12 +35,14 @@ export async function GET(request: NextRequest) {
   }
 
   const { searchParams } = new URL(request.url);
-  const scopeFilter = searchParams.get("scope") as SessionScope | null;
+  const scopeParam = searchParams.get("scope");
+  const scopeFilter: SessionScope | null =
+    scopeParam === "admin" || scopeParam === "organization" ? scopeParam : null;
 
-  // Admins see admin sessions; org users see their org's sessions
+  // Admins see all sessions by default; org users see only org-scoped sessions for their tenant.
   let sessions;
   if (hasAdmin) {
-    sessions = await getActiveSessions(undefined, scopeFilter || "admin");
+    sessions = await getActiveSessions(undefined, scopeFilter || undefined);
   } else {
     const orgId = await getCurrentOrganizationId();
     sessions = await getActiveSessions(orgId, scopeFilter || "organization");

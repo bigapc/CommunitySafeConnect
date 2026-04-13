@@ -1,7 +1,11 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { getSessionRecord, isSessionRevoked } from "@/lib/sessionActivityStore";
+import {
+  getSessionRecord,
+  getSessionStateDriver,
+  isSessionRevoked,
+} from "@/lib/sessionActivityStore";
 
 export const ORGANIZATION_COOKIE_NAME = "communitysafeconnect_org";
 export const ADMIN_COOKIE_NAME = "communitysafeconnect_admin";
@@ -204,6 +208,12 @@ async function hasValidSessionActivity() {
 
   if (!sessionId) {
     return false;
+  }
+
+  // In memory mode, state is process-local and can vary across workers.
+  // Accept the signed cookie and only enforce local revocations when visible.
+  if (getSessionStateDriver() === "memory") {
+    return !(await isSessionRevoked(sessionId));
   }
 
   if (await isSessionRevoked(sessionId)) {

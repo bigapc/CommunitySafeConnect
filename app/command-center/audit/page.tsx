@@ -1,5 +1,7 @@
 import { getCommandCenterAuditLogs } from "@/lib/commandCenterData";
-import { getCurrentOrganizationId } from "@/lib/access";
+import { getCurrentOrganizationId, hasAdminAccess } from "@/lib/access";
+import SessionManagementPanel from "@/components/SessionManagementPanel";
+import { getActiveSessions } from "@/lib/sessionActivityStore";
 import { getSecurityHealthSnapshot } from "@/lib/securityHealth";
 
 interface CommandCenterAuditPageProps {
@@ -12,7 +14,9 @@ export default async function CommandCenterAuditPage({ searchParams }: CommandCe
   const params = await searchParams;
   const query = (params.q || "").trim().toLowerCase();
   const organizationId = await getCurrentOrganizationId();
+  const isAdmin = await hasAdminAccess();
   const securityHealth = await getSecurityHealthSnapshot();
+  const initialSessions = await getActiveSessions(undefined, isAdmin ? undefined : "organization");
   const sessionRedisRequestedButUnavailable =
     securityHealth.checks.sessionState.requestedDriver === "redis" &&
     !securityHealth.checks.sessionState.distributedConsistency;
@@ -148,6 +152,7 @@ export default async function CommandCenterAuditPage({ searchParams }: CommandCe
           </p>
         )}
       </div>
+      <SessionManagementPanel initialSessions={initialSessions} isAdmin={isAdmin} />
       {integrity && !integrity.valid && (
         <p style={{ color: "#ffb3bf" }}>
           Audit integrity warning: chain validation failed at log {integrity.brokenLogId || "unknown"} ({integrity.reason || "unknown reason"}).
