@@ -54,14 +54,14 @@ export default function AccessSessionControls() {
   }
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+    <div className="session-controls">
       <button type="button" onClick={() => void logout("hard")} disabled={isBusy}>
         Logout Now
       </button>
       <button type="button" onClick={() => void logout("policy")} disabled={isBusy}>
         Logout with Policy Retention
       </button>
-      {message && <small style={{ color: "#94a3b8" }}>{message}</small>}
+      {message && <small>{message}</small>}
     </div>
   );
 }

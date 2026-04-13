@@ -54,30 +54,23 @@ export default function AccessForm({ nextPath }: AccessFormProps) {
         Enter the {scope === "admin" ? "admin" : "organization"} access code to continue.
       </p>
       {isDevelopment && (
-        <p style={{ color: "#94a3b8", marginTop: "-0.25rem" }}>
+        <p style={{ marginTop: "-0.25rem" }}>
           Demo code: {scope === "admin" ? "community-admin-demo" : "community-org-demo"}
         </p>
       )}
-      <form onSubmit={handleSubmit} style={{ display: "flex", gap: "0.5rem", maxWidth: "520px" }}>
+      <form onSubmit={handleSubmit} className="access-form-row">
         <input
           type="password"
           value={accessCode}
           onChange={(event) => setAccessCode(event.target.value)}
           placeholder="Access code"
           required
-          style={{
-            padding: "10px",
-            flex: 1,
-            background: "#1e293b",
-            border: "1px solid #334155",
-            color: "white",
-          }}
         />
         <button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Checking..." : "Continue"}
         </button>
       </form>
-      {errorMessage && <p style={{ color: "#fca5a5" }}>{errorMessage}</p>}
+      {errorMessage && <p className="report-feedback error">{errorMessage}</p>}
     </main>
   );
 }

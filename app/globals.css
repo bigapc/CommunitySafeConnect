@@ -24,6 +24,7 @@ body {
 body {
   font-family: "Archivo", sans-serif;
   color: var(--ink);
+  line-height: 1.45;
   background:
     radial-gradient(1200px 420px at -10% -20%, #f9d9a8 0%, transparent 55%),
     radial-gradient(1200px 420px at 120% 120%, #b5d9df 0%, transparent 55%),
@@ -81,6 +82,14 @@ a {
   box-shadow: var(--shadow);
 }
 
+h2 {
+  font-size: clamp(1.3rem, 2vw + 0.7rem, 2rem);
+}
+
+h3 {
+  font-size: clamp(1.05rem, 1.3vw + 0.65rem, 1.35rem);
+}
+
 h2,
 h3 {
   margin-top: 0;
@@ -120,6 +129,41 @@ button {
 button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+form {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.access-form-row {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 520px;
+}
+
+.access-form-row input {
+  flex: 1;
+}
+
+.session-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.session-controls small {
+  width: 100%;
+}
+
+.report-feedback.success {
+  color: #1f7a3f;
+  margin-bottom: 0.75rem;
+}
+
+.report-feedback.error {
+  color: #9b2736;
 }
 
 article {
@@ -185,7 +229,8 @@ code {
 }
 
 .control-search input {
-  min-width: 280px;
+  flex: 1 1 260px;
+  min-width: 0;
   background: #0c1f2e;
   border-color: #3f5b75;
   color: #eef8ff;
@@ -235,4 +280,24 @@ code {
 .status-pill.flagged {
   background: #59202a;
   color: #ffb3bf;
+}
+
+@media (max-width: 760px) {
+  .access-form-row {
+    flex-direction: column;
+    max-width: none;
+  }
+
+  .session-controls {
+    width: 100%;
+  }
+
+  .session-controls button {
+    width: 100%;
+  }
+
+  .control-room-nav a {
+    width: 100%;
+    text-align: center;
+  }
 }

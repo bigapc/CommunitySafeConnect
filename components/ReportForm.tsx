@@ -29,30 +29,33 @@ export default function ReportForm() {
       return;
     }
 
-      setSubmitted(true);
-      setDescription("");
-      setIsSubmitting(false);
+    setSubmitted(true);
+    setDescription("");
+    setIsSubmitting(false);
   }
 
   return (
     <>
       {submitted && (
-        <p style={{ color: "#86efac", marginBottom: "0.75rem" }}>
+        <p className="report-feedback success">
           Report submitted securely.
         </p>
       )}
-    <form onSubmit={handleSubmit}>
-      <textarea
-        placeholder="Describe the situation..."
-        value={description}
-        onChange={(event) => { setDescription(event.target.value); setSubmitted(false); }}
-        required
-      />
-      <button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Submitting..." : "Submit"}
-      </button>
-      {errorMessage && <p style={{ color: "#fca5a5" }}>{errorMessage}</p>}
-    </form>
+      <form onSubmit={handleSubmit}>
+        <textarea
+          placeholder="Describe the situation..."
+          value={description}
+          onChange={(event) => {
+            setDescription(event.target.value);
+            setSubmitted(false);
+          }}
+          required
+        />
+        <button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Submitting..." : "Submit"}
+        </button>
+        {errorMessage && <p className="report-feedback error">{errorMessage}</p>}
+      </form>
     </>
   );
 }
