@@ -80,3 +80,11 @@ In non-mock mode, callback handling enforces strict ID token verification:
 - Chain verification is available in memory via `verifyAuditLogChain(organizationId)`.
 - Command-center audit view now displays chain status and per-entry hash snippets.
 - Optional secret for production hardening: `AUDIT_INTEGRITY_SECRET`.
+
+## Security Anomaly Alerts
+
+- Structured security events are persisted in-memory from auth/MFA/SSO security logger paths.
+- Command center audit view surfaces active alerts from recent events:
+	- Failed login spike (15 min window)
+	- Failed MFA spike (15 min window)
+	- Suspicious cross-tenant login pattern (same IP across 3+ tenants within 30 min)

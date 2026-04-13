@@ -12,7 +12,7 @@ export default async function CommandCenterAuditPage({ searchParams }: CommandCe
   const query = (params.q || "").trim().toLowerCase();
   const organizationId = await getCurrentOrganizationId();
 
-  const { auditLogs, integrity, error } = await getCommandCenterAuditLogs(organizationId, query);
+  const { auditLogs, integrity, alerts, error } = await getCommandCenterAuditLogs(organizationId, query);
 
   return (
     <section>
@@ -39,6 +39,30 @@ export default async function CommandCenterAuditPage({ searchParams }: CommandCe
         <p style={{ color: "#86efac" }}>
           Audit integrity: verified (tamper-evident chain intact).
         </p>
+      )}
+      {alerts.length > 0 && (
+        <div style={{ marginTop: "0.8rem", marginBottom: "0.8rem" }}>
+          <h4 style={{ marginBottom: "0.4rem" }}>Security Alerts ({alerts.length})</h4>
+          {alerts.map((alert) => (
+            <p
+              key={alert.id}
+              style={{
+                margin: "0.3rem 0",
+                color:
+                  alert.severity === "high"
+                    ? "#ffb3bf"
+                    : alert.severity === "medium"
+                      ? "#ffd88a"
+                      : "#c7d2fe",
+              }}
+            >
+              [{alert.severity.toUpperCase()}] <strong>{alert.title}</strong>: {alert.description}
+            </p>
+          ))}
+        </div>
+      )}
+      {alerts.length === 0 && (
+        <p style={{ color: "#86efac" }}>No active anomaly alerts detected.</p>
       )}
 
       <h3 style={{ marginTop: "1rem" }}>Audit Events ({auditLogs.length})</h3>

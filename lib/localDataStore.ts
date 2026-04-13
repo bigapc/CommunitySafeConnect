@@ -37,6 +37,24 @@ export interface AccessAuditLogRow {
   created_at: string;
 }
 
+export interface SecurityEventRow {
+  id: string;
+  organization_id: string | null;
+  event: string;
+  level: "info" | "warn" | "error";
+  outcome: "success" | "failure";
+  reason: string | null;
+  request_id: string;
+  method: string;
+  path: string;
+  ip_address: string | null;
+  user_agent: string | null;
+  scope: string | null;
+  username: string | null;
+  metadata_json: string | null;
+  created_at: string;
+}
+
 export type UserRole = "user" | "operator" | "admin";
 
 export interface UserRow {
@@ -106,6 +124,7 @@ const chatMessages: ChatMessageRow[] = [
 ];
 
 const auditLogs: AccessAuditLogRow[] = [];
+const securityEvents: SecurityEventRow[] = [];
 
 function sortByCreatedAt<T extends { created_at: string }>(items: T[], ascending: boolean) {
   return [...items].sort((a, b) => {
@@ -314,6 +333,35 @@ export function verifyAuditLogChain(organizationId: string) {
     brokenLogId: null,
     reason: null,
   };
+}
+
+export function createSecurityEvent(
+  entry: Omit<SecurityEventRow, "id" | "created_at">
+) {
+  const event: SecurityEventRow = {
+    id: createId("sec"),
+    created_at: new Date().toISOString(),
+    ...entry,
+  };
+
+  securityEvents.unshift(event);
+  return event;
+}
+
+export function listSecurityEvents(options?: {
+  organizationId?: string;
+  ascending?: boolean;
+  limit?: number;
+}) {
+  const ascending = options?.ascending ?? false;
+  const limit = options?.limit ?? 200;
+  const organizationId = options?.organizationId;
+
+  const scoped = organizationId
+    ? securityEvents.filter((event) => event.organization_id === organizationId)
+    : [...securityEvents];
+
+  return sortByCreatedAt(scoped, ascending).slice(0, limit);
 }
 
 // ============ User Management & RBAC ============

@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { createSecurityEvent } from "@/lib/localDataStore";
 
 export interface SecurityLogEvent {
   event: string;
@@ -27,13 +28,33 @@ export function getRequestId(request: NextRequest) {
 }
 
 export function logSecurityEvent(request: NextRequest, event: SecurityLogEvent) {
-  const payload = {
-    timestamp: new Date().toISOString(),
-    requestId: getRequestId(request),
+  const requestId = getRequestId(request);
+  const ip = getClientIp(request);
+  const userAgent = request.headers.get("user-agent");
+
+  createSecurityEvent({
+    organization_id: event.organizationId || null,
+    event: event.event,
+    level: event.level,
+    outcome: event.outcome,
+    reason: event.reason || null,
+    request_id: requestId,
     method: request.method,
     path: request.nextUrl.pathname,
-    ip: getClientIp(request),
-    userAgent: request.headers.get("user-agent"),
+    ip_address: ip,
+    user_agent: userAgent,
+    scope: event.scope || null,
+    username: event.user || null,
+    metadata_json: event.metadata ? JSON.stringify(event.metadata) : null,
+  });
+
+  const payload = {
+    timestamp: new Date().toISOString(),
+    requestId,
+    method: request.method,
+    path: request.nextUrl.pathname,
+    ip,
+    userAgent,
     ...event,
   };
 
