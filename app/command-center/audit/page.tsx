@@ -1,5 +1,6 @@
 import { getCommandCenterAuditLogs } from "@/lib/commandCenterData";
 import { getCurrentOrganizationId } from "@/lib/access";
+import { getSecurityHealthSnapshot } from "@/lib/securityHealth";
 
 interface CommandCenterAuditPageProps {
   searchParams: Promise<{
@@ -11,6 +12,7 @@ export default async function CommandCenterAuditPage({ searchParams }: CommandCe
   const params = await searchParams;
   const query = (params.q || "").trim().toLowerCase();
   const organizationId = await getCurrentOrganizationId();
+  const securityHealth = await getSecurityHealthSnapshot();
 
   const { auditLogs, integrity, alerts, alertHistory, error } = await getCommandCenterAuditLogs(organizationId, query);
 
@@ -30,6 +32,19 @@ export default async function CommandCenterAuditPage({ searchParams }: CommandCe
           Audit logs could not be loaded. Apply the audit migration if needed.
         </p>
       )}
+      <div style={{ marginTop: "0.8rem", marginBottom: "0.8rem" }}>
+        <h4 style={{ marginBottom: "0.4rem" }}>Security Readiness</h4>
+        <p style={{ margin: "0.3rem 0", color: securityHealth.status === "ok" ? "#86efac" : "#ffd88a" }}>
+          Status: <strong>{securityHealth.status.toUpperCase()}</strong>
+        </p>
+        <p style={{ margin: "0.3rem 0", color: "#cbd5e1" }}>
+          Alert state: driver={securityHealth.checks.alertState.driver} connected={String(securityHealth.checks.alertState.connected)}
+          {" "}redisConfigured={String(securityHealth.checks.alertState.redisConfigured)}
+        </p>
+        <p style={{ margin: "0.3rem 0", color: "#cbd5e1" }}>
+          OIDC configured: {String(securityHealth.checks.oidc.configured)}
+        </p>
+      </div>
       {integrity && !integrity.valid && (
         <p style={{ color: "#ffb3bf" }}>
           Audit integrity warning: chain validation failed at log {integrity.brokenLogId || "unknown"} ({integrity.reason || "unknown reason"}).

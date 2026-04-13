@@ -1,44 +1,6 @@
 import { NextResponse } from "next/server";
-import {
-  getAlertStateDriver,
-  getAlertStateHealth,
-  isRedisAlertStateConfigured,
-} from "@/lib/alertStateStore";
-
-function hasOidcConfigured() {
-  return Boolean(
-    process.env.OIDC_CLIENT_ID &&
-      process.env.OIDC_ISSUER_URL &&
-      process.env.OIDC_CLIENT_SECRET
-  );
-}
+import { getSecurityHealthSnapshot } from "@/lib/securityHealth";
 
 export async function GET() {
-  const alertState = await getAlertStateHealth();
-  const oidcConfigured = hasOidcConfigured();
-
-  const overallStatus =
-    alertState.driver === "redis" && !alertState.connected ? "degraded" : "ok";
-
-  return NextResponse.json({
-    status: overallStatus,
-    checks: {
-      alertState: {
-        driver: getAlertStateDriver(),
-        configured: alertState.configured,
-        connected: alertState.connected,
-        redisConfigured: isRedisAlertStateConfigured(),
-      },
-      oidc: {
-        configured: oidcConfigured,
-      },
-      securityTelemetry: {
-        requestIdsEnabled: true,
-        structuredLoggingEnabled: true,
-        anomalyDetectionEnabled: true,
-        auditHashChainEnabled: true,
-      },
-    },
-    timestamp: new Date().toISOString(),
-  });
+  return NextResponse.json(await getSecurityHealthSnapshot());
 }
