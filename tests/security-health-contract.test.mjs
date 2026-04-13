@@ -75,10 +75,16 @@ async function testHealthResponse(cookies) {
   assert.strictEqual(typeof payload.timestamp, "string", "timestamp must be string");
 
   // Test checks object structure
-  const checksRequiredFields = ["alertState", "oidc", "securityTelemetry"];
+  const checksRequiredFields = ["alertState", "sessionState", "oidc", "securityTelemetry"];
   for (const field of checksRequiredFields) {
     assert.ok(field in payload.checks, `Missing field in checks: ${field}`);
   }
+
+  assert.strictEqual(typeof payload.checks.sessionState.requestedDriver, "string", "sessionState.requestedDriver must be string");
+  assert.strictEqual(typeof payload.checks.sessionState.activeDriver, "string", "sessionState.activeDriver must be string");
+  assert.strictEqual(typeof payload.checks.sessionState.connected, "boolean", "sessionState.connected must be boolean");
+  assert.strictEqual(typeof payload.checks.sessionState.revocationEnforced, "boolean", "sessionState.revocationEnforced must be boolean");
+  assert.strictEqual(typeof payload.checks.sessionState.distributedConsistency, "boolean", "sessionState.distributedConsistency must be boolean");
 
   // Test severity score range
   assert.ok([0, 1, 2].includes(payload.overallSeverityScore), "overallSeverityScore must be 0, 1, or 2");
@@ -102,7 +108,7 @@ async function testHealthHeaders(cookies) {
 
   const schemaVersion = healthRes.headers.get("x-security-health-schema-version");
   assert.ok(schemaVersion, "Missing X-Security-Health-Schema-Version header");
-  assert.strictEqual(schemaVersion, "2026-04-13.1", "Schema version mismatch");
+  assert.strictEqual(schemaVersion, "2026-04-13.2", "Schema version mismatch");
 
   const link = healthRes.headers.get("link");
   assert.ok(link, "Missing Link header");

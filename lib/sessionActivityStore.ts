@@ -32,6 +32,12 @@ function getConfiguredSessionStateDriver(): SessionStateDriver {
   return driver === "redis" ? "redis" : "memory";
 }
 
+async function deleteRevokedSessionFromRedis(sessionId: string) {
+  await fetchRedis(
+    `/hdel/${encodeURIComponent(getRevokedHashKey())}/${encodeURIComponent(sessionId)}`
+  );
+}
+
 function getSessionStateNamespace() {
   return process.env.SESSION_STATE_NAMESPACE || "csc_session_state";
 }
@@ -183,6 +189,51 @@ async function loadSessionsFromRedis(): Promise<SessionRecord[]> {
 async function clearRedisSessions() {
   await fetchRedis(`/del/${encodeURIComponent(getSessionHashKey())}`);
   await fetchRedis(`/del/${encodeURIComponent(getRevokedHashKey())}`);
+}
+
+export async function getSessionStateHealth() {
+  const requestedDriver = getConfiguredSessionStateDriver();
+  const activeDriver = getSessionStateDriver();
+  const redisConfigured = isRedisSessionStateConfigured();
+
+  if (activeDriver === "memory") {
+    return {
+      requestedDriver,
+      activeDriver,
+      configured: requestedDriver === "memory" || redisConfigured,
+      connected: requestedDriver === "memory",
+      redisConfigured,
+      revocationEnforced: true,
+      distributedConsistency: false,
+    };
+  }
+
+  try {
+    const probeKey = `health_probe_${Date.now()}`;
+    await saveRevokedSessionToRedis(probeKey, Date.now());
+    const value = await getRevokedSessionTimestampFromRedis(probeKey);
+    await deleteRevokedSessionFromRedis(probeKey);
+
+    return {
+      requestedDriver,
+      activeDriver,
+      configured: redisConfigured,
+      connected: value > 0,
+      redisConfigured,
+      revocationEnforced: true,
+      distributedConsistency: value > 0,
+    };
+  } catch {
+    return {
+      requestedDriver,
+      activeDriver,
+      configured: redisConfigured,
+      connected: false,
+      redisConfigured,
+      revocationEnforced: true,
+      distributedConsistency: false,
+    };
+  }
 }
 
 function pruneExpiredRevocationsInMemory() {

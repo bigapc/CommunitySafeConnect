@@ -11,6 +11,12 @@
     "features",
     "alertStateDriver",
     "alertStateRedisConfigured",
+    "sessionStateDriver",
+    "sessionStateRequestedDriver",
+    "sessionStateRedisConfigured",
+    "sessionStateConnected",
+    "sessionRevocationEnforced",
+    "distributedSessionConsistency",
     "oidcConfigured",
     "rbacEnabled",
     "tenantIsolationEnabled"
@@ -75,6 +81,32 @@
     "alertStateRedisConfigured": {
       "type": "boolean",
       "description": "Whether Redis REST URL/token is configured"
+    },
+    "sessionStateDriver": {
+      "type": "string",
+      "enum": ["memory", "redis"],
+      "description": "Active backend used for session state enforcement"
+    },
+    "sessionStateRequestedDriver": {
+      "type": "string",
+      "enum": ["memory", "redis"],
+      "description": "Configured backend requested for session state enforcement"
+    },
+    "sessionStateRedisConfigured": {
+      "type": "boolean",
+      "description": "Whether Redis REST URL/token is configured for session state"
+    },
+    "sessionStateConnected": {
+      "type": "boolean",
+      "description": "Whether the active session state backend is currently reachable"
+    },
+    "sessionRevocationEnforced": {
+      "type": "boolean",
+      "description": "Whether request-time session revocation enforcement is active"
+    },
+    "distributedSessionConsistency": {
+      "type": "boolean",
+      "description": "Whether session revocation/listing is shared across instances"
     },
     "oidcConfigured": {
       "type": "boolean",

@@ -20,7 +20,7 @@
   "properties": {
     "schemaVersion": {
       "type": "string",
-      "const": "2026-04-13.1"
+      "const": "2026-04-13.2"
     },
     "schemaPath": {
       "type": "string",
@@ -32,7 +32,7 @@
     },
     "checks": {
       "type": "object",
-      "required": ["alertState", "oidc", "securityTelemetry"],
+      "required": ["alertState", "sessionState", "oidc", "securityTelemetry"],
       "additionalProperties": false,
       "properties": {
         "alertState": {
@@ -47,6 +47,34 @@
             "configured": { "type": "boolean" },
             "connected": { "type": "boolean" },
             "redisConfigured": { "type": "boolean" }
+          }
+        },
+        "sessionState": {
+          "type": "object",
+          "required": [
+            "requestedDriver",
+            "activeDriver",
+            "configured",
+            "connected",
+            "redisConfigured",
+            "revocationEnforced",
+            "distributedConsistency"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "requestedDriver": {
+              "type": "string",
+              "enum": ["memory", "redis"]
+            },
+            "activeDriver": {
+              "type": "string",
+              "enum": ["memory", "redis"]
+            },
+            "configured": { "type": "boolean" },
+            "connected": { "type": "boolean" },
+            "redisConfigured": { "type": "boolean" },
+            "revocationEnforced": { "type": "boolean" },
+            "distributedConsistency": { "type": "boolean" }
           }
         },
         "oidc": {
@@ -111,6 +139,7 @@
         "type": "string",
         "enum": [
           "alert_state_redis_disconnected",
+          "session_state_redis_disconnected",
           "oidc_discovery_unreachable",
           "oidc_jwks_unreachable",
           "oidc_discovery_slow",
@@ -130,6 +159,7 @@
             "type": "string",
             "enum": [
               "alert_state_redis_disconnected",
+              "session_state_redis_disconnected",
               "oidc_discovery_unreachable",
               "oidc_jwks_unreachable",
               "oidc_discovery_slow",
@@ -147,6 +177,7 @@
       "type": ["string", "null"],
       "enum": [
         "alert_state_redis_disconnected",
+        "session_state_redis_disconnected",
         "oidc_discovery_unreachable",
         "oidc_jwks_unreachable",
         "oidc_discovery_slow",

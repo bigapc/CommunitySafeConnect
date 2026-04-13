@@ -3,6 +3,7 @@ import {
   getAlertStateHealth,
   isRedisAlertStateConfigured,
 } from "@/lib/alertStateStore";
+import { getSessionStateHealth } from "@/lib/sessionActivityStore";
 import { getSsoConfig } from "@/lib/sso";
 
 function hasOidcConfigured() {
@@ -31,6 +32,7 @@ interface ProbeResult {
 
 type SecurityDegradationReason =
   | "alert_state_redis_disconnected"
+  | "session_state_redis_disconnected"
   | "oidc_discovery_unreachable"
   | "oidc_jwks_unreachable"
   | "oidc_discovery_slow"
@@ -40,6 +42,7 @@ type SecurityDegradationSeverity = "warning" | "critical";
 
 const SECURITY_REASON_SEVERITY: Record<SecurityDegradationReason, SecurityDegradationSeverity> = {
   alert_state_redis_disconnected: "critical",
+  session_state_redis_disconnected: "warning",
   oidc_discovery_unreachable: "critical",
   oidc_jwks_unreachable: "critical",
   oidc_discovery_slow: "warning",
@@ -48,13 +51,14 @@ const SECURITY_REASON_SEVERITY: Record<SecurityDegradationReason, SecurityDegrad
 
 const SECURITY_REASON_ACTION: Record<SecurityDegradationReason, string> = {
   alert_state_redis_disconnected: "Check ALERT_STATE_REDIS_REST_URL/TOKEN and Redis network reachability.",
+  session_state_redis_disconnected: "Check SESSION_STATE_REDIS_REST_URL/TOKEN and Redis network reachability for cross-instance session revocation.",
   oidc_discovery_unreachable: "Verify OIDC_ISSUER_URL and IdP availability for discovery endpoint.",
   oidc_jwks_unreachable: "Verify OIDC_JWKS_URI or IdP JWKS endpoint availability.",
   oidc_discovery_slow: "Investigate IdP discovery latency and upstream network performance.",
   oidc_jwks_slow: "Investigate IdP JWKS latency and consider CDN/cache strategy.",
 };
 
-export const SECURITY_HEALTH_SCHEMA_VERSION = "2026-04-13.1";
+export const SECURITY_HEALTH_SCHEMA_VERSION = "2026-04-13.2";
 export const SECURITY_HEALTH_SCHEMA_PATH = "/api/health/security/schema";
 
 function getOverallSeverity(
@@ -210,12 +214,17 @@ async function getOidcConnectivity(): Promise<OidcConnectivity> {
 
 export async function getSecurityHealthSnapshot() {
   const alertState = await getAlertStateHealth();
+  const sessionState = await getSessionStateHealth();
   const oidcConfigured = hasOidcConfigured();
   const oidcConnectivity = await getOidcConnectivity();
   const degradationReasons: SecurityDegradationReason[] = [];
 
   if (alertState.driver === "redis" && !alertState.connected) {
     degradationReasons.push("alert_state_redis_disconnected");
+  }
+
+  if (sessionState.requestedDriver === "redis" && !sessionState.connected) {
+    degradationReasons.push("session_state_redis_disconnected");
   }
 
   if (oidcConfigured) {
@@ -255,6 +264,15 @@ export async function getSecurityHealthSnapshot() {
         configured: alertState.configured,
         connected: alertState.connected,
         redisConfigured: isRedisAlertStateConfigured(),
+      },
+      sessionState: {
+        requestedDriver: sessionState.requestedDriver,
+        activeDriver: sessionState.activeDriver,
+        configured: sessionState.configured,
+        connected: sessionState.connected,
+        redisConfigured: sessionState.redisConfigured,
+        revocationEnforced: sessionState.revocationEnforced,
+        distributedConsistency: sessionState.distributedConsistency,
       },
       oidc: {
         configured: oidcConfigured,

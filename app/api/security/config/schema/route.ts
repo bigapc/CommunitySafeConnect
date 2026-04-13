@@ -22,6 +22,12 @@ const SCHEMA = {
     "features",
     "alertStateDriver",
     "alertStateRedisConfigured",
+    "sessionStateDriver",
+    "sessionStateRequestedDriver",
+    "sessionStateRedisConfigured",
+    "sessionStateConnected",
+    "sessionRevocationEnforced",
+    "distributedSessionConsistency",
     "oidcConfigured",
     "rbacEnabled",
     "tenantIsolationEnabled",
@@ -87,6 +93,32 @@ const SCHEMA = {
       type: "boolean",
       description: "Whether Redis REST URL/token is configured",
     },
+    sessionStateDriver: {
+      type: "string",
+      enum: ["memory", "redis"],
+      description: "Active backend used for session state enforcement",
+    },
+    sessionStateRequestedDriver: {
+      type: "string",
+      enum: ["memory", "redis"],
+      description: "Configured backend requested for session state enforcement",
+    },
+    sessionStateRedisConfigured: {
+      type: "boolean",
+      description: "Whether Redis REST URL/token is configured for session state",
+    },
+    sessionStateConnected: {
+      type: "boolean",
+      description: "Whether the active session state backend is currently reachable",
+    },
+    sessionRevocationEnforced: {
+      type: "boolean",
+      description: "Whether request-time session revocation enforcement is active",
+    },
+    distributedSessionConsistency: {
+      type: "boolean",
+      description: "Whether session revocation/listing is shared across instances",
+    },
     oidcConfigured: {
       type: "boolean",
       description: "Whether OIDC is fully configured",
@@ -103,7 +135,7 @@ const SCHEMA = {
 };
 
 export async function GET() {
-  const configVersion = "2026-04-13.1";
+  const configVersion = "2026-04-13.2";
 
   return NextResponse.json(SCHEMA, {
     headers: {
@@ -115,7 +147,7 @@ export async function GET() {
 }
 
 export async function HEAD() {
-  const configVersion = "2026-04-13.1";
+  const configVersion = "2026-04-13.2";
 
   return new NextResponse(null, {
     status: 200,

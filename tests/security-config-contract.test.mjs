@@ -48,6 +48,12 @@ async function testConfigResponse(cookies) {
     "features",
     "alertStateDriver",
     "alertStateRedisConfigured",
+    "sessionStateDriver",
+    "sessionStateRequestedDriver",
+    "sessionStateRedisConfigured",
+    "sessionStateConnected",
+    "sessionRevocationEnforced",
+    "distributedSessionConsistency",
     "oidcConfigured",
     "rbacEnabled",
     "tenantIsolationEnabled",
@@ -67,6 +73,12 @@ async function testConfigResponse(cookies) {
   assert(Array.isArray(payload.features), "features must be array");
   assert.strictEqual(typeof payload.alertStateDriver, "string", "alertStateDriver must be string");
   assert.strictEqual(typeof payload.alertStateRedisConfigured, "boolean", "alertStateRedisConfigured must be boolean");
+  assert.strictEqual(typeof payload.sessionStateDriver, "string", "sessionStateDriver must be string");
+  assert.strictEqual(typeof payload.sessionStateRequestedDriver, "string", "sessionStateRequestedDriver must be string");
+  assert.strictEqual(typeof payload.sessionStateRedisConfigured, "boolean", "sessionStateRedisConfigured must be boolean");
+  assert.strictEqual(typeof payload.sessionStateConnected, "boolean", "sessionStateConnected must be boolean");
+  assert.strictEqual(typeof payload.sessionRevocationEnforced, "boolean", "sessionRevocationEnforced must be boolean");
+  assert.strictEqual(typeof payload.distributedSessionConsistency, "boolean", "distributedSessionConsistency must be boolean");
   assert.strictEqual(typeof payload.oidcConfigured, "boolean", "oidcConfigured must be boolean");
   assert.strictEqual(typeof payload.rbacEnabled, "boolean", "rbacEnabled must be boolean");
   assert.strictEqual(typeof payload.tenantIsolationEnabled, "boolean", "tenantIsolationEnabled must be boolean");
@@ -98,6 +110,15 @@ async function testConfigResponse(cookies) {
   assert.ok(
     ["file", "redis_rest"].includes(payload.alertStateDriver),
     "alertStateDriver must be 'file' or 'redis_rest'"
+  );
+
+  assert.ok(
+    ["memory", "redis"].includes(payload.sessionStateDriver),
+    "sessionStateDriver must be 'memory' or 'redis'"
+  );
+  assert.ok(
+    ["memory", "redis"].includes(payload.sessionStateRequestedDriver),
+    "sessionStateRequestedDriver must be 'memory' or 'redis'"
   );
 
   // Must have at least the core security features enabled
@@ -195,6 +216,7 @@ async function runTests() {
     console.log("  ✓ All required fields present");
     console.log(`  ✓ configVersion: ${payload.configVersion}`);
     console.log(`  ✓ alertStateDriver: ${payload.alertStateDriver}`);
+    console.log(`  ✓ sessionStateDriver: ${payload.sessionStateDriver}`);
     console.log(`  ✓ features count: ${payload.features.length}\n`);
 
     console.log("Test 4: Checking config response headers...");

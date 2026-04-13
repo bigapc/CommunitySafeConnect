@@ -77,6 +77,7 @@ Security health endpoint:
 - `GET /api/health/security` returns security readiness checks, including alert-state driver connectivity.
 - `GET /api/health/security/schema` returns the canonical JSON schema for readiness responses.
 - The endpoint is admin-only and also reports live OIDC discovery/JWKS connectivity when OIDC is configured.
+- The endpoint also reports session-state enforcement health, including requested driver, active driver, revocation enforcement, and multi-instance consistency status.
 - The endpoint sets `Cache-Control: no-store` so readiness data is always fresh.
 - The endpoint also sets `X-Security-Health-Schema-Version` and a `Link rel=describedby` header for contract discovery.
 - Optional: `OIDC_HEALTH_SLOW_THRESHOLD_MS` (default: `1500`) to flag OIDC latency risk in readiness output.
@@ -86,6 +87,7 @@ Security health endpoint:
 - The response includes `schemaVersion` and `recommendedActions` for stable parsing and operator remediation guidance.
 - Canonical JSON schema for this response: `docs/security-health.schema.json`.
 - Health responses include `schemaPath` so consumers can discover the active contract endpoint.
+- When `SESSION_STATE_DRIVER=redis` is requested but the backend is unavailable, readiness includes `session_state_redis_disconnected` as a degradation reason.
 
 Security configuration audit endpoint:
 
@@ -104,6 +106,8 @@ Security configuration audit endpoint:
   - `rate_limiting_enabled`: Per-tenant request rate limiting
   - `session_secure_flags`: Secure cookie flags (httpOnly, secure, sameSite=Strict)
 - The response includes `alertStateDriver` (`file` or `redis_rest`) showing which backend persists alert state.
+- The response includes `sessionStateDriver`, `sessionStateRequestedDriver`, `sessionStateConnected`, and `distributedSessionConsistency` for session enforcement topology visibility.
+- The response includes `sessionRevocationEnforced` to confirm request-time revocation checks are active.
 - The response includes `oidcConfigured`, `rbacEnabled`, and `tenantIsolationEnabled` for high-level capability discovery.
 - Canonical JSON schema for this response: `docs/security-config.schema.json`.
 
