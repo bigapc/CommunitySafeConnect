@@ -44,6 +44,14 @@ Set these variables in `.env.local` for real IdP integration:
 - `OIDC_CLIENT_SECRET`
 - `OIDC_AUTHORIZATION_ENDPOINT` (optional override)
 - `OIDC_TOKEN_ENDPOINT` (optional override)
+- `OIDC_JWKS_URI` (optional override)
 - `OIDC_REDIRECT_URI` (optional override)
 
 For local testing only, `OIDC_MOCK_MODE=true` can be used to bypass real token exchange.
+
+In non-mock mode, callback handling enforces strict ID token verification:
+
+- Signature validation against JWKS
+- `iss` and `aud` validation
+- `exp` validation (via JWT verification)
+- `nonce` binding between start and callback

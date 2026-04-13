@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   buildOidcAuthorizationUrl,
+  createOidcNonce,
   normalizeOrganizationId,
   normalizePath,
   normalizeScope,
@@ -15,6 +16,7 @@ export async function GET(request: NextRequest) {
     nextPath,
     organizationId,
     scope,
+    nonce: createOidcNonce(),
     issuedAt: Date.now(),
   });
 

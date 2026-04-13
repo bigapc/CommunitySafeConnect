@@ -9,7 +9,7 @@ import {
 } from "@/lib/access";
 import { createAuditLog } from "@/lib/localDataStore";
 import { getClientIp } from "@/lib/securityRateLimit";
-import { getSsoConfig, verifyOidcState } from "@/lib/sso";
+import { getSsoConfig, validateOidcIdToken, verifyOidcState } from "@/lib/sso";
 
 export async function GET(request: NextRequest) {
   const error = request.nextUrl.searchParams.get("error");
@@ -60,10 +60,30 @@ export async function GET(request: NextRequest) {
         redirectUrl.searchParams.set("sso_error", "token_exchange_failed");
         return NextResponse.redirect(redirectUrl, 303);
       }
+
+      const tokenPayload = (await tokenResponse.json()) as {
+        id_token?: string;
+        access_token?: string;
+        token_type?: string;
+        expires_in?: number;
+      };
+
+      const validation = await validateOidcIdToken(
+        request.nextUrl.origin,
+        tokenPayload,
+        context.nonce
+      );
+
+      if (!validation.valid) {
+        const redirectUrl = new URL("/access", request.url);
+        redirectUrl.searchParams.set("next", context.nextPath);
+        redirectUrl.searchParams.set("sso_error", validation.error);
+        return NextResponse.redirect(redirectUrl, 303);
+      }
     } catch {
       const redirectUrl = new URL("/access", request.url);
       redirectUrl.searchParams.set("next", context.nextPath);
-      redirectUrl.searchParams.set("sso_error", "token_exchange_failed");
+      redirectUrl.searchParams.set("sso_error", "oidc_validation_failed");
       return NextResponse.redirect(redirectUrl, 303);
     }
   }

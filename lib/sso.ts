@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { createRemoteJWKSet, jwtVerify } from "jose";
 
 export type SsoScope = "organization" | "admin";
 
@@ -6,6 +7,7 @@ export interface OidcStartContext {
   nextPath: string;
   organizationId: string;
   scope: SsoScope;
+  nonce: string;
   issuedAt: number;
 }
 
@@ -15,8 +17,16 @@ interface SsoConfig {
   clientSecret: string | null;
   authEndpoint: string | null;
   tokenEndpoint: string | null;
+  jwksUri: string | null;
   redirectUri: string | null;
   mockMode: boolean;
+}
+
+interface OidcTokenPayload {
+  id_token?: string;
+  access_token?: string;
+  token_type?: string;
+  expires_in?: number;
 }
 
 const DEV_DEFAULT_SESSION_SECRET = "communitysafeconnect-dev-secret";
@@ -39,6 +49,10 @@ export function getSsoConfig(requestOrigin?: string): SsoConfig {
     process.env.OIDC_TOKEN_ENDPOINT ||
     (issuerUrl ? `${issuerUrl.replace(/\/$/, "")}/token` : null);
 
+  const jwksUri =
+    process.env.OIDC_JWKS_URI ||
+    (issuerUrl ? `${issuerUrl.replace(/\/$/, "")}/.well-known/jwks.json` : null);
+
   const redirectUri =
     process.env.OIDC_REDIRECT_URI ||
     (requestOrigin ? `${requestOrigin.replace(/\/$/, "")}/api/sso/oidc/callback` : null);
@@ -49,6 +63,7 @@ export function getSsoConfig(requestOrigin?: string): SsoConfig {
     clientSecret,
     authEndpoint,
     tokenEndpoint,
+    jwksUri,
     redirectUri,
     mockMode: process.env.OIDC_MOCK_MODE === "true" || process.env.NODE_ENV !== "production",
   };
@@ -61,8 +76,13 @@ export function isOidcConfigured(requestOrigin?: string) {
     config.clientId &&
       config.authEndpoint &&
       config.tokenEndpoint &&
+      config.jwksUri &&
       config.redirectUri
   );
+}
+
+export function createOidcNonce() {
+  return Buffer.from(crypto.getRandomValues(new Uint8Array(24))).toString("base64url");
 }
 
 function encodeContext(context: OidcStartContext) {
@@ -131,6 +151,7 @@ export function buildOidcAuthorizationUrl(
     response_type: "code",
     scope: "openid profile email",
     state,
+    nonce: context.nonce,
   });
 
   return `${config.authEndpoint}?${params.toString()}`;
@@ -156,4 +177,38 @@ export function normalizeOrganizationId(value: string | null | undefined) {
     .slice(0, 64);
 
   return normalized || "community-demo-org";
+}
+
+export async function validateOidcIdToken(
+  requestOrigin: string,
+  tokenPayload: OidcTokenPayload,
+  expectedNonce: string
+) {
+  const config = getSsoConfig(requestOrigin);
+
+  if (!config.clientId || !config.issuerUrl || !config.jwksUri) {
+    return { valid: false as const, error: "oidc_not_configured" };
+  }
+
+  if (!tokenPayload.id_token) {
+    return { valid: false as const, error: "missing_id_token" };
+  }
+
+  try {
+    const jwks = createRemoteJWKSet(new URL(config.jwksUri));
+
+    const { payload } = await jwtVerify(tokenPayload.id_token, jwks, {
+      issuer: config.issuerUrl,
+      audience: config.clientId,
+      clockTolerance: 5,
+    });
+
+    if (payload.nonce !== expectedNonce) {
+      return { valid: false as const, error: "invalid_nonce" };
+    }
+
+    return { valid: true as const };
+  } catch {
+    return { valid: false as const, error: "invalid_id_token" };
+  }
 }
