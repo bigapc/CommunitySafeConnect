@@ -1,9 +1,12 @@
 import {
   AccessAuditLogRow,
   ChatMessageRow,
+  CommandCenterEventRow,
   ReportRow,
+  getCommandCenterMetrics,
   listAuditLogs,
   listChatMessages,
+  listCommandCenterEvents,
   listReports,
 } from "@/lib/localDataStore";
 
@@ -49,6 +52,17 @@ export async function getCommandCenterAuditLogs(query: string) {
 
   return {
     auditLogs,
+    error: null,
+  };
+}
+
+export async function getCommandCenterOverview() {
+  const metrics = getCommandCenterMetrics();
+  const recentEvents = listCommandCenterEvents({ ascending: false, limit: 8 });
+
+  return {
+    metrics,
+    recentEvents,
     error: null,
   };
 }

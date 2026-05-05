@@ -82,6 +82,102 @@ a {
   box-shadow: var(--shadow);
 }
 
+.route-transition {
+  animation: routeEnter 380ms ease-out;
+}
+
+@keyframes routeEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  align-items: center;
+}
+
+.hero-stack {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.hero-image-card {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 14px 34px rgba(44, 39, 28, 0.2);
+}
+
+.hero-image-card img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.mission-grid {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.mission-card {
+  margin: 0;
+  padding: 0.85rem;
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+.mission-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 26px rgba(39, 34, 21, 0.16);
+}
+
+.mission-card p {
+  margin: 0.35rem 0;
+}
+
+.sector-showcase {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.sector-card {
+  overflow: hidden;
+  padding: 0;
+}
+
+.sector-card img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-bottom: 1px solid var(--line);
+}
+
+.sector-card h3,
+.sector-card p {
+  padding: 0 0.9rem;
+}
+
+.sector-card h3 {
+  margin-top: 0.75rem;
+  margin-bottom: 0.3rem;
+}
+
+.sector-card p {
+  margin-top: 0;
+  margin-bottom: 0.9rem;
+}
+
 h2 {
   font-size: clamp(1.3rem, 2vw + 0.7rem, 2rem);
 }
@@ -242,6 +338,23 @@ code {
   gap: 0.7rem;
 }
 
+.ops-metrics-grid {
+  margin-top: 0.4rem;
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.ops-metric-card {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.ops-metric-card strong {
+  font-size: 1.6rem;
+  color: #f4fbff;
+}
+
 .control-card {
   border: 1px solid #3f5b75 !important;
   border-radius: 12px !important;
@@ -299,5 +412,11 @@ code {
   .control-room-nav a {
     width: 100%;
     text-align: center;
+  }
+
+  .mission-grid,
+  .sector-showcase,
+  .ops-metrics-grid {
+    grid-template-columns: 1fr;
   }
 }

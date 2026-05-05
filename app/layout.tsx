@@ -1,5 +1,6 @@
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import RouteTransition from "@/components/RouteTransition";
 
 export const metadata = {
   title: "CommunitySafeConnect",
@@ -16,7 +17,7 @@ export default function RootLayout({
       <body suppressHydrationWarning>
         <div className="app-shell">
           <Navbar />
-          {children}
+          <RouteTransition>{children}</RouteTransition>
         </div>
       </body>
     </html>

@@ -13,6 +13,7 @@ export default async function CommandCenterLayout({
       <h2>Command Center Ops Console</h2>
       <p>Manage reports, live message moderation, and access policy logs.</p>
       <nav className="control-room-nav">
+        <Link href="/command-center/overview">Overview</Link>
         <Link href="/command-center/reports">Reports</Link>
         <Link href="/command-center/messages">Messages</Link>
         <Link href="/command-center/audit">Audit</Link>

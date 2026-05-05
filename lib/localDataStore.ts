@@ -30,6 +30,15 @@ export interface AccessAuditLogRow {
   created_at: string;
 }
 
+export interface CommandCenterEventRow {
+  id: string;
+  action: string;
+  target_type: "report" | "message" | "system";
+  target_id: string | null;
+  details: string | null;
+  created_at: string;
+}
+
 function createId(prefix: string) {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return `${prefix}_${crypto.randomUUID()}`;
@@ -82,6 +91,17 @@ const chatMessages: ChatMessageRow[] = [
 
 const auditLogs: AccessAuditLogRow[] = [];
 
+const commandCenterEvents: CommandCenterEventRow[] = [
+  {
+    id: createId("event"),
+    action: "ops_console_initialized",
+    target_type: "system",
+    target_id: null,
+    details: "Command center demo mode initialized.",
+    created_at: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
+  },
+];
+
 function sortByCreatedAt<T extends { created_at: string }>(items: T[], ascending: boolean) {
   return [...items].sort((a, b) => {
     const diff = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
@@ -106,6 +126,12 @@ export function createReport(description: string) {
   };
 
   reports.unshift(report);
+  createCommandCenterEvent({
+    action: "report_received",
+    target_type: "report",
+    target_id: report.id,
+    details: "A new community report was submitted.",
+  });
   return report;
 }
 
@@ -119,6 +145,12 @@ export function markReportReviewed(id: string, reviewedBy = "command-center") {
   report.reviewed = true;
   report.reviewed_at = new Date().toISOString();
   report.reviewed_by = reviewedBy;
+  createCommandCenterEvent({
+    action: "report_reviewed",
+    target_type: "report",
+    target_id: id,
+    details: `Report marked reviewed by ${reviewedBy}.`,
+  });
   return true;
 }
 
@@ -141,6 +173,12 @@ export function createChatMessage(username: string, message: string) {
   };
 
   chatMessages.push(chatMessage);
+  createCommandCenterEvent({
+    action: "chat_message_received",
+    target_type: "message",
+    target_id: chatMessage.id,
+    details: `New chat message from ${username}.`,
+  });
   return chatMessage;
 }
 
@@ -156,6 +194,12 @@ export function setMessageFlag(id: string, mode: "flag" | "unflag") {
     chatMessage.flagged_at = new Date().toISOString();
     chatMessage.flagged_reason = "manual command-center review";
     chatMessage.flagged_by = "command-center";
+    createCommandCenterEvent({
+      action: "message_flagged",
+      target_type: "message",
+      target_id: id,
+      details: "Message flagged by command center.",
+    });
     return true;
   }
 
@@ -163,6 +207,12 @@ export function setMessageFlag(id: string, mode: "flag" | "unflag") {
   chatMessage.flagged_at = null;
   chatMessage.flagged_reason = null;
   chatMessage.flagged_by = null;
+  createCommandCenterEvent({
+    action: "message_unflagged",
+    target_type: "message",
+    target_id: id,
+    details: "Message cleared by command center.",
+  });
   return true;
 }
 
@@ -181,4 +231,39 @@ export function createAuditLog(entry: Omit<AccessAuditLogRow, "id" | "created_at
 
   auditLogs.unshift(log);
   return log;
+}
+
+export function createCommandCenterEvent(
+  entry: Omit<CommandCenterEventRow, "id" | "created_at">
+) {
+  const event: CommandCenterEventRow = {
+    id: createId("event"),
+    created_at: new Date().toISOString(),
+    ...entry,
+  };
+
+  commandCenterEvents.unshift(event);
+  return event;
+}
+
+export function listCommandCenterEvents(options?: { ascending?: boolean; limit?: number }) {
+  const ascending = options?.ascending ?? false;
+  const limit = options?.limit ?? 50;
+  return sortByCreatedAt(commandCenterEvents, ascending).slice(0, limit);
+}
+
+export function getCommandCenterMetrics() {
+  const pendingReports = reports.filter((report) => !report.reviewed).length;
+  const reviewedReports = reports.length - pendingReports;
+  const flaggedMessages = chatMessages.filter((message) => message.flagged).length;
+
+  return {
+    totalReports: reports.length,
+    pendingReports,
+    reviewedReports,
+    totalMessages: chatMessages.length,
+    flaggedMessages,
+    accessAuditEvents: auditLogs.length,
+    commandCenterEvents: commandCenterEvents.length,
+  };
 }
