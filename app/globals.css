@@ -401,28 +401,29 @@ code {
   color: #dbe8f3;
 }
 
-.incident-conflict-banner {
-  margin-top: 0.75rem;
-  padding: 0.65rem;
-  background: rgba(201, 102, 0, 0.12);
-  border: 1px solid #d97706;
-  border-radius: 8px;
-  color: #fcc34d;
-  font-size: 0.85rem;
+.incident-card.has-conflict {
+  border-color: #b8860b !important;
+  border-width: 2px;
+  background: linear-gradient(135deg, #1a2e3a 0%, #2d1f1a 100%) !important;
 }
 
-.incident-conflict-banner p {
-  margin: 0;
+.conflict-banner {
+  background: #3d2816;
+  border: 1px solid #8b6914;
+  border-radius: 6px;
+  padding: 0.55rem;
+  margin: 0.55rem 0;
+  color: #ffd699;
 }
 
-.conflict-button {
-  background: #d97706 !important;
-  color: #fff !important;
-  border: 1px solid #dc2626 !important;
+.conflict-banner strong {
+  color: #ffe6a0;
 }
 
-.conflict-button:hover:not(:disabled) {
-  background: #b45309 !important;
+.conflict-banner small {
+  display: block;
+  margin-top: 0.25rem;
+  color: #e6b800;
 }
 
 .ops-metrics-grid {

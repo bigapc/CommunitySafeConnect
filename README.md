@@ -35,7 +35,13 @@
 - Moderators and above can update incident status, assignment, and escalation directly from the incidents console.
 - Incident actions are tracked in command center events for operational visibility.
 - The incidents console auto-refreshes every 10 seconds and shows recent per-incident activity history.
-- **Conflict Detection**: If another moderator updates an incident while you're editing, a conflict warning will appear. You can choose to force update (overwriting theirs) or refresh to see their latest changes.
+
+## Concurrent Edit Conflict Detection
+
+- When multiple moderators edit the same incident simultaneously, the system detects conflicts on refresh.
+- Conflicting incidents are highlighted with a gold border and banner indicating which fields changed.
+- Operators can choose to **Reload** (discard local changes) or **Overwrite** (save local changes) when conflicts occur.
+- Fields are locked during conflict resolution to prevent accidental unsaved edits.
 
 ## Access Audit Trail
 

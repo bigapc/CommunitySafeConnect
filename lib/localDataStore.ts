@@ -59,9 +59,9 @@ export interface IncidentRow {
   assignee: string | null;
   escalated: boolean;
   sla_due_at: string | null;
+  version: number;
   created_at: string;
   updated_at: string;
-  version: number;
 }
 
 export interface UsageEventRow {
@@ -156,9 +156,9 @@ const incidents: IncidentRow[] = [
     assignee: "ops-shift-alpha",
     escalated: true,
     sla_due_at: new Date(Date.now() + 1000 * 60 * 60).toISOString(),
+    version: 1,
     created_at: new Date(Date.now() - 1000 * 60 * 40).toISOString(),
     updated_at: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
-    version: 2,
   },
   {
     id: createId("inc"),
@@ -170,9 +170,9 @@ const incidents: IncidentRow[] = [
     assignee: "ops-moderation",
     escalated: false,
     sla_due_at: new Date(Date.now() + 1000 * 60 * 60 * 8).toISOString(),
+    version: 1,
     created_at: new Date(Date.now() - 1000 * 60 * 70).toISOString(),
     updated_at: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
-    version: 1,
   },
 ];
 
@@ -514,9 +514,9 @@ export function createIncident(
     assignee: input.assignee || null,
     escalated: input.severity === "critical",
     sla_due_at: createSlaDueAt(input.severity),
+    version: 1,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-    version: 0,
   };
 
   incidents.unshift(incident);
@@ -541,8 +541,8 @@ export function updateIncident(
     status?: IncidentStatus;
     assignee?: string | null;
     escalated?: boolean;
-  },
-  expectedVersion?: number
+    expectedVersion?: number;
+  }
 ) {
   const scopedOrgId = getScopedOrgId(organizationId);
   const incident = incidents.find(
@@ -553,8 +553,15 @@ export function updateIncident(
     return null;
   }
 
-  if (expectedVersion !== undefined && incident.version !== expectedVersion) {
-    throw new IncidentConflictError(expectedVersion, incident.version);
+  if (
+    typeof updates.expectedVersion === "number" &&
+    updates.expectedVersion !== incident.version
+  ) {
+    return {
+      conflict: true as const,
+      expectedVersion: updates.expectedVersion,
+      actualVersion: incident.version,
+    };
   }
 
   if (updates.status) {
@@ -569,8 +576,8 @@ export function updateIncident(
     incident.escalated = updates.escalated;
   }
 
-  incident.updated_at = new Date().toISOString();
   incident.version += 1;
+  incident.updated_at = new Date().toISOString();
 
   createCommandCenterEvent({
     organization_id: scopedOrgId,
@@ -581,13 +588,6 @@ export function updateIncident(
   });
 
   return incident;
-}
-
-export class IncidentConflictError extends Error {
-  constructor(public expectedVersion: number, public actualVersion: number) {
-    super(`Incident version mismatch: expected ${expectedVersion}, got ${actualVersion}`);
-    this.name = "IncidentConflictError";
-  }
 }
 
 export function listInvoiceEvents(options?: {
