@@ -22,9 +22,19 @@
 - `/command-center` redirects to `/command-center/reports`.
 - `/admin` now redirects to `/command-center` for compatibility.
 - Command center subroutes:
+	- `/command-center/overview`
 	- `/command-center/reports`
+	- `/command-center/incidents`
 	- `/command-center/messages`
 	- `/command-center/audit`
+	- `/command-center/subscription`
+
+## Incident Operations
+
+- Use `/command-center/incidents` to create incidents with title, description, severity, and assignee.
+- Moderators and above can update incident status, assignment, and escalation directly from the incidents console.
+- Incident actions are tracked in command center events for operational visibility.
+- The incidents console auto-refreshes every 10 seconds and shows recent per-incident activity history.
 
 ## Access Audit Trail
 

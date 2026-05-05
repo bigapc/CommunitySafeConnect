@@ -339,6 +339,68 @@ code {
   gap: 0.7rem;
 }
 
+.incident-create-form {
+  padding: 0.85rem;
+}
+
+.incident-create-form textarea,
+.incident-create-form select,
+.incident-create-form input,
+.incident-card select,
+.incident-card input {
+  background: #0c1f2e;
+  border: 1px solid #3f5b75;
+  color: #eef8ff;
+  border-radius: 8px;
+}
+
+.incident-create-form textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 88px;
+  margin-top: 0.55rem;
+  padding: 0.6rem;
+}
+
+.incident-grid {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.incident-card {
+  padding: 0.75rem;
+}
+
+.incident-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #c4d8e8;
+  font-size: 0.9rem;
+}
+
+.incident-checkbox input {
+  width: auto;
+}
+
+.incident-history {
+  margin-top: 0.75rem;
+  border-top: 1px dashed #35526c;
+  padding-top: 0.55rem;
+}
+
+.incident-history ul {
+  margin: 0.4rem 0 0;
+  padding-left: 1rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.incident-history li {
+  color: #dbe8f3;
+}
+
 .ops-metrics-grid {
   margin-top: 0.4rem;
   display: grid;
@@ -417,7 +479,8 @@ code {
 
   .mission-grid,
   .sector-showcase,
-  .ops-metrics-grid {
+  .ops-metrics-grid,
+  .incident-grid {
     grid-template-columns: 1fr;
   }
 }

@@ -8,6 +8,7 @@ import {
   listCommandCenterEvents,
   listReports,
 } from "@/lib/localDataStore";
+import type { CommandCenterEventRow } from "@/lib/localDataStore";
 import { getOrganizationById } from "@/lib/tenancy";
 
 function includesQuery(value: string | null | undefined, query: string) {
@@ -75,6 +76,32 @@ export async function getCommandCenterOverviewByOrganization(organizationId: str
   };
 }
 
+export function getIncidentEventsById(
+  organizationId: string,
+  incidentIds: string[],
+  maxEventsPerIncident = 4
+) {
+  const idSet = new Set(incidentIds);
+  const incidentEvents = listCommandCenterEvents({ organizationId, ascending: false, limit: 500 }).filter(
+    (event) => event.target_type === "incident" && !!event.target_id && idSet.has(event.target_id)
+  );
+
+  const incidentEventsById: Record<string, CommandCenterEventRow[]> = {};
+
+  for (const event of incidentEvents) {
+    const incidentId = event.target_id as string;
+    const current = incidentEventsById[incidentId] || [];
+
+    if (current.length >= maxEventsPerIncident) {
+      continue;
+    }
+
+    incidentEventsById[incidentId] = [...current, event];
+  }
+
+  return incidentEventsById;
+}
+
 export async function getCommandCenterIncidents(organizationId: string, query: string) {
   const incidents = listIncidents({ organizationId, ascending: false, limit: 100 }).filter((incident) => {
     return (
@@ -85,8 +112,14 @@ export async function getCommandCenterIncidents(organizationId: string, query: s
     );
   });
 
+  const incidentEventsById = getIncidentEventsById(
+    organizationId,
+    incidents.map((incident) => incident.id)
+  );
+
   return {
     incidents,
+    incidentEventsById,
     error: null,
   };
 }

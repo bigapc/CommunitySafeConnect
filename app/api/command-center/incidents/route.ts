@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRoleForApi } from "@/lib/access";
 import { createIncident, listIncidents } from "@/lib/localDataStore";
+import { getIncidentEventsById } from "@/lib/commandCenterData";
 
 export async function GET() {
   const access = await requireRoleForApi("moderator");
@@ -9,8 +10,15 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
+  const incidents = listIncidents({ organizationId: access.organizationId, ascending: false, limit: 100 });
+  const incidentEventsById = getIncidentEventsById(
+    access.organizationId,
+    incidents.map((incident) => incident.id)
+  );
+
   return NextResponse.json({
-    incidents: listIncidents({ organizationId: access.organizationId, ascending: false, limit: 100 }),
+    incidents,
+    incidentEventsById,
   });
 }
 
