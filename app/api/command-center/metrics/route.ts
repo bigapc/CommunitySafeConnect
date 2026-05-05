@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { hasAdminAccess } from "@/lib/access";
+import { getCurrentAccessContext, hasAdminAccess } from "@/lib/access";
 import { getCommandCenterMetrics, listCommandCenterEvents } from "@/lib/localDataStore";
 
 export async function GET() {
@@ -7,8 +7,14 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
+  const context = await getCurrentAccessContext();
+
+  if (!context) {
+    return NextResponse.json({ error: "Organization context not found." }, { status: 401 });
+  }
+
   return NextResponse.json({
-    metrics: getCommandCenterMetrics(),
-    recentEvents: listCommandCenterEvents({ ascending: false, limit: 8 }),
+    metrics: getCommandCenterMetrics(context.organizationId),
+    recentEvents: listCommandCenterEvents({ organizationId: context.organizationId, ascending: false, limit: 8 }),
   });
 }

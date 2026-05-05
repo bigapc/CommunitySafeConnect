@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { hasAdminAccess } from "@/lib/access";
+import { requireRoleForApi } from "@/lib/access";
 import { setMessageFlag } from "@/lib/localDataStore";
 
 function sanitizeReturnTo(value: string | null) {
@@ -14,7 +14,9 @@ export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  if (!(await hasAdminAccess())) {
+  const access = await requireRoleForApi("moderator");
+
+  if (!access) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
@@ -24,7 +26,7 @@ export async function POST(
   const mode = formData.get("mode")?.toString() === "unflag" ? "unflag" : "flag";
 
   try {
-    const updated = setMessageFlag(id, mode);
+    const updated = setMessageFlag(access.organizationId, id, mode);
 
     if (!updated) {
       return NextResponse.json({ error: "Message not found." }, { status: 404 });

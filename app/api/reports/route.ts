@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { hasOrganizationAccess } from "@/lib/access";
+import { getCurrentAccessContext, hasOrganizationAccess } from "@/lib/access";
 import { createReport } from "@/lib/localDataStore";
 
 export async function POST(request: NextRequest) {
@@ -8,14 +8,23 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const body = (await request.json()) as { description?: string };
+    const body = (await request.json()) as {
+      description?: string;
+      severity?: "low" | "medium" | "high" | "critical";
+    };
     const description = body.description?.trim();
+    const severity = body.severity || "medium";
+    const context = await getCurrentAccessContext();
+
+    if (!context) {
+      return NextResponse.json({ error: "Organization context not found." }, { status: 401 });
+    }
 
     if (!description) {
       return NextResponse.json({ error: "Description is required." }, { status: 400 });
     }
 
-    createReport(description);
+    createReport(context.organizationId, description, severity);
 
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch (error) {

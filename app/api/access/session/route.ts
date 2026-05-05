@@ -3,12 +3,17 @@ import {
   ADMIN_COOKIE_NAME,
   AccessScope,
   ORGANIZATION_COOKIE_NAME,
+  SESSION_CONTEXT_COOKIE_NAME,
+  createAccessContext,
+  createSessionContextCookieValue,
   createSessionCookieValue,
+  getCurrentAccessContext,
   getExpectedAccessCode,
   getPolicyRetentionMaxAgeSeconds,
   getSessionCookieOptions,
 } from "@/lib/access";
 import { createAuditLog } from "@/lib/localDataStore";
+import { getDefaultOrganizationId, getOrganizationById } from "@/lib/tenancy";
 
 function getClientIp(request: NextRequest) {
   const forwardedFor = request.headers.get("x-forwarded-for");
@@ -23,22 +28,39 @@ function getClientIp(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as { code?: string; scope?: AccessScope };
+    const body = (await request.json()) as {
+      code?: string;
+      scope?: AccessScope;
+      organizationId?: string;
+      role?: string;
+    };
     const code = body.code?.trim();
     const scope: AccessScope = body.scope === "admin" ? "admin" : "organization";
+    const organizationId = (body.organizationId || getDefaultOrganizationId()).trim();
+    const organization = getOrganizationById(organizationId);
 
     if (!code) {
       return NextResponse.json({ error: "Access code is required." }, { status: 400 });
     }
 
-    if (code !== getExpectedAccessCode(scope)) {
+    if (!organization) {
+      return NextResponse.json({ error: "Invalid organization." }, { status: 400 });
+    }
+
+    if (code !== getExpectedAccessCode(scope, organizationId)) {
       return NextResponse.json({ error: "Invalid access code." }, { status: 401 });
     }
 
     const response = NextResponse.json({ ok: true });
     const cookieOptions = getSessionCookieOptions();
+    const context = createAccessContext(scope, organizationId, body.role);
 
     response.cookies.set(ORGANIZATION_COOKIE_NAME, createSessionCookieValue("organization"), cookieOptions);
+    response.cookies.set(
+      SESSION_CONTEXT_COOKIE_NAME,
+      createSessionContextCookieValue(context),
+      cookieOptions
+    );
 
     if (scope === "admin") {
       response.cookies.set(ADMIN_COOKIE_NAME, createSessionCookieValue("admin"), cookieOptions);
@@ -61,8 +83,11 @@ export async function DELETE(request: NextRequest) {
   const retainedUntil = retentionSeconds
     ? new Date(Date.now() + retentionSeconds * 1000).toISOString()
     : null;
+  const existingContext = await getCurrentAccessContext();
+  const organizationId = existingContext?.organizationId || getDefaultOrganizationId();
 
   createAuditLog({
+    organization_id: organizationId,
     action: "logout",
     scope,
     retention_mode: retentionMode,
@@ -91,11 +116,20 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    if (existingContext) {
+      response.cookies.set(
+        SESSION_CONTEXT_COOKIE_NAME,
+        createSessionContextCookieValue(existingContext),
+        policyCookieOptions
+      );
+    }
+
     return response;
   }
 
   response.cookies.delete(ORGANIZATION_COOKIE_NAME);
   response.cookies.delete(ADMIN_COOKIE_NAME);
+  response.cookies.delete(SESSION_CONTEXT_COOKIE_NAME);
 
   return response;
 }

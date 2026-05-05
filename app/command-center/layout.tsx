@@ -15,8 +15,10 @@ export default async function CommandCenterLayout({
       <nav className="control-room-nav">
         <Link href="/command-center/overview">Overview</Link>
         <Link href="/command-center/reports">Reports</Link>
+        <Link href="/command-center/incidents">Incidents</Link>
         <Link href="/command-center/messages">Messages</Link>
         <Link href="/command-center/audit">Audit</Link>
+        <Link href="/command-center/subscription">Subscription</Link>
       </nav>
       {children}
     </main>

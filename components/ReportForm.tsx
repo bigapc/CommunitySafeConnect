@@ -4,6 +4,7 @@ import { useState } from "react";
 
 export default function ReportForm() {
   const [description, setDescription] = useState("");
+  const [severity, setSeverity] = useState<"low" | "medium" | "high" | "critical">("medium");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -18,7 +19,7 @@ export default function ReportForm() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ description }),
+      body: JSON.stringify({ description, severity }),
     });
 
     const payload = (await response.json().catch(() => null)) as { error?: string } | null;
@@ -42,6 +43,18 @@ export default function ReportForm() {
         </p>
       )}
       <form onSubmit={handleSubmit}>
+        <label>
+          Priority
+          <select
+            value={severity}
+            onChange={(event) => setSeverity(event.target.value as typeof severity)}
+          >
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="critical">Critical</option>
+          </select>
+        </label>
         <textarea
           placeholder="Describe the situation..."
           value={description}

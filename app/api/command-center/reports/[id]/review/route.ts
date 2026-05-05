@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { hasAdminAccess } from "@/lib/access";
+import { requireRoleForApi } from "@/lib/access";
 import { markReportReviewed } from "@/lib/localDataStore";
 
 function sanitizeReturnTo(value: string | null) {
@@ -14,7 +14,9 @@ export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  if (!(await hasAdminAccess())) {
+  const access = await requireRoleForApi("moderator");
+
+  if (!access) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
@@ -23,7 +25,7 @@ export async function POST(
   const returnTo = sanitizeReturnTo(formData.get("returnTo")?.toString() || null);
 
   try {
-    const updated = markReportReviewed(id, "command-center");
+    const updated = markReportReviewed(access.organizationId, id, access.role);
 
     if (!updated) {
       return NextResponse.json({ error: "Report not found." }, { status: 404 });

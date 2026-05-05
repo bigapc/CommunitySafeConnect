@@ -1,4 +1,5 @@
 import { getCommandCenterReports } from "@/lib/commandCenterData";
+import { getCurrentAccessContext } from "@/lib/access";
 
 interface CommandCenterReportsPageProps {
   searchParams: Promise<{
@@ -8,10 +9,12 @@ interface CommandCenterReportsPageProps {
 
 export default async function CommandCenterReportsPage({ searchParams }: CommandCenterReportsPageProps) {
   const params = await searchParams;
+  const context = await getCurrentAccessContext();
+  const organizationId = context?.organizationId || "metro-city-university";
   const query = (params.q || "").trim().toLowerCase();
   const returnTo = `/command-center/reports${params.q ? `?q=${encodeURIComponent(params.q)}` : ""}`;
 
-  const { reports, error } = await getCommandCenterReports(query);
+  const { reports, error } = await getCommandCenterReports(organizationId, query);
 
   return (
     <section>

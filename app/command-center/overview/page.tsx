@@ -1,10 +1,16 @@
-import { getCommandCenterOverview } from "@/lib/commandCenterData";
+import { getCurrentAccessContext } from "@/lib/access";
+import { getCommandCenterOverviewByOrganization } from "@/lib/commandCenterData";
 
 export default async function CommandCenterOverviewPage() {
-  const { metrics, recentEvents } = await getCommandCenterOverview();
+  const context = await getCurrentAccessContext();
+  const organizationId = context?.organizationId || "metro-city-university";
+  const { organization, metrics, usage, recentEvents } = await getCommandCenterOverviewByOrganization(organizationId);
 
   return (
     <section>
+      <p className="control-meta" style={{ marginTop: 0 }}>
+        Tenant: {organization?.name || organizationId} | Plan: {usage.plan} | Month: {usage.month}
+      </p>
       <h3>Operational Overview</h3>
       <div className="ops-metrics-grid">
         <article className="control-card ops-metric-card">
@@ -28,6 +34,11 @@ export default async function CommandCenterOverviewPage() {
           <small className="control-meta">
             Access: {metrics.accessAuditEvents} | Ops: {metrics.commandCenterEvents}
           </small>
+        </article>
+        <article className="control-card ops-metric-card">
+          <small className="control-meta">Open Incidents</small>
+          <strong>{metrics.openIncidents}</strong>
+          <small className="control-meta">Escalated: {metrics.escalatedIncidents}</small>
         </article>
       </div>
 
