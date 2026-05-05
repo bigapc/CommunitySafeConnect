@@ -401,6 +401,30 @@ code {
   color: #dbe8f3;
 }
 
+.incident-conflict-banner {
+  margin-top: 0.75rem;
+  padding: 0.65rem;
+  background: rgba(201, 102, 0, 0.12);
+  border: 1px solid #d97706;
+  border-radius: 8px;
+  color: #fcc34d;
+  font-size: 0.85rem;
+}
+
+.incident-conflict-banner p {
+  margin: 0;
+}
+
+.conflict-button {
+  background: #d97706 !important;
+  color: #fff !important;
+  border: 1px solid #dc2626 !important;
+}
+
+.conflict-button:hover:not(:disabled) {
+  background: #b45309 !important;
+}
+
 .ops-metrics-grid {
   margin-top: 0.4rem;
   display: grid;

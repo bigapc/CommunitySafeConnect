@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRoleForApi } from "@/lib/access";
-import { updateIncident } from "@/lib/localDataStore";
+import { updateIncident, IncidentConflictError } from "@/lib/localDataStore";
 
 export async function PATCH(
   request: NextRequest,
@@ -19,19 +19,33 @@ export async function PATCH(
       status?: "new" | "triaged" | "in_progress" | "resolved";
       assignee?: string | null;
       escalated?: boolean;
+      version?: number;
     };
 
-    const updated = updateIncident(access.organizationId, id, {
-      status: body.status,
-      assignee: body.assignee,
-      escalated: body.escalated,
-    });
+    try {
+      const updated = updateIncident(access.organizationId, id, {
+        status: body.status,
+        assignee: body.assignee,
+        escalated: body.escalated,
+      }, body.version);
 
-    if (!updated) {
-      return NextResponse.json({ error: "Incident not found." }, { status: 404 });
+      if (!updated) {
+        return NextResponse.json({ error: "Incident not found." }, { status: 404 });
+      }
+
+      return NextResponse.json({ incident: updated });
+    } catch (error) {
+      if (error instanceof IncidentConflictError) {
+        return NextResponse.json({
+          error: "Incident was modified by another user.",
+          conflict: true,
+          expectedVersion: error.expectedVersion,
+          actualVersion: error.actualVersion,
+        }, { status: 409 });
+      }
+
+      throw error;
     }
-
-    return NextResponse.json({ incident: updated });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to update incident.";
     return NextResponse.json({ error: message }, { status: 500 });

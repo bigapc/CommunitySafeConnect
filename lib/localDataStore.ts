@@ -61,6 +61,7 @@ export interface IncidentRow {
   sla_due_at: string | null;
   created_at: string;
   updated_at: string;
+  version: number;
 }
 
 export interface UsageEventRow {
@@ -157,6 +158,7 @@ const incidents: IncidentRow[] = [
     sla_due_at: new Date(Date.now() + 1000 * 60 * 60).toISOString(),
     created_at: new Date(Date.now() - 1000 * 60 * 40).toISOString(),
     updated_at: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
+    version: 2,
   },
   {
     id: createId("inc"),
@@ -170,6 +172,7 @@ const incidents: IncidentRow[] = [
     sla_due_at: new Date(Date.now() + 1000 * 60 * 60 * 8).toISOString(),
     created_at: new Date(Date.now() - 1000 * 60 * 70).toISOString(),
     updated_at: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
+    version: 1,
   },
 ];
 
@@ -513,6 +516,7 @@ export function createIncident(
     sla_due_at: createSlaDueAt(input.severity),
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    version: 0,
   };
 
   incidents.unshift(incident);
@@ -537,7 +541,8 @@ export function updateIncident(
     status?: IncidentStatus;
     assignee?: string | null;
     escalated?: boolean;
-  }
+  },
+  expectedVersion?: number
 ) {
   const scopedOrgId = getScopedOrgId(organizationId);
   const incident = incidents.find(
@@ -546,6 +551,10 @@ export function updateIncident(
 
   if (!incident) {
     return null;
+  }
+
+  if (expectedVersion !== undefined && incident.version !== expectedVersion) {
+    throw new IncidentConflictError(expectedVersion, incident.version);
   }
 
   if (updates.status) {
@@ -561,6 +570,7 @@ export function updateIncident(
   }
 
   incident.updated_at = new Date().toISOString();
+  incident.version += 1;
 
   createCommandCenterEvent({
     organization_id: scopedOrgId,
@@ -571,6 +581,13 @@ export function updateIncident(
   });
 
   return incident;
+}
+
+export class IncidentConflictError extends Error {
+  constructor(public expectedVersion: number, public actualVersion: number) {
+    super(`Incident version mismatch: expected ${expectedVersion}, got ${actualVersion}`);
+    this.name = "IncidentConflictError";
+  }
 }
 
 export function listInvoiceEvents(options?: {

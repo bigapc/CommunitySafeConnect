@@ -18,6 +18,12 @@ type IncidentDraft = {
   status: IncidentStatus;
   assignee: string;
   escalated: boolean;
+  version: number;
+};
+
+type IncidentConflict = {
+  expectedVersion: number;
+  actualVersion: number;
 };
 
 const severityOptions: IncidentSeverity[] = ["low", "medium", "high", "critical"];
@@ -28,6 +34,7 @@ function defaultDraft(incident: IncidentRow): IncidentDraft {
     status: incident.status,
     assignee: incident.assignee || "",
     escalated: incident.escalated,
+    version: incident.version,
   };
 }
 
@@ -60,6 +67,7 @@ export default function IncidentsConsole({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [conflicts, setConflicts] = useState<Record<string, IncidentConflict>>({});
 
   const filteredIncidents = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -114,6 +122,7 @@ export default function IncidentsConsole({
       }
       return next;
     });
+    setConflicts({});
     setErrorMessage("");
   }, []);
 
@@ -165,7 +174,7 @@ export default function IncidentsConsole({
     }
   }
 
-  async function saveIncident(id: string) {
+  async function saveIncident(id: string, forceUpdate = false) {
     const draft = drafts[id];
 
     if (!draft) {
@@ -185,12 +194,32 @@ export default function IncidentsConsole({
           status: draft.status,
           assignee: draft.assignee.trim() || null,
           escalated: draft.escalated,
+          version: forceUpdate ? undefined : draft.version,
         }),
       });
 
       const payload = (await response.json().catch(() => null)) as
-        | { incident?: IncidentRow; error?: string }
+        | {
+            incident?: IncidentRow;
+            error?: string;
+            conflict?: boolean;
+            expectedVersion?: number;
+            actualVersion?: number;
+          }
         | null;
+
+      if (response.status === 409 && payload?.conflict && !forceUpdate) {
+        setConflicts((current) => ({
+          ...current,
+          [id]: {
+            expectedVersion: payload.expectedVersion || 0,
+            actualVersion: payload.actualVersion || 0,
+          },
+        }));
+        setErrorMessage(payload.error || "Conflict detected. Refreshing latest data...");
+        await refreshIncidents();
+        return;
+      }
 
       if (!response.ok || !payload?.incident) {
         setErrorMessage(payload?.error || "Unable to update incident.");
@@ -204,6 +233,11 @@ export default function IncidentsConsole({
         return sortByUpdatedAtDesc(updated);
       });
       syncDraft(payload.incident);
+      setConflicts((current) => {
+        const next = { ...current };
+        delete next[id];
+        return next;
+      });
       await refreshIncidents();
       setErrorMessage("");
     } finally {
@@ -368,10 +402,30 @@ export default function IncidentsConsole({
                   <span className={`status-pill ${draft.escalated ? "flagged" : "clean"}`}>
                     {draft.escalated ? "Escalated" : "Normal"}
                   </span>
-                  <button type="button" onClick={() => void saveIncident(incident.id)} disabled={isSaving || isSubmitting}>
-                    {isSaving ? "Saving..." : "Save"}
-                  </button>
+                  {conflicts[incident.id] ? (
+                    <button
+                      type="button"
+                      onClick={() => void saveIncident(incident.id, true)}
+                      disabled={isSaving || isSubmitting}
+                      className="conflict-button"
+                    >
+                      {isSaving ? "Forcing..." : "Force Update"}
+                    </button>
+                  ) : (
+                    <button type="button" onClick={() => void saveIncident(incident.id)} disabled={isSaving || isSubmitting}>
+                      {isSaving ? "Saving..." : "Save"}
+                    </button>
+                  )}
                 </div>
+
+                {conflicts[incident.id] && (
+                  <div className="incident-conflict-banner">
+                    <p>
+                      <strong>⚠️ Edit Conflict</strong> Another user modified this incident (version {conflicts[incident.id].actualVersion}).
+                      Your changes may override theirs. Click "Force Update" to proceed or "Refresh" to see latest changes.
+                    </p>
+                  </div>
+                )}
 
                 <div className="incident-history">
                   <small className="control-meta" style={{ display: "block" }}>
