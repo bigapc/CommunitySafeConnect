@@ -14,3 +14,7 @@ pnpm-debug.log*
 # env files
 .env.local
 .env*.local
+
+# supabase local CLI state
+supabase/.temp/
+supabase/.branches/
