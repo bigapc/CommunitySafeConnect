@@ -9,6 +9,7 @@ export const SESSION_CONTEXT_COOKIE_NAME = "communitysafeconnect_context";
 
 const DEFAULT_SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
 const DEFAULT_POLICY_RETENTION_SECONDS = 60 * 60 * 24;
+const DEFAULT_ORGANIZATION_HISTORY_HOURS = 24;
 const DEV_DEFAULT_SESSION_SECRET = "communitysafeconnect-dev-secret";
 const DEV_DEFAULT_ORGANIZATION_ACCESS_CODE = "community-org-demo";
 const DEV_DEFAULT_ADMIN_ACCESS_CODE = "community-admin-demo";
@@ -199,6 +200,18 @@ export function getPolicyRetentionMaxAgeSeconds() {
     process.env.ACCESS_POLICY_RETENTION_SECONDS,
     DEFAULT_POLICY_RETENTION_SECONDS
   );
+}
+
+export function getOrganizationHistoryWindowHours() {
+  return readPositiveNumber(
+    process.env.ORGANIZATION_HISTORY_WINDOW_HOURS,
+    DEFAULT_ORGANIZATION_HISTORY_HOURS
+  );
+}
+
+export function getOrganizationHistoryCutoffIso(referenceTime = Date.now()) {
+  const cutoffMs = referenceTime - getOrganizationHistoryWindowHours() * 60 * 60 * 1000;
+  return new Date(cutoffMs).toISOString();
 }
 
 export function getSessionCookieOptions(maxAge = getAccessSessionMaxAgeSeconds()) {

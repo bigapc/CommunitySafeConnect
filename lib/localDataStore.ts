@@ -633,6 +633,25 @@ export function createInvoiceEvent(
   return event;
 }
 
+export function requestDataRemoval(
+  organizationId: string,
+  input: {
+    requestedBy: string;
+    dataset: "messages" | "reports";
+    reason: string;
+  }
+) {
+  const scopedOrgId = getScopedOrgId(organizationId);
+
+  return createCommandCenterEvent({
+    organization_id: scopedOrgId,
+    action: "data_removal_requested",
+    target_type: "system",
+    target_id: null,
+    details: `${input.dataset} requestedBy=${input.requestedBy} reason=${input.reason}`,
+  });
+}
+
 export function getOrganizationUsageSnapshot(organizationId: string) {
   const scopedOrgId = getScopedOrgId(organizationId);
   const organization = getOrganizationById(scopedOrgId);

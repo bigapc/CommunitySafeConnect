@@ -11,9 +11,10 @@ interface ChatMessage {
 
 interface ChatClientProps {
   initialMessages: ChatMessage[];
+  historyWindowHours: number;
 }
 
-export default function ChatClient({ initialMessages }: ChatClientProps) {
+export default function ChatClient({ initialMessages, historyWindowHours }: ChatClientProps) {
   const [messages, setMessages] = useState(initialMessages);
   const [username, setUsername] = useState("");
   const [sessionUsername, setSessionUsername] = useState("");
@@ -132,6 +133,10 @@ export default function ChatClient({ initialMessages }: ChatClientProps) {
       <h2>Organization Chat</h2>
       <p style={{ color: "#94a3b8" }}>
         Chatting as <strong style={{ color: "#00c2ff" }}>{sessionUsername}</strong>
+      </p>
+      <p style={{ color: "#f5d08a", marginTop: "-0.35rem" }}>
+        Policy: only the most recent {historyWindowHours} hours are visible here. For older records,
+        contact the command center for evidence access.
       </p>
       <div
         style={{

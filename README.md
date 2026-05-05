@@ -47,3 +47,13 @@
 
 - Logout actions are recorded in `public.access_audit_logs` with action, scope, retention mode, request path, IP, user-agent, and timestamp.
 - Run migration `20260406_create_access_audit_logs.sql` before relying on production audit entries.
+
+## Data Security Policy
+
+- Hard deletion of reports and messages is not available through organization-facing APIs.
+- Limited removal review can only be requested by organization authority (`org_admin` and above):
+	- `DELETE /api/reports` with JSON body `{ "reason": "..." }`
+	- `DELETE /api/chat/messages` with JSON body `{ "reason": "..." }`
+- These endpoints do not delete data. They create a command-center review event for policy handling.
+- Organization-facing views expose only recent history (`ORGANIZATION_HISTORY_WINDOW_HOURS`, default `24`).
+- Historical evidence access must be requested from the command center for emergency and legal workflows.
