@@ -81,6 +81,24 @@ export interface InvoiceEventRow {
   created_at: string;
 }
 
+export type EvidenceDataset = "messages" | "reports" | "mixed";
+export type EvidenceRequestStatus = "pending" | "approved" | "rejected" | "exported";
+
+export interface EvidenceRequestRow {
+  id: string;
+  organization_id: string;
+  dataset: EvidenceDataset;
+  reason: string;
+  case_reference: string | null;
+  requested_by: string;
+  requested_at: string;
+  status: EvidenceRequestStatus;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  review_notes: string | null;
+  exported_at: string | null;
+}
+
 function createId(prefix: string) {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return `${prefix}_${crypto.randomUUID()}`;
@@ -200,6 +218,23 @@ const commandCenterEvents: CommandCenterEventRow[] = [
     target_id: null,
     details: "Command center demo mode initialized.",
     created_at: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
+  },
+];
+
+const evidenceRequests: EvidenceRequestRow[] = [
+  {
+    id: createId("evidence"),
+    organization_id: getDefaultOrganizationId(),
+    dataset: "messages",
+    reason: "Historical records requested for official incident follow-up.",
+    case_reference: "CASE-2026-0411",
+    requested_by: "org_admin",
+    requested_at: new Date(Date.now() - 1000 * 60 * 50).toISOString(),
+    status: "pending",
+    reviewed_by: null,
+    reviewed_at: null,
+    review_notes: null,
+    exported_at: null,
   },
 ];
 
@@ -650,6 +685,132 @@ export function requestDataRemoval(
     target_id: null,
     details: `${input.dataset} requestedBy=${input.requestedBy} reason=${input.reason}`,
   });
+}
+
+export function listEvidenceRequests(options?: {
+  organizationId?: string;
+  ascending?: boolean;
+  limit?: number;
+}) {
+  const organizationId = getScopedOrgId(options?.organizationId);
+  const ascending = options?.ascending ?? false;
+  const limit = options?.limit ?? 100;
+  return sortByCreatedAt(
+    evidenceRequests
+      .filter((request) => request.organization_id === organizationId)
+      .map((request) => ({ ...request, created_at: request.requested_at })),
+    ascending
+  )
+    .slice(0, limit)
+    .map(({ created_at: _createdAt, ...request }) => request);
+}
+
+export function createEvidenceRequest(
+  organizationId: string,
+  input: {
+    dataset: EvidenceDataset;
+    reason: string;
+    caseReference?: string | null;
+    requestedBy: string;
+  }
+) {
+  const scopedOrgId = getScopedOrgId(organizationId);
+  const request: EvidenceRequestRow = {
+    id: createId("evidence"),
+    organization_id: scopedOrgId,
+    dataset: input.dataset,
+    reason: input.reason,
+    case_reference: input.caseReference?.trim() || null,
+    requested_by: input.requestedBy,
+    requested_at: new Date().toISOString(),
+    status: "pending",
+    reviewed_by: null,
+    reviewed_at: null,
+    review_notes: null,
+    exported_at: null,
+  };
+
+  evidenceRequests.unshift(request);
+
+  createCommandCenterEvent({
+    organization_id: scopedOrgId,
+    action: "evidence_request_created",
+    target_type: "system",
+    target_id: request.id,
+    details: `dataset=${request.dataset} requestedBy=${request.requested_by}`,
+  });
+
+  return request;
+}
+
+export function reviewEvidenceRequest(
+  organizationId: string,
+  requestId: string,
+  input: {
+    status: "approved" | "rejected";
+    reviewedBy: string;
+    reviewNotes?: string | null;
+  }
+) {
+  const scopedOrgId = getScopedOrgId(organizationId);
+  const request = evidenceRequests.find(
+    (item) => item.id === requestId && item.organization_id === scopedOrgId
+  );
+
+  if (!request) {
+    return null;
+  }
+
+  request.status = input.status;
+  request.reviewed_by = input.reviewedBy;
+  request.reviewed_at = new Date().toISOString();
+  request.review_notes = input.reviewNotes?.trim() || null;
+
+  createCommandCenterEvent({
+    organization_id: scopedOrgId,
+    action: "evidence_request_reviewed",
+    target_type: "system",
+    target_id: request.id,
+    details: `status=${request.status} reviewedBy=${request.reviewed_by}`,
+  });
+
+  return request;
+}
+
+export function exportEvidenceRequest(
+  organizationId: string,
+  requestId: string,
+  exportedBy: string
+) {
+  const scopedOrgId = getScopedOrgId(organizationId);
+  const request = evidenceRequests.find(
+    (item) => item.id === requestId && item.organization_id === scopedOrgId
+  );
+
+  if (!request) {
+    return null;
+  }
+
+  if (request.status !== "approved" && request.status !== "exported") {
+    return {
+      error: "Evidence request must be approved before export.",
+    };
+  }
+
+  request.status = "exported";
+  request.exported_at = new Date().toISOString();
+  request.reviewed_by = request.reviewed_by || exportedBy;
+  request.reviewed_at = request.reviewed_at || new Date().toISOString();
+
+  createCommandCenterEvent({
+    organization_id: scopedOrgId,
+    action: "evidence_export_generated",
+    target_type: "system",
+    target_id: request.id,
+    details: `exportedBy=${exportedBy} dataset=${request.dataset}`,
+  });
+
+  return request;
 }
 
 export function getOrganizationUsageSnapshot(organizationId: string) {

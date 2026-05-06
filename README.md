@@ -26,6 +26,7 @@
 	- `/command-center/reports`
 	- `/command-center/incidents`
 	- `/command-center/messages`
+	- `/command-center/evidence`
 	- `/command-center/audit`
 	- `/command-center/subscription`
 
@@ -57,3 +58,13 @@
 - These endpoints do not delete data. They create a command-center review event for policy handling.
 - Organization-facing views expose only recent history (`ORGANIZATION_HISTORY_WINDOW_HOURS`, default `24`).
 - Historical evidence access must be requested from the command center for emergency and legal workflows.
+
+## Evidence Workflow
+
+- `/command-center/evidence` is the queue for legal and emergency evidence access requests.
+- Moderators and above can create evidence requests with dataset, reason, and case reference.
+- Only `super_admin` can approve/reject requests and generate export packages.
+- Evidence lifecycle actions are recorded as command center events:
+	- `evidence_request_created`
+	- `evidence_request_reviewed`
+	- `evidence_export_generated`

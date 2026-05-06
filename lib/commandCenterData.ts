@@ -6,6 +6,7 @@ import {
   listAuditLogs,
   listChatMessages,
   listCommandCenterEvents,
+  listEvidenceRequests,
   listReports,
 } from "@/lib/localDataStore";
 import type { CommandCenterEventRow } from "@/lib/localDataStore";
@@ -133,6 +134,23 @@ export async function getCommandCenterSubscription(organizationId: string) {
     organization,
     usage,
     invoiceEvents,
+    error: null,
+  };
+}
+
+export async function getCommandCenterEvidenceRequests(organizationId: string, query: string) {
+  const requests = listEvidenceRequests({ organizationId, ascending: false, limit: 100 }).filter((request) => {
+    return (
+      includesQuery(request.dataset, query) ||
+      includesQuery(request.reason, query) ||
+      includesQuery(request.case_reference, query) ||
+      includesQuery(request.requested_by, query) ||
+      includesQuery(request.status, query)
+    );
+  });
+
+  return {
+    requests,
     error: null,
   };
 }

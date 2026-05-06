@@ -407,6 +407,36 @@ code {
   background: linear-gradient(135deg, #1a2e3a 0%, #2d1f1a 100%) !important;
 }
 
+.evidence-create-form {
+  margin-top: 1rem;
+  padding: 0.85rem;
+}
+
+.evidence-create-form textarea,
+.evidence-create-form select,
+.evidence-create-form input {
+  background: #0c1f2e;
+  border: 1px solid #3f5b75;
+  color: #eef8ff;
+  border-radius: 8px;
+}
+
+.evidence-create-form textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 88px;
+  margin-top: 0.55rem;
+  padding: 0.6rem;
+}
+
+.evidence-action-row {
+  margin-top: 0.6rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .conflict-banner {
   background: #3d2816;
   border: 1px solid #8b6914;
@@ -507,5 +537,13 @@ code {
   .ops-metrics-grid,
   .incident-grid {
     grid-template-columns: 1fr;
+  }
+
+  .evidence-action-row form {
+    width: 100%;
+  }
+
+  .evidence-action-row button {
+    width: 100%;
   }
 }
