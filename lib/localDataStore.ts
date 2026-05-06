@@ -1103,3 +1103,36 @@ export function listEscalationRequests(options?: { organizationId?: string; limi
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
     .slice(0, limit);
 }
+
+export function updateEscalationRequest(
+  organizationId: string,
+  escalationId: string,
+  input: {
+    status: EscalationStatus;
+    reviewedBy: string;
+    resolutionNotes?: string | null;
+  }
+) {
+  const scopedOrgId = getScopedOrgId(organizationId);
+  const request = escalationRequests.find(
+    (item) => item.id === escalationId && item.organization_id === scopedOrgId
+  );
+
+  if (!request) {
+    return null;
+  }
+
+  request.status = input.status;
+  request.resolution_notes = input.resolutionNotes || null;
+  request.resolved_at = input.status === "resolved" ? new Date().toISOString() : null;
+
+  createCommandCenterEvent({
+    organization_id: scopedOrgId,
+    action: `escalation_request_${input.status}`,
+    target_type: "system",
+    target_id: request.id,
+    details: `reviewedBy=${input.reviewedBy} notes=${input.resolutionNotes || "none"}`,
+  });
+
+  return request;
+}

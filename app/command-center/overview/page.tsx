@@ -89,6 +89,28 @@ export default async function CommandCenterOverviewPage() {
               <small className="control-meta" style={{ display: "block" }}>
                 {new Date(request.created_at).toLocaleString()}
               </small>
+              <small className="control-meta" style={{ display: "block", marginTop: "0.35rem" }}>
+                {request.reason}
+              </small>
+              {request.status !== "resolved" && (
+                <form action={`/api/command-center/escalation/${request.id}/review`} method="post" className="queue-review-form">
+                  <input type="hidden" name="returnTo" value="/command-center/overview" />
+                  <textarea
+                    name="resolutionNotes"
+                    rows={2}
+                    placeholder="Add review notes for leadership handoff"
+                    className="queue-review-notes"
+                  />
+                  <div className="queue-review-actions">
+                    <button type="submit" name="status" value="under_review">
+                      Mark under review
+                    </button>
+                    <button type="submit" name="status" value="resolved">
+                      Resolve request
+                    </button>
+                  </div>
+                </form>
+              )}
             </article>
           ))
         )}
