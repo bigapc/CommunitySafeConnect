@@ -202,6 +202,8 @@ export default async function CommandCenterOverviewPage() {
         <Link href="/command-center/incidents">Manage Incidents</Link>
         <Link href="/command-center/messages">Moderate Messages</Link>
         <Link href="/command-center/channels">Command Channels</Link>
+        <Link href="/command-center/assistant">AI Assistant</Link>
+        <Link href="/live-map">Live Map</Link>
         <Link href="/command-center/reports">Review Reports</Link>
         <Link href="/command-center/evidence">Handle Evidence</Link>
       </div>

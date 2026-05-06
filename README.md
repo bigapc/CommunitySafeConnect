@@ -15,6 +15,24 @@
 	- off-route and no-movement alert triggers
 	- safe arrival confirmation
 
+## Live Map Intelligence
+
+- Use `/live-map` for a live operations map view.
+- Live map supports:
+	- safe zone visibility
+	- incident overlay visibility
+	- patrol overlay visibility
+	- operational pin feed with severity status
+
+## AI Safety Assistant
+
+- Use `/command-center/assistant` for in-app AI operations guidance.
+- Assistant supports moderator+ roles and provides:
+	- triage recommendations
+	- escalation guidance
+	- debrief structure generation
+	- stakeholder communication templates
+
 ## Community Safety OS Layers
 
 - Personal safety layer: safe walks, arrival monitoring, SOS journeys, and trusted-circle coordination.

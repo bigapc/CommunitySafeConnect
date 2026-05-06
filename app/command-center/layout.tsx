@@ -18,6 +18,7 @@ export default async function CommandCenterLayout({
         <Link href="/command-center/incidents">Incidents</Link>
         <Link href="/command-center/messages">Messages</Link>
         <Link href="/command-center/channels">Channels</Link>
+        <Link href="/command-center/assistant">AI Assistant</Link>
         <Link href="/command-center/escalations">Escalations</Link>
         <Link href="/command-center/evidence">Evidence</Link>
         <Link href="/command-center/audit">Audit</Link>
