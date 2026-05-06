@@ -555,6 +555,27 @@ code {
   flex-wrap: wrap;
 }
 
+.verification-banner {
+  margin-top: 0.6rem;
+  margin-bottom: 0.2rem;
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid;
+  font-size: 0.9rem;
+}
+
+.verification-banner.ok {
+  border-color: #2a7a4a;
+  background: #143221;
+  color: #a7ebc1;
+}
+
+.verification-banner.failed {
+  border-color: #8a2d3b;
+  background: #3a1b23;
+  color: #ffc2cb;
+}
+
 .conflict-banner {
   background: #3d2816;
   border: 1px solid #8b6914;

@@ -274,6 +274,10 @@ function signEvidenceDigest(digest: string) {
   return createHmac("sha256", getEvidenceSigningSecret()).update(digest).digest("hex");
 }
 
+function verifyEvidenceDigestSignature(digest: string, signature: string) {
+  return signEvidenceDigest(digest) === signature;
+}
+
 function buildEvidenceSnapshot(organizationId: string, request: EvidenceRequestRow) {
   const includeMessages = request.dataset === "messages" || request.dataset === "mixed";
   const includeReports = request.dataset === "reports" || request.dataset === "mixed";
@@ -879,6 +883,43 @@ export function exportEvidenceRequest(
   });
 
   return request;
+}
+
+export function verifyEvidenceExportIntegrity(
+  organizationId: string,
+  requestId: string,
+  verifiedBy: string
+) {
+  const scopedOrgId = getScopedOrgId(organizationId);
+  const request = evidenceRequests.find(
+    (item) => item.id === requestId && item.organization_id === scopedOrgId
+  );
+
+  if (!request) {
+    return null;
+  }
+
+  if (!request.export_hash || !request.export_signature) {
+    return {
+      ok: false,
+      reason: "No export artifact is available for this request.",
+    };
+  }
+
+  const signatureValid = verifyEvidenceDigestSignature(request.export_hash, request.export_signature);
+
+  createCommandCenterEvent({
+    organization_id: scopedOrgId,
+    action: "evidence_export_verified",
+    target_type: "system",
+    target_id: request.id,
+    details: `verifiedBy=${verifiedBy} ok=${signatureValid}`,
+  });
+
+  return {
+    ok: signatureValid,
+    reason: signatureValid ? null : "Stored signature does not match stored hash.",
+  };
 }
 
 export function getOrganizationUsageSnapshot(organizationId: string) {

@@ -70,3 +70,5 @@
 	- `evidence_request_created`
 	- `evidence_request_reviewed`
 	- `evidence_export_generated`
+	- `evidence_export_verified`
+- Exported evidence packages can be integrity-verified from the queue (`Verify Export Integrity`).

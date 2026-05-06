@@ -4,6 +4,9 @@ import { getCommandCenterEvidenceRequests } from "@/lib/commandCenterData";
 interface CommandCenterEvidencePageProps {
   searchParams: Promise<{
     q?: string;
+    verify?: string;
+    verifyId?: string;
+    verifyReason?: string;
   }>;
 }
 
@@ -12,6 +15,9 @@ export default async function CommandCenterEvidencePage({ searchParams }: Comman
   const context = await getCurrentAccessContext();
   const organizationId = context?.organizationId || "metro-city-university";
   const query = (params.q || "").trim().toLowerCase();
+  const verifyStatus = params.verify;
+  const verifyId = params.verifyId;
+  const verifyReason = params.verifyReason;
   const returnTo = `/command-center/evidence${params.q ? `?q=${encodeURIComponent(params.q)}` : ""}`;
   const canFinalize = context?.role === "super_admin";
 
@@ -23,6 +29,13 @@ export default async function CommandCenterEvidencePage({ searchParams }: Comman
       <p className="control-meta" style={{ marginTop: "-0.2rem" }}>
         Historical evidence and legal export actions are command-center controlled.
       </p>
+      {verifyStatus && (
+        <div className={`verification-banner ${verifyStatus === "ok" ? "ok" : "failed"}`}>
+          {verifyStatus === "ok"
+            ? `Integrity verified for export ${verifyId || ""}.`
+            : `Integrity verification failed${verifyReason ? `: ${verifyReason}` : "."}`}
+        </div>
+      )}
 
       <form action="/command-center/evidence" method="get" className="control-search">
         <input
@@ -138,6 +151,15 @@ export default async function CommandCenterEvidencePage({ searchParams }: Comman
                   <form action={`/api/command-center/evidence/${request.id}/export`} method="post">
                     <input type="hidden" name="returnTo" value={returnTo} />
                     <button type="submit">Generate Export Package</button>
+                  </form>
+                </div>
+              )}
+
+              {request.status === "exported" && (
+                <div className="evidence-action-row">
+                  <form action={`/api/command-center/evidence/${request.id}/verify`} method="post">
+                    <input type="hidden" name="returnTo" value={returnTo} />
+                    <button type="submit">Verify Export Integrity</button>
                   </form>
                 </div>
               )}
