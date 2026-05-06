@@ -1,3 +1,4 @@
+import { createHash, createHmac } from "node:crypto";
 import { getDefaultOrganizationId, getOrganizationById, getPlanLimits } from "@/lib/tenancy";
 
 export interface ReportRow {
@@ -97,6 +98,8 @@ export interface EvidenceRequestRow {
   reviewed_at: string | null;
   review_notes: string | null;
   exported_at: string | null;
+  export_hash: string | null;
+  export_signature: string | null;
 }
 
 function createId(prefix: string) {
@@ -235,6 +238,8 @@ const evidenceRequests: EvidenceRequestRow[] = [
     reviewed_at: null,
     review_notes: null,
     exported_at: null,
+    export_hash: null,
+    export_signature: null,
   },
 ];
 
@@ -255,6 +260,60 @@ function createSlaDueAt(severity: IncidentSeverity) {
   };
 
   return new Date(now + minutesBySeverity[severity] * 60 * 1000).toISOString();
+}
+
+function getEvidenceSigningSecret() {
+  return process.env.ACCESS_SESSION_SECRET || "communitysafeconnect-dev-secret";
+}
+
+function createEvidenceDigest(payload: string) {
+  return createHash("sha256").update(payload).digest("hex");
+}
+
+function signEvidenceDigest(digest: string) {
+  return createHmac("sha256", getEvidenceSigningSecret()).update(digest).digest("hex");
+}
+
+function buildEvidenceSnapshot(organizationId: string, request: EvidenceRequestRow) {
+  const includeMessages = request.dataset === "messages" || request.dataset === "mixed";
+  const includeReports = request.dataset === "reports" || request.dataset === "mixed";
+
+  const scopedMessages = includeMessages
+    ? chatMessages
+      .filter((item) => item.organization_id === organizationId)
+      .map((item) => ({
+        id: item.id,
+        username: item.username,
+        message: item.message,
+        created_at: item.created_at,
+        flagged: item.flagged,
+      }))
+    : [];
+
+  const scopedReports = includeReports
+    ? reports
+      .filter((item) => item.organization_id === organizationId)
+      .map((item) => ({
+        id: item.id,
+        description: item.description,
+        severity: item.severity,
+        created_at: item.created_at,
+        reviewed: item.reviewed,
+      }))
+    : [];
+
+  return {
+    request_id: request.id,
+    organization_id: organizationId,
+    dataset: request.dataset,
+    case_reference: request.case_reference,
+    requested_at: request.requested_at,
+    exported_at: new Date().toISOString(),
+    report_count: scopedReports.length,
+    message_count: scopedMessages.length,
+    reports: scopedReports,
+    messages: scopedMessages,
+  };
 }
 
 function createUsageEvent(organizationId: string, metric: "reports" | "messages", quantity: number) {
@@ -728,6 +787,8 @@ export function createEvidenceRequest(
     reviewed_at: null,
     review_notes: null,
     exported_at: null,
+    export_hash: null,
+    export_signature: null,
   };
 
   evidenceRequests.unshift(request);
@@ -797,17 +858,24 @@ export function exportEvidenceRequest(
     };
   }
 
+  const snapshot = buildEvidenceSnapshot(scopedOrgId, request);
+  const serializedSnapshot = JSON.stringify(snapshot);
+  const digest = createEvidenceDigest(serializedSnapshot);
+  const signature = signEvidenceDigest(digest);
+
   request.status = "exported";
-  request.exported_at = new Date().toISOString();
+  request.exported_at = snapshot.exported_at;
   request.reviewed_by = request.reviewed_by || exportedBy;
   request.reviewed_at = request.reviewed_at || new Date().toISOString();
+  request.export_hash = digest;
+  request.export_signature = signature;
 
   createCommandCenterEvent({
     organization_id: scopedOrgId,
     action: "evidence_export_generated",
     target_type: "system",
     target_id: request.id,
-    details: `exportedBy=${exportedBy} dataset=${request.dataset}`,
+    details: `exportedBy=${exportedBy} dataset=${request.dataset} hash=${digest.slice(0, 12)}`,
   });
 
   return request;

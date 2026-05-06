@@ -106,6 +106,16 @@ export default async function CommandCenterEvidencePage({ searchParams }: Comman
                     exportedAt={new Date(request.exported_at).toLocaleString()}
                   </small>
                 )}
+                {request.export_hash && (
+                  <small className="control-meta" style={{ display: "block" }}>
+                    hash={request.export_hash}
+                  </small>
+                )}
+                {request.export_signature && (
+                  <small className="control-meta" style={{ display: "block" }}>
+                    signature={request.export_signature}
+                  </small>
+                )}
               </div>
 
               {canFinalize && request.status === "pending" && (

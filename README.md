@@ -64,6 +64,7 @@
 - `/command-center/evidence` is the queue for legal and emergency evidence access requests.
 - Moderators and above can create evidence requests with dataset, reason, and case reference.
 - Only `super_admin` can approve/reject requests and generate export packages.
+- Export packages are tamper-evident: each export stores a SHA-256 hash and HMAC signature.
 - Evidence lifecycle actions are recorded as command center events:
 	- `evidence_request_created`
 	- `evidence_request_reviewed`
