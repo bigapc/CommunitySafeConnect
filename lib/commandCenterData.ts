@@ -3,6 +3,7 @@ import {
   getCommandCenterMetrics,
   listIncidents,
   listInvoiceEvents,
+  listEscalationRequests,
   listAuditLogs,
   listChatMessages,
   listCommandCenterEvents,
@@ -65,6 +66,7 @@ export async function getCommandCenterOverview() {
 export async function getCommandCenterOverviewByOrganization(organizationId: string) {
   const metrics = getCommandCenterMetrics(organizationId);
   const recentEvents = listCommandCenterEvents({ organizationId, ascending: false, limit: 8 });
+  const recentEscalations = listEscalationRequests({ organizationId, limit: 6 });
   const usage = getOrganizationUsageSnapshot(organizationId);
   const organization = getOrganizationById(organizationId);
 
@@ -73,6 +75,7 @@ export async function getCommandCenterOverviewByOrganization(organizationId: str
     metrics,
     usage,
     recentEvents,
+    recentEscalations,
     error: null,
   };
 }

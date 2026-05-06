@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireOrganizationAccess } from "@/lib/access";
 import { buildJourneyQuery, getJourneyContext } from "@/lib/journey";
+import SosActivationPanel from "@/components/SosActivationPanel";
 
 interface SosPageProps {
   searchParams?: {
@@ -25,27 +26,22 @@ export default async function SosPage({ searchParams }: SosPageProps) {
       </div>
       <h2>Emergency Activation</h2>
       <p style={{ color: "#94a3b8", marginTop: "-0.2rem" }}>
-        Activate emergency response quickly with clear choices and documented escalation.
+        Calm, immediate activation for trusted response, clear next steps, and documented follow-through.
       </p>
       <p className="journey-context" style={{ marginTop: "-0.1rem" }}>
         Journey {journey.journeyId} | Mode: {journey.mode === "silent" ? "Silent" : "Standard"}
       </p>
 
-      <div className="mission-grid" style={{ marginTop: "1rem" }}>
-        <article className="mission-card" style={{ borderColor: "#7f1d1d", background: "#2b1111" }}>
-          <h3 style={{ color: "#fecaca" }}>Activate SOS</h3>
-          <p style={{ color: "#fca5a5" }}>
-            Immediate alert workflow with rapid incident handoff to your organization response team.
-          </p>
-          <p><Link href={`/safety-circle${standardQuery}`}>Continue to Safety Circle</Link></p>
-        </article>
+      <SosActivationPanel standardHref={`/safety-circle${standardQuery}`} silentHref={`/safety-circle${silentQuery}`} />
 
-        <article className="mission-card" style={{ borderColor: "#1e3a8a", background: "#0f1c3a" }}>
-          <h3 style={{ color: "#bfdbfe" }}>Silent Mode</h3>
-          <p style={{ color: "#93c5fd" }}>
-            Use discreet activation during sensitive scenarios and continue in the incident log flow.
-          </p>
-          <p><Link href={`/safety-circle${silentQuery}`}>Activate Silent Flow</Link></p>
+      <div className="mission-grid" style={{ marginTop: "1rem" }}>
+        <article className="mission-card sos-support-card">
+          <h3>Trusted response</h3>
+          <p>Your circle can be notified first so help reaches you without unnecessary noise or confusion.</p>
+        </article>
+        <article className="mission-card sos-support-card">
+          <h3>Documentation stays intact</h3>
+          <p>Every step moves into the recorded incident flow so leaders can review, export, and coordinate safely.</p>
         </article>
       </div>
 

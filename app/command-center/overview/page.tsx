@@ -5,7 +5,7 @@ import Link from "next/link";
 export default async function CommandCenterOverviewPage() {
   const context = await getCurrentAccessContext();
   const organizationId = context?.organizationId || "metro-city-university";
-  const { organization, metrics, usage, recentEvents } = await getCommandCenterOverviewByOrganization(organizationId);
+  const { organization, metrics, usage, recentEvents, recentEscalations } = await getCommandCenterOverviewByOrganization(organizationId);
 
   return (
     <section>
@@ -60,6 +60,38 @@ export default async function CommandCenterOverviewPage() {
             {metrics.pendingPlanChangeRequests > 0 ? "⚠ Awaiting approval" : "No pending requests"}
           </small>
         </article>
+        <article className="control-card ops-metric-card" style={metrics.pendingEscalationRequests > 0 ? { borderLeft: "3px solid #d1495b" } : {}}>
+          <small className="control-meta">Security Escalations</small>
+          <strong>{metrics.pendingEscalationRequests}</strong>
+          <small className="control-meta">
+            {metrics.pendingEscalationRequests > 0 ? "Leadership review required" : "No active escalations"}
+          </small>
+        </article>
+      </div>
+
+      <h3 style={{ marginTop: "1rem" }}>Restricted Access Escalation Queue</h3>
+      <div className="control-list">
+        {recentEscalations.length === 0 ? (
+          <article className="control-card" style={{ padding: "0.75rem" }}>
+            <p style={{ margin: 0 }}>No escalations right now. Stay aware. Stay safe.</p>
+          </article>
+        ) : (
+          recentEscalations.map((request) => (
+            <article key={request.id} className="control-card" style={{ padding: "0.75rem" }}>
+              <p style={{ margin: 0 }}>
+                <strong>{request.category.replaceAll("_", " ")}</strong>
+                {" "}
+                status={request.status}
+              </p>
+              <small className="control-meta" style={{ display: "block" }}>
+                {request.contact_name} | {request.contact_email} | requestedBy={request.requested_by_role}
+              </small>
+              <small className="control-meta" style={{ display: "block" }}>
+                {new Date(request.created_at).toLocaleString()}
+              </small>
+            </article>
+          ))
+        )}
       </div>
 
       <h3 style={{ marginTop: "1rem" }}>Recent Operational Events</h3>

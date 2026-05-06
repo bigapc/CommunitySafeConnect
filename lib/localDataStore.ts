@@ -986,6 +986,9 @@ export function getCommandCenterMetrics(organizationId: string) {
   const scopedEvidenceRequests = evidenceRequests.filter(
     (request) => request.organization_id === scopedOrgId
   );
+  const scopedEscalationRequests = escalationRequests.filter(
+    (request) => request.organization_id === scopedOrgId
+  );
 
   const pendingReports = scopedReports.filter((report) => !report.reviewed).length;
   const reviewedReports = scopedReports.length - pendingReports;
@@ -1004,6 +1007,9 @@ export function getCommandCenterMetrics(organizationId: string) {
   const pendingPlanChangeRequests = scopedEvents.filter(
     (event) => event.action === "subscription_plan_change_requested"
   ).length;
+  const pendingEscalationRequests = scopedEscalationRequests.filter(
+    (request) => request.status !== "resolved"
+  ).length;
 
   return {
     totalReports: scopedReports.length,
@@ -1021,6 +1027,7 @@ export function getCommandCenterMetrics(organizationId: string) {
     accessAuditEvents: scopedAudits.length,
     commandCenterEvents: scopedEvents.length,
     pendingPlanChangeRequests,
+    pendingEscalationRequests,
   };
 }
 

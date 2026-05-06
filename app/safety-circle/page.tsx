@@ -38,7 +38,7 @@ export default async function SafetyCirclePage({ searchParams }: SafetyCirclePag
       </div>
       <h2>Safety Circle</h2>
       <p style={{ color: "#94a3b8", marginTop: "-0.2rem" }}>
-        Notify trusted contacts, coordinate response, then record details in the incident log.
+        Notify trusted contacts, mark yourself safe when appropriate, and coordinate the next response step.
       </p>
       <p className="journey-context" style={{ marginTop: "-0.1rem" }}>
         Journey {journey.journeyId} | Mode: {journey.mode === "silent" ? "Silent" : "Standard"}

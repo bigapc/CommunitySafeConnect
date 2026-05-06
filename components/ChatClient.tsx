@@ -20,6 +20,8 @@ export default function ChatClient({ initialMessages, historyWindowHours }: Chat
   const [sessionUsername, setSessionUsername] = useState("");
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [checkInMessage, setCheckInMessage] = useState("");
+  const [isSendingCheckIn, setIsSendingCheckIn] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const fetchMessages = useCallback(async () => {
@@ -101,11 +103,53 @@ export default function ChatClient({ initialMessages, historyWindowHours }: Chat
     setErrorMessage("");
   }
 
+  async function sendCheckIn(type: "safe" | "follow_up") {
+    if (!sessionUsername) {
+      return;
+    }
+
+    setIsSendingCheckIn(true);
+    setErrorMessage("");
+
+    const checkInText = type === "safe"
+      ? `${sessionUsername} check-in: marked safe and available.`
+      : `${sessionUsername} check-in: requesting follow-up support.`;
+
+    const response = await fetch("/api/chat/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username: sessionUsername,
+        message: checkInText,
+      }),
+    });
+
+    const payload = (await response.json().catch(() => null)) as
+      | { message?: ChatMessage; error?: string }
+      | null;
+
+    setIsSendingCheckIn(false);
+
+    if (!response.ok || !payload?.message) {
+      setErrorMessage(payload?.error || "Could not send check-in.");
+      return;
+    }
+
+    setMessages((currentMessages) => [...currentMessages, payload.message as ChatMessage]);
+    setCheckInMessage(
+      type === "safe"
+        ? "You're marked safe. Your circle knows you're safe."
+        : "Check-in sent. Your circle has been asked to follow up."
+    );
+  }
+
   if (!sessionUsername) {
     return (
       <div className="container">
-        <h2>Open Chat Session</h2>
-        <p>Enter a username to join the organization chat.</p>
+        <h2>Open Safety Circle Session</h2>
+        <p>Enter a name your trusted contacts will recognize.</p>
         <form onSubmit={openSession} style={{ display: "flex", gap: "0.5rem" }}>
           <input
             type="text"
@@ -138,6 +182,23 @@ export default function ChatClient({ initialMessages, historyWindowHours }: Chat
         Policy: only the most recent {historyWindowHours} hours are visible here. For older records,
         contact the command center for evidence access.
       </p>
+      <div className="check-in-panel">
+        <div>
+          <strong>Safety check-in</strong>
+          <p>
+            Use a quick status update so your circle knows whether you are safe or need follow-up.
+          </p>
+        </div>
+        <div className="check-in-actions">
+          <button type="button" onClick={() => void sendCheckIn("safe")} disabled={isSendingCheckIn}>
+            {isSendingCheckIn ? "Sending..." : "I'm Safe"}
+          </button>
+          <button type="button" className="secondary-action" onClick={() => void sendCheckIn("follow_up")} disabled={isSendingCheckIn}>
+            Need Follow-Up
+          </button>
+        </div>
+        {checkInMessage && <p className="check-in-feedback">{checkInMessage}</p>}
+      </div>
       <div
         style={{
           border: "1px solid #334155",
@@ -154,7 +215,7 @@ export default function ChatClient({ initialMessages, historyWindowHours }: Chat
         }}
       >
         {messages.length === 0 && (
-          <p style={{ color: "#64748b" }}>No messages yet. Start the conversation.</p>
+          <p style={{ color: "#64748b" }}>No alerts right now. Stay aware. Stay safe.</p>
         )}
         {messages.map((chatMessage) => (
           <div key={chatMessage.id}>

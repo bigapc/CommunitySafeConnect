@@ -1113,8 +1113,129 @@ code {
       color: #7dd3fc;
     }
 
+    .sos-activation-panel {
+      margin-top: 1rem;
+      border: 1px solid #d7b58d;
+      border-radius: 18px;
+      padding: 1.2rem;
+      background: linear-gradient(145deg, #fff6ea, #fffaf3);
+      display: grid;
+      gap: 1rem;
+    }
+
+    .sos-activation-copy h3 {
+      margin: 0.15rem 0 0.45rem;
+    }
+
+    .sos-activation-copy p {
+      margin: 0;
+      color: #5f6b76;
+    }
+
+    .sos-status-kicker {
+      font-size: 0.74rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #7c352d;
+    }
+
+    .sos-activation-actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .sos-primary-button,
+    .sos-secondary-button {
+      border: 0;
+      border-radius: 999px;
+      padding: 0.9rem 1.4rem;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
+    }
+
+    .sos-primary-button {
+      background: #c43a4a;
+      color: #fff9f5;
+      box-shadow: 0 0 0 0 rgba(196, 58, 74, 0.28);
+      animation: calmPulse 2.6s ease-in-out infinite;
+    }
+
+    .sos-primary-button:hover,
+    .sos-secondary-button:hover {
+      transform: translateY(-1px);
+    }
+
+    .sos-primary-button.active,
+    .sos-secondary-button.active {
+      opacity: 0.88;
+    }
+
+    .sos-secondary-button {
+      background: #e5eef8;
+      color: #1d4f6b;
+      border: 1px solid #a3bdd0;
+    }
+
+    .sos-support-card {
+      border: 1px solid #d7c2a6;
+      border-radius: 14px;
+      background: #fff8ee;
+    }
+
+    .check-in-panel {
+      border: 1px solid #c4d6c2;
+      border-radius: 12px;
+      background: #f5fbf4;
+      padding: 0.9rem 1rem;
+      margin: 0.85rem 0 1rem;
+    }
+
+    .check-in-panel p {
+      margin: 0.25rem 0 0;
+      color: #4c5d52;
+    }
+
+    .check-in-actions {
+      display: flex;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+      margin-top: 0.75rem;
+    }
+
+    .secondary-action {
+      background: #e8eef4;
+      color: #28485d;
+    }
+
+    .check-in-feedback {
+      margin-top: 0.7rem;
+      color: #1f6b4f;
+      font-weight: 600;
+    }
+
+    @keyframes calmPulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(196, 58, 74, 0.12);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 0 0 12px rgba(196, 58, 74, 0);
+        transform: scale(1.015);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(196, 58, 74, 0);
+        transform: scale(1);
+      }
+    }
+
     @media (max-width: 600px) {
       .csc-hero { padding: 2.5rem 0.75rem 2rem; }
       .csc-mvp-card-wide { grid-column: span 1; }
       .csc-definition { padding: 1rem 1.25rem; }
+      .sos-activation-actions { flex-direction: column; align-items: stretch; }
     }
