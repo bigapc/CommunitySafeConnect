@@ -3,8 +3,8 @@ import Navbar from "@/components/Navbar";
 import RouteTransition from "@/components/RouteTransition";
 
 export const metadata = {
-  title: "CommunitySafeConnect",
-  description: "Powered by ArmPack Company"
+  title: "CommunitySafetyConnect",
+  description: "Real-time safety infrastructure for communities, campuses, and businesses. Powered by Armstrong Pack Company."
 };
 
 export default function RootLayout({

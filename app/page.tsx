@@ -4,117 +4,122 @@ import Image from "next/image";
 export default function HomePage() {
   return (
     <main className="container">
-      <section className="hero-grid">
-        <div>
-          <h2>Community Operations Desk</h2>
-          <p>
-            A resilient safety architecture designed for schools, universities, faith communities,
-            and neighborhood coalitions to coordinate prevention, response, and trusted communication.
-          </p>
-          <p>
-            Built for national-scale deployment with role-gated command workflows and institution-ready operations.
-          </p>
-        </div>
-        <div className="hero-stack">
-          <div className="hero-image-card">
-            <Image
-              src="/images/campus-safety.svg"
-              alt="Campus and municipal safety operations visual"
-              width={1200}
-              height={800}
-            />
-          </div>
+      {/* ── Hero ── */}
+      <section className="csc-hero">
+        <div className="csc-hero-eyebrow">Powered by Armstrong Pack Company</div>
+        <h2 className="csc-hero-headline">
+          Safety Infrastructure for Communities,<br />Campuses, and Businesses
+        </h2>
+        <p className="csc-hero-sub">
+          CommunitySafetyConnect provides real-time alerting, trusted response coordination,
+          incident documentation, and safe location visibility in one connected platform.
+        </p>
+        <div className="csc-hero-actions">
+          <Link href="/report" className="csc-btn csc-btn-primary">Activate SOS</Link>
+          <Link href="/dashboard" className="csc-btn csc-btn-secondary">View Safe Zones</Link>
+          <Link href="/access?next=/command-center" className="csc-btn csc-btn-outline">For Organizations</Link>
         </div>
       </section>
 
-      <div className="mission-grid">
-        <article className="mission-card">
-          <h3>Resident Actions</h3>
-          <p><Link href="/report">Submit a report</Link></p>
-          <p><Link href="/chat">Open safety chat</Link></p>
-        </article>
+      {/* ── Platform definition ── */}
+      <section className="csc-definition">
+        <p className="csc-definition-text">
+          CommunitySafetyConnect is a real-time safety infrastructure platform that connects
+          individuals, organizations, and communities through emergency activation, trusted alerting,
+          safe location awareness, and documented incident response.
+        </p>
+      </section>
 
-        <article className="mission-card">
-          <h3>Organization View</h3>
-          <p><Link href="/dashboard">Review dashboard</Link></p>
-          <p><Link href="/access?next=/dashboard">Access portal</Link></p>
-        </article>
+      {/* ── Three lanes ── */}
+      <section className="csc-lanes">
+        <h3 className="csc-section-label">Three lanes of growth</h3>
+        <div className="csc-lanes-grid">
+          <article className="csc-lane-card csc-lane-consumer">
+            <span className="csc-lane-icon">👤</span>
+            <strong>Consumer Layer</strong>
+            <p>People use SOS, Safety Circle, Safe Zones, and incident logging to stay safe and connected.</p>
+          </article>
+          <article className="csc-lane-card csc-lane-community">
+            <span className="csc-lane-icon">🏘️</span>
+            <strong>Community Layer</strong>
+            <p>Neighborhood groups, churches, apartments, and local organizations use shared safety tools.</p>
+          </article>
+          <article className="csc-lane-card csc-lane-institution">
+            <span className="csc-lane-icon">🏛️</span>
+            <strong>Institution Layer</strong>
+            <p>Schools, campuses, and businesses use dashboards, alert systems, response workflows, and reporting. That is where scale lives.</p>
+          </article>
+        </div>
+      </section>
 
-        <article className="mission-card">
-          <h3>Admin Controls</h3>
-          <p><Link href="/command-center">Command Center</Link></p>
-          <p><Link href="/access?next=/command-center">Admin access</Link></p>
-        </article>
-      </div>
+      {/* ── MVP five parts ── */}
+      <section className="csc-mvp">
+        <h3 className="csc-section-label">Five strong parts — Version 1</h3>
+        <div className="csc-mvp-grid">
+          <article className="csc-mvp-card">
+            <div className="csc-mvp-number">01</div>
+            <strong>Emergency Activation</strong>
+            <p>Large SOS button with silent mode, live location, and alert sending.</p>
+            <Link href="/report" className="csc-mvp-link">Open →</Link>
+          </article>
+          <article className="csc-mvp-card">
+            <div className="csc-mvp-number">02</div>
+            <strong>Safety Circle</strong>
+            <p>Trusted contacts receive alerts, check-ins, and live status when it matters.</p>
+            <Link href="/chat" className="csc-mvp-link">Open →</Link>
+          </article>
+          <article className="csc-mvp-card">
+            <div className="csc-mvp-number">03</div>
+            <strong>Safe Zones</strong>
+            <p>Map of verified safe locations — schools, businesses, churches, and partner sites.</p>
+            <Link href="/dashboard" className="csc-mvp-link">Open →</Link>
+          </article>
+          <article className="csc-mvp-card">
+            <div className="csc-mvp-number">04</div>
+            <strong>Incident Log</strong>
+            <p>Timestamped reports with notes, photos, audio, and location for documentation.</p>
+            <Link href="/report" className="csc-mvp-link">Open →</Link>
+          </article>
+          <article className="csc-mvp-card csc-mvp-card-wide">
+            <div className="csc-mvp-number">05</div>
+            <strong>Institution Dashboard</strong>
+            <p>Admin-only backend for neighborhoods, campuses, and businesses to monitor alerts, approved locations, and activity in real time.</p>
+            <Link href="/access?next=/command-center" className="csc-mvp-link">Access Dashboard →</Link>
+          </article>
+        </div>
+      </section>
 
+      {/* ── Target market ── */}
+      <section className="csc-market">
+        <h3 className="csc-section-label">Built for your first buyers</h3>
+        <p className="csc-market-sub">Organizations with real safety needs, clear leadership, and budget.</p>
+        <div className="csc-market-grid">
+          {["Private & Charter Schools","Apartment Communities","Churches & Faith Networks","Small Business Campuses","Community Organizations","Higher Education"].map((name) => (
+            <span key={name} className="csc-market-tag">{name}</span>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Portal access ── */}
       <section className="access-chooser">
-        <h3>Choose Access Type</h3>
-        <p>Select your portal first, then sign in with the matching access code.</p>
+        <h3>Access Your Portal</h3>
+        <p>Select the portal that matches your role, then sign in with your access code.</p>
         <div className="access-chooser-grid">
           <Link href="/access?next=/dashboard" className="access-chooser-tile">
             <strong>Organization Portal</strong>
-            <small>For report review, operations dashboard, and live coordination chat.</small>
+            <small>Dashboard, report review, coordination chat, and safe zone management.</small>
           </Link>
           <Link href="/access?next=/command-center" className="access-chooser-tile">
-            <strong>Admin Command Center</strong>
-            <small>For moderation, incident command, evidence workflow, and exports.</small>
+            <strong>Institution Command Center</strong>
+            <small>Alert monitoring, incident command, evidence workflow, and response exports.</small>
           </Link>
         </div>
       </section>
 
-      <section className="action-hub">
-        <h3>Quick Workflow Hub</h3>
-        <p>Choose a mission and jump directly to the exact workflow entry point.</p>
-        <div className="action-grid">
-          <Link href="/access?next=/report" className="action-tile">
-            <strong>Incident Intake</strong>
-            <small>Authenticate and file a structured safety report.</small>
-          </Link>
-          <Link href="/access?next=/chat" className="action-tile">
-            <strong>Live Coordination</strong>
-            <small>Sign in and coordinate with field volunteers in real time.</small>
-          </Link>
-          <Link href="/access?next=/dashboard" className="action-tile">
-            <strong>Organization Review</strong>
-            <small>View recent reports and policy-limited historical windows.</small>
-          </Link>
-          <Link href="/access?next=/command-center/overview" className="action-tile">
-            <strong>Ops Command</strong>
-            <small>Open command-center overview for metrics and response posture.</small>
-          </Link>
-          <Link href="/access?next=/command-center/evidence" className="action-tile">
-            <strong>Evidence Workflow</strong>
-            <small>Request, approve, and export legal evidence packages.</small>
-          </Link>
-          <Link href="/access?next=/command-center/incidents" className="action-tile">
-            <strong>Incident Queue</strong>
-            <small>Create, triage, assign, and escalate active incidents.</small>
-          </Link>
-        </div>
-      </section>
-
-      <section className="sector-showcase">
-        <article className="sector-card">
-          <Image
-            src="/images/community-response.svg"
-            alt="Community response coordination"
-            width={1200}
-            height={800}
-          />
-          <h3>Institutional Preparedness</h3>
-          <p>For colleges, universities, churches, and community organizations requiring reliable safety coordination.</p>
-        </article>
-        <article className="sector-card">
-          <Image
-            src="/images/command-center.svg"
-            alt="Command center operational intelligence"
-            width={1200}
-            height={800}
-          />
-          <h3>Operational Intelligence</h3>
-          <p>Admin teams gain route-level governance, event telemetry, and moderation visibility in one command environment.</p>
-        </article>
-      </section>
+      {/* ── Footer note ── */}
+      <footer className="csc-footer">
+        <p>CommunitySafetyConnect &mdash; Premium Plan Platform &mdash; Powered by Armstrong Pack Company</p>
+      </footer>
     </main>
   );
 }

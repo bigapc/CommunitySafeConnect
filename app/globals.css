@@ -189,7 +189,7 @@ a {
 }
 
 .access-chooser {
-  margin-top: 1rem;
+  margin-top: 2rem;
   border: 1px solid var(--line);
   border-radius: 16px;
   padding: 0.9rem;
@@ -795,6 +795,186 @@ code {
   }
 
   .evidence-action-row button {
+
+    /* ─── CommunitySafetyConnect Homepage ─── */
+
+    .csc-hero {
+      text-align: center;
+      padding: 4rem 1rem 3rem;
+    }
+    .csc-hero-eyebrow {
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted, #6b7280);
+      margin-bottom: 1rem;
+    }
+    .csc-hero-headline {
+      font-size: clamp(1.75rem, 4vw, 3rem);
+      font-weight: 800;
+      line-height: 1.15;
+      margin: 0 0 1.25rem;
+      color: var(--text, #0f172a);
+    }
+    .csc-hero-sub {
+      max-width: 640px;
+      margin: 0 auto 2rem;
+      color: var(--muted, #4b5563);
+      font-size: 1.05rem;
+      line-height: 1.65;
+    }
+    .csc-hero-actions {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .csc-btn {
+      display: inline-block;
+      padding: 0.7rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-decoration: none;
+      transition: opacity 0.15s;
+    }
+    .csc-btn:hover { opacity: 0.85; }
+    .csc-btn-primary {
+      background: #dc2626;
+      color: #fff;
+    }
+    .csc-btn-secondary {
+      background: #1d4ed8;
+      color: #fff;
+    }
+    .csc-btn-outline {
+      border: 2px solid var(--line, #cbd5e1);
+      color: var(--text, #0f172a);
+      background: transparent;
+    }
+
+    .csc-definition {
+      background: var(--surface-alt, #f8fafc);
+      border-left: 4px solid #1d4ed8;
+      border-radius: 12px;
+      padding: 1.5rem 2rem;
+      margin: 0 0 2.5rem;
+    }
+    .csc-definition-text {
+      margin: 0;
+      font-size: 1.05rem;
+      line-height: 1.7;
+      color: var(--text, #0f172a);
+      font-style: italic;
+    }
+
+    .csc-section-label {
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted, #6b7280);
+      margin-bottom: 1rem;
+    }
+
+    .csc-lanes {
+      margin-bottom: 3rem;
+    }
+    .csc-lanes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+    .csc-lane-card {
+      border-radius: 14px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .csc-lane-card p { margin: 0; font-size: 0.9rem; line-height: 1.55; color: inherit; }
+    .csc-lane-card strong { font-size: 1rem; }
+    .csc-lane-icon { font-size: 1.6rem; }
+    .csc-lane-consumer  { background: #fef3c7; color: #78350f; }
+    .csc-lane-community { background: #dbeafe; color: #1e3a8a; }
+    .csc-lane-institution { background: #dcfce7; color: #14532d; }
+
+    .csc-mvp {
+      margin-bottom: 3rem;
+    }
+    .csc-mvp-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .csc-mvp-card {
+      border: 1px solid var(--line, #e2e8f0);
+      border-radius: 14px;
+      padding: 1.25rem 1.25rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      background: var(--surface, #fff);
+    }
+    .csc-mvp-card-wide {
+      grid-column: span 2;
+    }
+    .csc-mvp-number {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--muted, #94a3b8);
+    }
+    .csc-mvp-card strong { font-size: 0.98rem; color: var(--text, #0f172a); }
+    .csc-mvp-card p { margin: 0; font-size: 0.87rem; color: var(--muted, #64748b); line-height: 1.5; flex: 1; }
+    .csc-mvp-link {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #1d4ed8;
+      text-decoration: none;
+      margin-top: 0.25rem;
+    }
+    .csc-mvp-link:hover { text-decoration: underline; }
+
+    .csc-market {
+      margin-bottom: 3rem;
+    }
+    .csc-market-sub {
+      color: var(--muted, #6b7280);
+      font-size: 0.92rem;
+      margin: 0 0 1rem;
+    }
+    .csc-market-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .csc-market-tag {
+      background: var(--surface-alt, #f1f5f9);
+      border: 1px solid var(--line, #e2e8f0);
+      border-radius: 999px;
+      padding: 0.4rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text, #0f172a);
+    }
+
+    .csc-footer {
+      border-top: 1px solid var(--line, #e2e8f0);
+      padding: 1.5rem 0;
+      text-align: center;
+      margin-top: 2rem;
+    }
+    .csc-footer p {
+      font-size: 0.8rem;
+      color: var(--muted, #94a3b8);
+      margin: 0;
+    }
+
+    @media (max-width: 600px) {
+      .csc-hero { padding: 2.5rem 0.75rem 2rem; }
+      .csc-mvp-card-wide { grid-column: span 1; }
+      .csc-definition { padding: 1rem 1.25rem; }
+    }
     width: 100%;
   }
 }

@@ -10,7 +10,7 @@ export default async function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-inner">
-        <h1 className="navbar-brand">CommunitySafeConnect</h1>
+        <h1 className="navbar-brand">CommunitySafetyConnect</h1>
         <div className="navbar-links">
           <Link href="/report">Report</Link>
           <Link href="/dashboard">Dashboard</Link>
