@@ -4,11 +4,20 @@ import {
   getOrganizationHistoryWindowHours,
   requireOrganizationAccess,
 } from "@/lib/access";
+import { buildJourneyQuery, createJourneyContext, getJourneyContext } from "@/lib/journey";
 import Link from "next/link";
 import { listReports } from "@/lib/localDataStore";
 
-export default async function OrganizationDashboardPage() {
+interface OrganizationDashboardPageProps {
+  searchParams?: {
+    [key: string]: string | string[] | undefined;
+  };
+}
+
+export default async function OrganizationDashboardPage({ searchParams }: OrganizationDashboardPageProps) {
   await requireOrganizationAccess("/organization-dashboard");
+  const journey = getJourneyContext(searchParams);
+  const restartJourney = createJourneyContext("standard");
   const context = await getCurrentAccessContext();
   const organizationId = context?.organizationId;
   const historyWindowHours = getOrganizationHistoryWindowHours();
@@ -35,6 +44,9 @@ export default async function OrganizationDashboardPage() {
         Policy: only recent records from the last {historyWindowHours} hours are shown. For historical
         records needed for emergencies or legal processes, contact the command center.
       </p>
+      <p className="journey-context" style={{ marginTop: "-0.1rem" }}>
+        Journey {journey.journeyId} | Mode: {journey.mode === "silent" ? "Silent" : "Standard"}
+      </p>
       <div className="org-kpi-grid">
         <article className="org-kpi-card">
           <small>Visible Reports</small>
@@ -50,10 +62,10 @@ export default async function OrganizationDashboardPage() {
         </article>
       </div>
       <div className="org-quick-actions">
-        <Link href="/sos">New Emergency Journey</Link>
-        <Link href="/incident-log">Submit New Incident Log</Link>
-        <Link href="/safety-circle">Open Safety Circle</Link>
-        <Link href="/safe-zones">View Safe Zones</Link>
+        <Link href={`/sos${buildJourneyQuery(restartJourney)}`}>New Emergency Journey</Link>
+        <Link href={`/incident-log${buildJourneyQuery(journey)}`}>Submit New Incident Log</Link>
+        <Link href={`/safety-circle${buildJourneyQuery(journey)}`}>Open Safety Circle</Link>
+        <Link href={`/safe-zones${buildJourneyQuery(journey)}`}>View Safe Zones</Link>
         <Link href="/access?next=/command-center/evidence">Request Historical Evidence</Link>
       </div>
       {reports.length === 0 ? (

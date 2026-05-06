@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireOrganizationAccess } from "@/lib/access";
+import { buildJourneyQuery, createJourneyContext, getJourneyContext } from "@/lib/journey";
 
 const defaultSafeZones = [
   {
@@ -22,8 +23,16 @@ const defaultSafeZones = [
   },
 ];
 
-export default async function SafeZonesPage() {
+interface SafeZonesPageProps {
+  searchParams?: {
+    [key: string]: string | string[] | undefined;
+  };
+}
+
+export default async function SafeZonesPage({ searchParams }: SafeZonesPageProps) {
   await requireOrganizationAccess("/safe-zones");
+  const journey = getJourneyContext(searchParams);
+  const restartJourney = createJourneyContext("standard");
 
   return (
     <main className="container">
@@ -37,6 +46,9 @@ export default async function SafeZonesPage() {
       <h2>Safe Zones</h2>
       <p style={{ color: "#94a3b8", marginTop: "-0.2rem" }}>
         Verified locations for trusted shelter, response coordination, and resource support.
+      </p>
+      <p className="journey-context" style={{ marginTop: "-0.1rem" }}>
+        Journey {journey.journeyId} | Mode: {journey.mode === "silent" ? "Silent" : "Standard"}
       </p>
 
       <div className="control-list" style={{ marginTop: "0.75rem" }}>
@@ -56,9 +68,9 @@ export default async function SafeZonesPage() {
       </div>
 
       <div className="org-quick-actions" style={{ marginTop: "1rem" }}>
-        <Link href="/organization-dashboard">Next: Organization Dashboard</Link>
-        <Link href="/incident-log">Back: Incident Log</Link>
-        <Link href="/sos">Restart Journey</Link>
+        <Link href={`/organization-dashboard${buildJourneyQuery(journey)}`}>Next: Organization Dashboard</Link>
+        <Link href={`/incident-log${buildJourneyQuery(journey)}`}>Back: Incident Log</Link>
+        <Link href={`/sos${buildJourneyQuery(restartJourney)}`}>Restart Journey</Link>
       </div>
     </main>
   );

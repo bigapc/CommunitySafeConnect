@@ -994,6 +994,11 @@ code {
       font-weight: 700;
     }
 
+    .journey-context {
+      font-size: 0.82rem;
+      color: #7dd3fc;
+    }
+
     @media (max-width: 600px) {
       .csc-hero { padding: 2.5rem 0.75rem 2rem; }
       .csc-mvp-card-wide { grid-column: span 1; }

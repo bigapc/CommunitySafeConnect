@@ -6,10 +6,18 @@ import {
   getOrganizationHistoryWindowHours,
   requireOrganizationAccess,
 } from "@/lib/access";
+import { buildJourneyQuery, getJourneyContext } from "@/lib/journey";
 import { listChatMessages } from "@/lib/localDataStore";
 
-export default async function SafetyCirclePage() {
+interface SafetyCirclePageProps {
+  searchParams?: {
+    [key: string]: string | string[] | undefined;
+  };
+}
+
+export default async function SafetyCirclePage({ searchParams }: SafetyCirclePageProps) {
   await requireOrganizationAccess("/safety-circle");
+  const journey = getJourneyContext(searchParams);
   const context = await getCurrentAccessContext();
   const organizationId = context?.organizationId;
   const historyWindowHours = getOrganizationHistoryWindowHours();
@@ -32,9 +40,12 @@ export default async function SafetyCirclePage() {
       <p style={{ color: "#94a3b8", marginTop: "-0.2rem" }}>
         Notify trusted contacts, coordinate response, then record details in the incident log.
       </p>
+      <p className="journey-context" style={{ marginTop: "-0.1rem" }}>
+        Journey {journey.journeyId} | Mode: {journey.mode === "silent" ? "Silent" : "Standard"}
+      </p>
       <div className="org-quick-actions" style={{ marginBottom: "1rem" }}>
-        <Link href="/incident-log">Next: Create Incident Log</Link>
-        <Link href="/safe-zones">Then: Navigate Safe Zones</Link>
+        <Link href={`/incident-log${buildJourneyQuery(journey)}`}>Next: Create Incident Log</Link>
+        <Link href={`/safe-zones${buildJourneyQuery(journey)}`}>Then: Navigate Safe Zones</Link>
       </div>
       <ChatClient initialMessages={messages} historyWindowHours={historyWindowHours} />
     </main>
