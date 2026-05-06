@@ -16,8 +16,15 @@ export interface PlanLimits {
   maxAnalysts: number;
 }
 
-const DEV_ORGANIZATION_ACCESS_CODE = "community-org-demo";
-const DEV_ADMIN_ACCESS_CODE = "community-admin-demo";
+function getRequiredAccessCode(name: string, fallbackName: "ORGANIZATION_ACCESS_CODE" | "ADMIN_ACCESS_CODE") {
+  const value = process.env[name] || process.env[fallbackName];
+
+  if (!value) {
+    throw new Error(`${name} (or ${fallbackName}) is not configured.`);
+  }
+
+  return value;
+}
 
 const planLimits: Record<OrganizationPlanTier, PlanLimits> = {
   starter: {
@@ -46,24 +53,24 @@ const organizations: OrganizationProfile[] = [
     name: "Metro City University",
     segment: "university",
     plan: "enterprise",
-    organizationAccessCode: process.env.MCU_ORGANIZATION_ACCESS_CODE || DEV_ORGANIZATION_ACCESS_CODE,
-    adminAccessCode: process.env.MCU_ADMIN_ACCESS_CODE || DEV_ADMIN_ACCESS_CODE,
+    organizationAccessCode: getRequiredAccessCode("MCU_ORGANIZATION_ACCESS_CODE", "ORGANIZATION_ACCESS_CODE"),
+    adminAccessCode: getRequiredAccessCode("MCU_ADMIN_ACCESS_CODE", "ADMIN_ACCESS_CODE"),
   },
   {
     id: "saint-mark-church-network",
     name: "Saint Mark Church Network",
     segment: "faith",
     plan: "professional",
-    organizationAccessCode: process.env.SMCN_ORGANIZATION_ACCESS_CODE || DEV_ORGANIZATION_ACCESS_CODE,
-    adminAccessCode: process.env.SMCN_ADMIN_ACCESS_CODE || DEV_ADMIN_ACCESS_CODE,
+    organizationAccessCode: getRequiredAccessCode("SMCN_ORGANIZATION_ACCESS_CODE", "ORGANIZATION_ACCESS_CODE"),
+    adminAccessCode: getRequiredAccessCode("SMCN_ADMIN_ACCESS_CODE", "ADMIN_ACCESS_CODE"),
   },
   {
     id: "harbor-community-alliance",
     name: "Harbor Community Alliance",
     segment: "community",
     plan: "starter",
-    organizationAccessCode: process.env.HCA_ORGANIZATION_ACCESS_CODE || DEV_ORGANIZATION_ACCESS_CODE,
-    adminAccessCode: process.env.HCA_ADMIN_ACCESS_CODE || DEV_ADMIN_ACCESS_CODE,
+    organizationAccessCode: getRequiredAccessCode("HCA_ORGANIZATION_ACCESS_CODE", "ORGANIZATION_ACCESS_CODE"),
+    adminAccessCode: getRequiredAccessCode("HCA_ADMIN_ACCESS_CODE", "ADMIN_ACCESS_CODE"),
   },
 ];
 

@@ -18,7 +18,6 @@ export default function AccessForm({ nextPath, organizations }: AccessFormProps)
   const [role, setRole] = useState<"analyst" | "moderator" | "org_admin" | "super_admin">("analyst");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const isDevelopment = process.env.NODE_ENV !== "production";
 
   const scope = useMemo(
     () => (nextPath.startsWith("/admin") || nextPath.startsWith("/command-center") ? "admin" : "organization"),
@@ -75,11 +74,6 @@ export default function AccessForm({ nextPath, organizations }: AccessFormProps)
       <p>
         Enter the {scope === "admin" ? "admin" : "organization"} access code to continue.
       </p>
-      {isDevelopment && (
-        <p style={{ marginTop: "-0.25rem" }}>
-          Demo code: {scope === "admin" ? "community-admin-demo" : "community-org-demo"}
-        </p>
-      )}
       <form onSubmit={handleSubmit} className="access-form-row">
         <select
           value={organizationId}

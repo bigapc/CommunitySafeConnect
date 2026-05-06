@@ -4,6 +4,7 @@
 
 - Set `ORGANIZATION_ACCESS_CODE` in `.env.local` to protect report, dashboard, and chat access.
 - Set `ADMIN_ACCESS_CODE` in `.env.local` to protect `/admin` (also used by `/command-center`).
+- Demo fallback credentials are disabled. Access code configuration is required for sign-in.
 - Set `ACCESS_SESSION_SECRET` in `.env.local` so access cookies are signed server-side.
 - Set `SUPABASE_SERVICE_ROLE_KEY` in `.env.local` so the server can read and write protected data.
 - Optional: set `ACCESS_SESSION_MAX_AGE_SECONDS` to control standard access session duration.
