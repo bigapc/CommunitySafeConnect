@@ -57,7 +57,7 @@
 ## Command Center Route
 
 - Use `/command-center` as the primary command center entry path.
-- `/command-center` redirects to `/command-center/reports`.
+- `/command-center` redirects to `/command-center/overview`.
 - `/admin` now redirects to `/command-center` for compatibility.
 - Command center subroutes:
 	- `/command-center/overview`
@@ -67,6 +67,16 @@
 	- `/command-center/evidence`
 	- `/command-center/audit`
 	- `/command-center/subscription`
+	- `/command-center/channels`
+
+## Organization Command Channels
+
+- `/command-center/channels` provides internal safety operations channels for organizations.
+- Moderators and higher can:
+  - Create emergency, alerts, tasks, debrief, and drill channels.
+  - Post prioritized channel updates (`normal`, `high`, `critical`).
+- Channel creation and posts are logged as command center events.
+- This capability is gated to Elite billing plans.
 
 ## Incident Operations
 

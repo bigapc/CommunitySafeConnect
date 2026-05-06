@@ -166,6 +166,7 @@ export default async function CommandCenterOverviewPage() {
       <div className="control-room-action-row">
         <Link href="/command-center/incidents">Manage Incidents</Link>
         <Link href="/command-center/messages">Moderate Messages</Link>
+        <Link href="/command-center/channels">Command Channels</Link>
         <Link href="/command-center/reports">Review Reports</Link>
         <Link href="/command-center/evidence">Handle Evidence</Link>
       </div>

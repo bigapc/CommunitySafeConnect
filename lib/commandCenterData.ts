@@ -1,4 +1,6 @@
 import {
+  listCommandChannels,
+  listCommandChannelMessages,
   getOrganizationUsageSnapshot,
   getCommandCenterMetrics,
   listIncidents,
@@ -40,6 +42,27 @@ export async function getCommandCenterMessages(organizationId: string, query: st
 
   return {
     messages,
+    error: null,
+  };
+}
+
+export async function getCommandCenterChannels(organizationId: string, query: string) {
+  const channels = listCommandChannels({ organizationId, ascending: false, limit: 100 }).filter((channel) => {
+    return includesQuery(channel.name, query) || includesQuery(channel.kind, query) || includesQuery(channel.created_by, query);
+  });
+
+  const channelMessagesById: Record<string, ReturnType<typeof listCommandChannelMessages>> = {};
+
+  for (const channel of channels) {
+    channelMessagesById[channel.id] = listCommandChannelMessages(organizationId, channel.id, {
+      ascending: false,
+      limit: 30,
+    });
+  }
+
+  return {
+    channels,
+    channelMessagesById,
     error: null,
   };
 }
