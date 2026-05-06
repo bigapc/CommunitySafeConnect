@@ -1,5 +1,5 @@
 import { createHash, createHmac } from "node:crypto";
-import { getDefaultOrganizationId, getOrganizationById, getPlanLimits } from "@/lib/tenancy";
+import { BillingPlanCode, getDefaultOrganizationId, getOrganizationById, getPlanLimits } from "@/lib/tenancy";
 
 export interface ReportRow {
   id: string;
@@ -748,6 +748,37 @@ export function requestDataRemoval(
     target_id: null,
     details: `${input.dataset} requestedBy=${input.requestedBy} reason=${input.reason}`,
   });
+}
+
+export function requestSubscriptionPlanChange(
+  organizationId: string,
+  input: {
+    requestedBy: string;
+    fromPlan: BillingPlanCode;
+    toPlan: BillingPlanCode;
+    reason: string;
+  }
+) {
+  const scopedOrgId = getScopedOrgId(organizationId);
+
+  if (input.fromPlan === input.toPlan) {
+    return {
+      error: "Requested plan is already active.",
+    };
+  }
+
+  const event = createCommandCenterEvent({
+    organization_id: scopedOrgId,
+    action: "subscription_plan_change_requested",
+    target_type: "billing",
+    target_id: null,
+    details: `from=${input.fromPlan} to=${input.toPlan} requestedBy=${input.requestedBy} reason=${input.reason}`,
+  });
+
+  return {
+    ok: true,
+    event,
+  };
 }
 
 export function listEvidenceRequests(options?: {

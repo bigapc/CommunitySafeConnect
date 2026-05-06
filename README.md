@@ -60,6 +60,12 @@
 - Organization-facing views expose only recent history (`ORGANIZATION_HISTORY_WINDOW_HOURS`, default `24`).
 - Historical evidence access must be requested from the command center for emergency and legal workflows.
 
+## Subscription Planner
+
+- Command center subscription supports Basic, Premium, and Elite pay-metric previews.
+- Org admins can generate invoice previews from usage metrics per selected billing tier.
+- Org admins can submit plan change requests from the planner; requests are logged as command center billing events.
+
 ## Evidence Workflow
 
 - `/command-center/evidence` is the queue for legal and emergency evidence access requests.
