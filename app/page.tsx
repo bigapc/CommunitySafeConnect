@@ -47,6 +47,21 @@ export default function HomePage() {
         </article>
       </div>
 
+      <section className="access-chooser">
+        <h3>Choose Access Type</h3>
+        <p>Select your portal first, then sign in with the matching access code.</p>
+        <div className="access-chooser-grid">
+          <Link href="/access?next=/dashboard" className="access-chooser-tile">
+            <strong>Organization Portal</strong>
+            <small>For report review, operations dashboard, and live coordination chat.</small>
+          </Link>
+          <Link href="/access?next=/command-center" className="access-chooser-tile">
+            <strong>Admin Command Center</strong>
+            <small>For moderation, incident command, evidence workflow, and exports.</small>
+          </Link>
+        </div>
+      </section>
+
       <section className="action-hub">
         <h3>Quick Workflow Hub</h3>
         <p>Choose a mission and jump directly to the exact workflow entry point.</p>

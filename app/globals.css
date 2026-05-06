@@ -188,6 +188,43 @@ a {
   color: #4f6372;
 }
 
+.access-chooser {
+  margin-top: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 0.9rem;
+  background: linear-gradient(130deg, #fef8ec, #fffdf6);
+}
+
+.access-chooser p {
+  margin-top: -0.2rem;
+}
+
+.access-chooser-grid {
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+
+.access-chooser-tile {
+  text-decoration: none;
+  border: 1px solid #dcc6a0;
+  border-radius: 12px;
+  background: #fff6e8;
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.3rem;
+  color: #325265;
+}
+
+.access-chooser-tile strong {
+  color: #7b2d27;
+}
+
+.access-chooser-tile small {
+  color: #4f6372;
+}
+
 .mission-card {
   margin: 0;
   padding: 0.85rem;
@@ -304,6 +341,29 @@ form {
 
 .access-panel {
   max-width: 640px;
+}
+
+.access-mode-switch {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.6rem;
+}
+
+.access-mode-switch a {
+  text-decoration: none;
+  border: 1px solid #d9be93;
+  border-radius: 999px;
+  padding: 0.3rem 0.75rem;
+  color: #5d4329;
+  background: #fff7e8;
+  font-size: 0.85rem;
+}
+
+.access-mode-switch a.active {
+  border-color: #7e332d;
+  background: #e16862;
+  color: #fff;
 }
 
 .access-subtitle {
@@ -719,7 +779,8 @@ code {
   }
 
   .action-grid,
-  .org-kpi-grid {
+  .org-kpi-grid,
+  .access-chooser-grid {
     grid-template-columns: 1fr;
   }
 

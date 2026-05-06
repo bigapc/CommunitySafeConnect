@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 interface AccessFormProps {
@@ -23,6 +24,8 @@ export default function AccessForm({ nextPath, organizations }: AccessFormProps)
     () => (nextPath.startsWith("/admin") || nextPath.startsWith("/command-center") ? "admin" : "organization"),
     [nextPath]
   );
+  const organizationAccessPath = scope === "organization" ? nextPath : "/dashboard";
+  const adminAccessPath = scope === "admin" ? nextPath : "/command-center";
 
   const roleOptions = useMemo(() => {
     if (scope === "admin") {
@@ -72,6 +75,24 @@ export default function AccessForm({ nextPath, organizations }: AccessFormProps)
     <main className="container">
       <div className="access-panel">
         <h2>{scope === "admin" ? "Admin Access" : "Organization Access"}</h2>
+        <div className="access-mode-switch" role="tablist" aria-label="Access type">
+          <Link
+            href={`/access?next=${encodeURIComponent(organizationAccessPath)}`}
+            className={scope === "organization" ? "active" : ""}
+            role="tab"
+            aria-selected={scope === "organization"}
+          >
+            Organization Access
+          </Link>
+          <Link
+            href={`/access?next=${encodeURIComponent(adminAccessPath)}`}
+            className={scope === "admin" ? "active" : ""}
+            role="tab"
+            aria-selected={scope === "admin"}
+          >
+            Admin Access
+          </Link>
+        </div>
         <p className="access-subtitle">
           Sign in to continue to
           {" "}
