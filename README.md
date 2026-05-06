@@ -81,6 +81,9 @@
 	- Only `org_admin` and `super_admin` can change task state.
 	- Task assignee and due date can be managed in channel controls.
 	- Overdue unresolved task channels automatically raise a `command_channel_sla_breached` event after a 15-minute grace period.
+	- SLA-breached task channels are automatically routed into incident operations:
+		- A critical incident is auto-created.
+		- A critical message is posted to the emergency command channel when available.
 	- Task state updates are logged as command center events.
 - Channel templates:
 	- `alerts`, `tasks`, `emergency`, `debrief`, `drill` templates define default names and allowed priorities.
@@ -99,6 +102,7 @@
 	- Task SLA due soon count (within 2 hours)
 	- Task SLA overdue count
 	- Task SLA escalation count (overdue past grace period)
+	- Task SLA incident routing count
 
 ## Incident Operations
 

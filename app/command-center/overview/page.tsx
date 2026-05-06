@@ -91,6 +91,11 @@ export default async function CommandCenterOverviewPage() {
           <strong>{metrics.escalatedTaskChannels}</strong>
           <small className="control-meta">Overdue tasks escalated after grace period</small>
         </article>
+        <article className="control-card ops-metric-card" style={metrics.routedTaskIncidentChannels > 0 ? { borderLeft: "3px solid #7f1d1d" } : {}}>
+          <small className="control-meta">SLA Routed Incidents</small>
+          <strong>{metrics.routedTaskIncidentChannels}</strong>
+          <small className="control-meta">Task channels routed into incident queue</small>
+        </article>
         <article className="control-card ops-metric-card" style={metrics.pendingEscalationRequests > 0 ? { borderLeft: "3px solid #d1495b" } : {}}>
           <small className="control-meta">Security Escalations</small>
           <strong>{metrics.pendingEscalationRequests}</strong>

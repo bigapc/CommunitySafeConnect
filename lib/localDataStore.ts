@@ -36,6 +36,7 @@ export interface CommandChannelRow {
   task_assignee: string | null;
   task_due_at: string | null;
   task_sla_alerted_at: string | null;
+  task_sla_incident_id: string | null;
   is_emergency: boolean;
   created_at: string;
   created_by: string;
@@ -213,6 +214,7 @@ const commandChannels: CommandChannelRow[] = [
     task_assignee: null,
     task_due_at: null,
     task_sla_alerted_at: null,
+    task_sla_incident_id: null,
     is_emergency: true,
     created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
     created_by: "org_admin",
@@ -227,6 +229,7 @@ const commandChannels: CommandChannelRow[] = [
     task_assignee: null,
     task_due_at: null,
     task_sla_alerted_at: null,
+    task_sla_incident_id: null,
     is_emergency: false,
     created_at: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
     created_by: "moderator",
@@ -241,6 +244,7 @@ const commandChannels: CommandChannelRow[] = [
     task_assignee: "ops-shift-bravo",
     task_due_at: new Date(Date.now() + 1000 * 60 * 90).toISOString(),
     task_sla_alerted_at: null,
+    task_sla_incident_id: null,
     is_emergency: false,
     created_at: new Date(Date.now() - 1000 * 60 * 95).toISOString(),
     created_by: "org_admin",
@@ -427,6 +431,9 @@ function syncTaskChannelSlaAlerts(organizationId: string) {
   const scopedOrgId = getScopedOrgId(organizationId);
   const nowMs = Date.now();
   const graceMs = TASK_CHANNEL_SLA_ESCALATION_GRACE_MINUTES * 60 * 1000;
+  const emergencyChannel = commandChannels.find(
+    (channel) => channel.organization_id === scopedOrgId && channel.kind === "emergency"
+  );
 
   for (const channel of commandChannels) {
     if (channel.organization_id !== scopedOrgId || channel.kind !== "tasks") {
@@ -447,14 +454,40 @@ function syncTaskChannelSlaAlerts(organizationId: string) {
       continue;
     }
 
+    const incident = createIncident(scopedOrgId, {
+      title: `Task SLA breach: ${channel.name}`,
+      description:
+        `Task channel overdue beyond ${TASK_CHANNEL_SLA_ESCALATION_GRACE_MINUTES} minute grace period. ` +
+        `state=${channel.task_state} assignee=${channel.task_assignee || "unassigned"} dueAt=${channel.task_due_at || "none"}`,
+      severity: "critical",
+      assignee: channel.task_assignee || "ops-sla-response",
+    });
+
+    if (emergencyChannel) {
+      const result = createCommandChannelMessage(scopedOrgId, emergencyChannel.id, {
+        sender: "sla-automation",
+        body:
+          `SLA breach routed from task channel ${channel.name}. ` +
+          `Incident ${incident.id.slice(0, 12)} created for immediate response.`,
+        priority: "critical",
+      });
+
+      if (result && !("error" in result)) {
+        emergencyChannel.last_message_at = result.created_at;
+      }
+    }
+
     channel.task_sla_alerted_at = new Date(nowMs).toISOString();
+    channel.task_sla_incident_id = incident.id;
 
     createCommandCenterEvent({
       organization_id: scopedOrgId,
       action: "command_channel_sla_breached",
       target_type: "channel",
       target_id: channel.id,
-      details: `channel=${channel.name} state=${channel.task_state} assignee=${channel.task_assignee || "unassigned"} dueAt=${channel.task_due_at || "none"}`,
+      details:
+        `channel=${channel.name} state=${channel.task_state} assignee=${channel.task_assignee || "unassigned"} dueAt=${channel.task_due_at || "none"} ` +
+        `incidentId=${incident.id}${emergencyChannel ? ` emergencyChannelId=${emergencyChannel.id}` : ""}`,
     });
   }
 }
@@ -783,6 +816,7 @@ export function createCommandChannel(
     task_assignee: null,
     task_due_at: input.kind === "tasks" ? createTaskDueAt() : null,
     task_sla_alerted_at: null,
+    task_sla_incident_id: null,
     is_emergency: input.isEmergency ?? template.isEmergencyByDefault,
     created_at: new Date().toISOString(),
     created_by: input.createdBy,
@@ -1487,6 +1521,9 @@ export function getCommandCenterMetrics(organizationId: string) {
   const escalatedTaskChannels = scopedChannels.filter((channel) => {
     return channel.kind === "tasks" && channel.task_state !== "resolved" && !!channel.task_sla_alerted_at;
   }).length;
+  const routedTaskIncidentChannels = scopedChannels.filter((channel) => {
+    return channel.kind === "tasks" && channel.task_state !== "resolved" && !!channel.task_sla_incident_id;
+  }).length;
 
   return {
     totalReports: scopedReports.length,
@@ -1501,6 +1538,7 @@ export function getCommandCenterMetrics(organizationId: string) {
     dueSoonTaskChannels,
     overdueTaskChannels,
     escalatedTaskChannels,
+    routedTaskIncidentChannels,
     totalIncidents: scopedIncidents.length,
     openIncidents,
     escalatedIncidents,
