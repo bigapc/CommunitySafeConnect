@@ -47,6 +47,37 @@ export default function HomePage() {
         </article>
       </div>
 
+      <section className="action-hub">
+        <h3>Quick Workflow Hub</h3>
+        <p>Choose a mission and jump directly to the exact workflow entry point.</p>
+        <div className="action-grid">
+          <Link href="/access?next=/report" className="action-tile">
+            <strong>Incident Intake</strong>
+            <small>Authenticate and file a structured safety report.</small>
+          </Link>
+          <Link href="/access?next=/chat" className="action-tile">
+            <strong>Live Coordination</strong>
+            <small>Sign in and coordinate with field volunteers in real time.</small>
+          </Link>
+          <Link href="/access?next=/dashboard" className="action-tile">
+            <strong>Organization Review</strong>
+            <small>View recent reports and policy-limited historical windows.</small>
+          </Link>
+          <Link href="/access?next=/command-center/overview" className="action-tile">
+            <strong>Ops Command</strong>
+            <small>Open command-center overview for metrics and response posture.</small>
+          </Link>
+          <Link href="/access?next=/command-center/evidence" className="action-tile">
+            <strong>Evidence Workflow</strong>
+            <small>Request, approve, and export legal evidence packages.</small>
+          </Link>
+          <Link href="/access?next=/command-center/incidents" className="action-tile">
+            <strong>Incident Queue</strong>
+            <small>Create, triage, assign, and escalate active incidents.</small>
+          </Link>
+        </div>
+      </section>
+
       <section className="sector-showcase">
         <article className="sector-card">
           <Image

@@ -1,9 +1,11 @@
 import Link from "next/link";
 import AccessSessionControls from "@/components/AccessSessionControls";
-import { hasAdminAccess } from "@/lib/access";
+import { getCurrentAccessContext, hasAdminAccess } from "@/lib/access";
 
 export default async function Navbar() {
   const isAdmin = await hasAdminAccess();
+  const context = await getCurrentAccessContext();
+  const accessLabel = context ? `${context.scope} | ${context.role}` : "not signed in";
 
   return (
     <nav className="navbar">
@@ -14,6 +16,11 @@ export default async function Navbar() {
           <Link href="/dashboard">Dashboard</Link>
           <Link href="/chat">Chat</Link>
           {isAdmin && <Link href="/command-center">Command Center</Link>}
+          <Link href="/access?next=/dashboard">Sign In</Link>
+        </div>
+        <div className="session-badges">
+          <span className="session-badge">Access: {accessLabel}</span>
+          {context?.organizationId && <span className="session-badge">Org: {context.organizationId}</span>}
         </div>
         <AccessSessionControls />
       </div>

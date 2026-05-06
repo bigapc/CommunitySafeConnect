@@ -73,6 +73,21 @@ a {
   gap: 0.8rem;
 }
 
+.session-badges {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.session-badge {
+  border: 1px solid #c8b394;
+  background: #fffbf0;
+  color: #5a402b;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.55rem;
+}
+
 .container {
   margin-top: 1rem;
   padding: 1.4rem;
@@ -127,6 +142,50 @@ a {
   display: grid;
   gap: 0.8rem;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.action-hub {
+  margin-top: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 0.9rem;
+  background: linear-gradient(130deg, #fff5e2, #fefaf2);
+}
+
+.action-hub p {
+  margin-top: -0.2rem;
+}
+
+.action-grid {
+  margin-top: 0.7rem;
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.action-tile {
+  border: 1px solid #d9b98e;
+  border-radius: 12px;
+  background: #fff8eb;
+  padding: 0.75rem;
+  text-decoration: none;
+  display: grid;
+  gap: 0.35rem;
+  color: #254456;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.action-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(71, 51, 26, 0.16);
+}
+
+.action-tile strong {
+  color: #7d2f28;
+}
+
+.action-tile small {
+  color: #4f6372;
 }
 
 .mission-card {
@@ -317,6 +376,65 @@ code {
   border-radius: 999px;
   padding: 0.3rem 0.7rem;
   font-size: 0.9rem;
+}
+
+.control-room-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.control-room-action-row a {
+  text-decoration: none;
+  color: #ddf5ff;
+  border: 1px solid #4f6c87;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+  background: #123349;
+}
+
+.org-kpi-grid {
+  margin-top: 0.9rem;
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.org-kpi-card {
+  border: 1px solid #d8c8ac;
+  border-radius: 12px;
+  background: #fff7ea;
+  padding: 0.7rem;
+  display: grid;
+  gap: 0.3rem;
+}
+
+.org-kpi-card small {
+  color: #6b4f32;
+}
+
+.org-kpi-card strong {
+  font-size: 1.35rem;
+  color: #7d2f28;
+}
+
+.org-quick-actions {
+  margin-top: 0.8rem;
+  margin-bottom: 0.8rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.org-quick-actions a {
+  text-decoration: none;
+  border: 1px solid #d6b588;
+  border-radius: 999px;
+  padding: 0.28rem 0.72rem;
+  background: #fff6e8;
+  color: #345469;
+  font-size: 0.85rem;
 }
 
 .control-search {
@@ -537,6 +655,17 @@ code {
   .ops-metrics-grid,
   .incident-grid {
     grid-template-columns: 1fr;
+  }
+
+  .action-grid,
+  .org-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .control-room-action-row a,
+  .org-quick-actions a {
+    width: 100%;
+    text-align: center;
   }
 
   .evidence-action-row form {

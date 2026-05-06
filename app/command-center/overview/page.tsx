@@ -1,5 +1,6 @@
 import { getCurrentAccessContext } from "@/lib/access";
 import { getCommandCenterOverviewByOrganization } from "@/lib/commandCenterData";
+import Link from "next/link";
 
 export default async function CommandCenterOverviewPage() {
   const context = await getCurrentAccessContext();
@@ -61,6 +62,14 @@ export default async function CommandCenterOverviewPage() {
             )}
           </article>
         ))}
+      </div>
+
+      <h3 style={{ marginTop: "1rem" }}>Quick Ops Actions</h3>
+      <div className="control-room-action-row">
+        <Link href="/command-center/incidents">Manage Incidents</Link>
+        <Link href="/command-center/messages">Moderate Messages</Link>
+        <Link href="/command-center/reports">Review Reports</Link>
+        <Link href="/command-center/evidence">Handle Evidence</Link>
       </div>
     </section>
   );
