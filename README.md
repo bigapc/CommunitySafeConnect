@@ -1,5 +1,42 @@
 # CommunitySafeConnect
 
+## Product Positioning
+
+- CommunitySafeConnect is a community safety operating system, not just a reporting app.
+- The platform connects residents, moderators, organizations, and command-center responders in one operational workflow.
+- It combines prevention, live response, escalation, evidence, and post-incident governance.
+
+## Community Safety OS Layers
+
+- Personal safety layer: safe walks, arrival monitoring, SOS journeys, and trusted-circle coordination.
+- Community intelligence layer: anonymous reporting, incident clustering, and neighborhood risk patterns.
+- Operations layer: command-center incident queues, escalation workflows, evidence control, and audit trails.
+- Institutional layer: organization channels, policy controls, compliance exports, and subscription governance.
+
+## Recommended Feature Packaging
+
+- Basic:
+	- Anonymous Community Reporting
+	- Safe Arrival Mode
+	- Guardian Check-In (single schedule + basic alerts)
+- Premium:
+	- SafeWalk Mode (route share + deviation alert)
+	- Community Risk Heatmap
+	- Campus/School Safety Layer (core workflows)
+	- AI Incident Summary Generator (standard exports)
+- Elite:
+	- Organization Command Channels
+	- Evidence Vault (immutable/tamper-evident chain)
+	- Verified Safe Businesses Network
+	- Campus Mode advanced controls (silent staff alerts, parent workflows)
+	- Panic Phrase Voice Detection (premium roadmap feature)
+
+## Flat Subscription Recommendation
+
+- Keep Basic and Premium usage-aware.
+- Offer Elite as a flat institutional operations package with negotiated rollout and onboarding.
+- Keep advanced operations and compliance tooling bundled under Elite to maximize enterprise value.
+
 ## Access Configuration
 
 - Set `ORGANIZATION_ACCESS_CODE` in `.env.local` to protect report, dashboard, and chat access.
@@ -65,6 +102,7 @@
 - Command center subscription supports Basic, Premium, and Elite pay-metric previews.
 - Org admins can generate invoice previews from usage metrics per selected billing tier.
 - Org admins can submit plan change requests from the planner; requests are logged as command center billing events.
+- Elite includes Organization Command Channels for institutional emergency coordination and task dispatch workflows.
 
 ## Evidence Workflow
 

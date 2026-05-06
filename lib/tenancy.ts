@@ -81,7 +81,12 @@ const billingPlans: BillingPlanProfile[] = [
     monthlyBaseUsd: 1499,
     reportUnitUsd: 0.65,
     messageUnitUsd: 0.04,
-    includes: ["Command center suite", "Priority support", "Compliance exports"],
+    includes: [
+      "Command center suite",
+      "Organization command channels",
+      "Priority support",
+      "Compliance exports",
+    ],
   },
 ];
 
