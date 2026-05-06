@@ -28,11 +28,15 @@ export async function POST(
     const rawStatus = formData.get("status")?.toString();
     const status = rawStatus === "resolved" ? "resolved" : "under_review";
     const resolutionNotes = formData.get("resolutionNotes")?.toString() || null;
+    const assignedTo = formData.get("assignedTo")?.toString() || null;
+    const verificationCallAt = formData.get("verificationCallAt")?.toString() || null;
 
     const updated = updateEscalationRequest(access.organizationId, id, {
       status,
       reviewedBy: access.role,
       resolutionNotes,
+      assignedTo,
+      verificationCallAt,
     });
 
     if (!updated) {

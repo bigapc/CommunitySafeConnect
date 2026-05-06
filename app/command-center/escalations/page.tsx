@@ -76,9 +76,28 @@ export default async function CommandCenterEscalationsPage({ searchParams }: Com
               <small className="control-meta" style={{ display: "block" }}>
                 {new Date(request.created_at).toLocaleString()}
               </small>
+              <small className="control-meta" style={{ display: "block" }}>
+                Owner: {request.assigned_to || "Unassigned"}
+                {request.verification_call_at
+                  ? ` | Verification call ${new Date(request.verification_call_at).toLocaleString()}`
+                  : " | Verification call not scheduled"}
+              </small>
               <p style={{ marginBottom: 0 }}>{request.reason}</p>
               <form action={`/api/command-center/escalation/${request.id}/review`} method="post" className="queue-review-form">
                 <input type="hidden" name="returnTo" value={returnTo} />
+                <div className="queue-review-grid">
+                  <input
+                    type="text"
+                    name="assignedTo"
+                    placeholder="Assign owner"
+                    defaultValue={request.assigned_to || ""}
+                  />
+                  <input
+                    type="datetime-local"
+                    name="verificationCallAt"
+                    defaultValue={request.verification_call_at ? request.verification_call_at.slice(0, 16) : ""}
+                  />
+                </div>
                 <textarea
                   name="resolutionNotes"
                   rows={2}
@@ -114,6 +133,12 @@ export default async function CommandCenterEscalationsPage({ searchParams }: Com
               <small className="control-meta" style={{ display: "block" }}>
                 submitted {new Date(request.created_at).toLocaleString()}
                 {request.resolved_at ? ` | resolved ${new Date(request.resolved_at).toLocaleString()}` : ""}
+              </small>
+              <small className="control-meta" style={{ display: "block" }}>
+                Owner: {request.assigned_to || "Unassigned"}
+                {request.verification_call_at
+                  ? ` | Verification call ${new Date(request.verification_call_at).toLocaleString()}`
+                  : " | Verification call not scheduled"}
               </small>
               <p style={{ marginBottom: request.resolution_notes ? "0.35rem" : 0 }}>{request.reason}</p>
               {request.resolution_notes && (

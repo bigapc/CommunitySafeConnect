@@ -1091,6 +1091,22 @@ code {
   font: inherit;
 }
 
+.queue-review-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.5rem;
+}
+
+.queue-review-grid input {
+  width: 100%;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 0.6rem 0.7rem;
+  background: #17202f;
+  color: #e2e8f0;
+  font: inherit;
+}
+
 .queue-review-actions {
   display: flex;
   gap: 0.5rem;

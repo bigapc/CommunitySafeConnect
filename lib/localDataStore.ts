@@ -1051,6 +1051,8 @@ export interface EscalationRequestRow {
   contact_email: string;
   requested_by_role: string;
   status: EscalationStatus;
+  assigned_to: string | null;
+  verification_call_at: string | null;
   created_at: string;
   resolved_at: string | null;
   resolution_notes: string | null;
@@ -1078,6 +1080,8 @@ export function createEscalationRequest(
     contact_email: input.contactEmail,
     requested_by_role: input.requestedByRole,
     status: "submitted",
+    assigned_to: null,
+    verification_call_at: null,
     created_at: new Date().toISOString(),
     resolved_at: null,
     resolution_notes: null,
@@ -1111,6 +1115,8 @@ export function updateEscalationRequest(
     status: EscalationStatus;
     reviewedBy: string;
     resolutionNotes?: string | null;
+    assignedTo?: string | null;
+    verificationCallAt?: string | null;
   }
 ) {
   const scopedOrgId = getScopedOrgId(organizationId);
@@ -1124,6 +1130,8 @@ export function updateEscalationRequest(
 
   request.status = input.status;
   request.resolution_notes = input.resolutionNotes || null;
+  request.assigned_to = input.assignedTo?.trim() || null;
+  request.verification_call_at = input.verificationCallAt?.trim() || null;
   request.resolved_at = input.status === "resolved" ? new Date().toISOString() : null;
 
   createCommandCenterEvent({
@@ -1131,7 +1139,7 @@ export function updateEscalationRequest(
     action: `escalation_request_${input.status}`,
     target_type: "system",
     target_id: request.id,
-    details: `reviewedBy=${input.reviewedBy} notes=${input.resolutionNotes || "none"}`,
+    details: `reviewedBy=${input.reviewedBy} assignedTo=${input.assignedTo || "unassigned"} verificationCallAt=${input.verificationCallAt || "unscheduled"} notes=${input.resolutionNotes || "none"}`,
   });
 
   return request;
