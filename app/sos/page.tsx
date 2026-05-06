@@ -19,10 +19,11 @@ export default async function SosPage({ searchParams }: SosPageProps) {
     <main className="container">
       <div className="response-journey" style={{ marginBottom: "0.8rem" }}>
         <span className="response-step active">1. SOS</span>
-        <span className="response-step">2. Safety Circle</span>
-        <span className="response-step">3. Incident Log</span>
-        <span className="response-step">4. Safe Zones</span>
-        <span className="response-step">5. Organization Dashboard</span>
+        <span className="response-step">2. Safe Walk</span>
+        <span className="response-step">3. Safety Circle</span>
+        <span className="response-step">4. Incident Log</span>
+        <span className="response-step">5. Safe Zones</span>
+        <span className="response-step">6. Organization Dashboard</span>
       </div>
       <h2>Emergency Activation</h2>
       <p style={{ color: "#94a3b8", marginTop: "-0.2rem" }}>
@@ -46,6 +47,7 @@ export default async function SosPage({ searchParams }: SosPageProps) {
       </div>
 
       <div className="org-quick-actions" style={{ marginTop: "1rem" }}>
+        <Link href="/safe-walk">Open Safe Walk Alert</Link>
         <Link href={`/safety-circle${buildJourneyQuery(journey)}`}>Next: Notify Safety Circle</Link>
         <Link href={`/incident-log${buildJourneyQuery(journey)}`}>Jump to Incident Log</Link>
         <Link href={`/organization-dashboard${buildJourneyQuery(journey)}`}>Open Organization Dashboard</Link>

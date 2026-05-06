@@ -6,6 +6,15 @@
 - The platform connects residents, moderators, organizations, and command-center responders in one operational workflow.
 - It combines prevention, live response, escalation, evidence, and post-incident governance.
 
+## SafeWalk Alert
+
+- Use `/safe-walk` for monitored walk sessions with ETA-based alert simulation.
+- SafeWalk supports:
+	- destination + ETA setup
+	- trusted contact assignment
+	- off-route and no-movement alert triggers
+	- safe arrival confirmation
+
 ## Community Safety OS Layers
 
 - Personal safety layer: safe walks, arrival monitoring, SOS journeys, and trusted-circle coordination.

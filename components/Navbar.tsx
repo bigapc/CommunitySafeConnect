@@ -13,6 +13,7 @@ export default async function Navbar() {
         <h1 className="navbar-brand">CommunitySafetyConnect</h1>
         <div className="navbar-links">
           <Link href="/sos">SOS</Link>
+          <Link href="/safe-walk">Safe Walk</Link>
           <Link href="/safe-zones">Safe Zones</Link>
           <Link href="/safety-circle">Safety Circle</Link>
           <Link href="/incident-log">Incident Log</Link>
