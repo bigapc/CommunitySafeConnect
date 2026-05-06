@@ -952,12 +952,24 @@ export function getCommandCenterMetrics(organizationId: string) {
   const scopedAudits = auditLogs.filter((log) => log.organization_id === scopedOrgId);
   const scopedEvents = commandCenterEvents.filter((event) => event.organization_id === scopedOrgId);
   const scopedIncidents = incidents.filter((incident) => incident.organization_id === scopedOrgId);
+  const scopedEvidenceRequests = evidenceRequests.filter(
+    (request) => request.organization_id === scopedOrgId
+  );
 
   const pendingReports = scopedReports.filter((report) => !report.reviewed).length;
   const reviewedReports = scopedReports.length - pendingReports;
   const flaggedMessages = scopedMessages.filter((message) => message.flagged).length;
   const openIncidents = scopedIncidents.filter((incident) => incident.status !== "resolved").length;
   const escalatedIncidents = scopedIncidents.filter((incident) => incident.escalated).length;
+  const pendingEvidenceRequests = scopedEvidenceRequests.filter(
+    (request) => request.status === "pending"
+  ).length;
+  const approvedEvidenceRequests = scopedEvidenceRequests.filter(
+    (request) => request.status === "approved"
+  ).length;
+  const exportedEvidenceRequests = scopedEvidenceRequests.filter(
+    (request) => request.status === "exported"
+  ).length;
 
   return {
     totalReports: scopedReports.length,
@@ -968,6 +980,10 @@ export function getCommandCenterMetrics(organizationId: string) {
     totalIncidents: scopedIncidents.length,
     openIncidents,
     escalatedIncidents,
+    totalEvidenceRequests: scopedEvidenceRequests.length,
+    pendingEvidenceRequests,
+    approvedEvidenceRequests,
+    exportedEvidenceRequests,
     accessAuditEvents: scopedAudits.length,
     commandCenterEvents: scopedEvents.length,
   };

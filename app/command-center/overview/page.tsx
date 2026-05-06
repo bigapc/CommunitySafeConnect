@@ -41,6 +41,18 @@ export default async function CommandCenterOverviewPage() {
           <strong>{metrics.openIncidents}</strong>
           <small className="control-meta">Escalated: {metrics.escalatedIncidents}</small>
         </article>
+        <article className="control-card ops-metric-card">
+          <small className="control-meta">Evidence Requests</small>
+          <strong>{metrics.totalEvidenceRequests}</strong>
+          <small className="control-meta">Pending: {metrics.pendingEvidenceRequests}</small>
+        </article>
+        <article className="control-card ops-metric-card">
+          <small className="control-meta">Evidence Ready/Exported</small>
+          <strong>{metrics.approvedEvidenceRequests + metrics.exportedEvidenceRequests}</strong>
+          <small className="control-meta">
+            Approved: {metrics.approvedEvidenceRequests} | Exported: {metrics.exportedEvidenceRequests}
+          </small>
+        </article>
       </div>
 
       <h3 style={{ marginTop: "1rem" }}>Recent Operational Events</h3>
