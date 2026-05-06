@@ -15,8 +15,8 @@ export default function HomePage() {
           incident documentation, and safe location visibility in one connected platform.
         </p>
         <div className="csc-hero-actions">
-          <Link href="/report" className="csc-btn csc-btn-primary">Activate SOS</Link>
-          <Link href="/dashboard" className="csc-btn csc-btn-secondary">View Safe Zones</Link>
+          <Link href="/sos" className="csc-btn csc-btn-primary">Activate SOS</Link>
+          <Link href="/safe-zones" className="csc-btn csc-btn-secondary">View Safe Zones</Link>
           <Link href="/access?next=/command-center" className="csc-btn csc-btn-outline">For Organizations</Link>
         </div>
       </section>
@@ -60,31 +60,31 @@ export default function HomePage() {
             <div className="csc-mvp-number">01</div>
             <strong>Emergency Activation</strong>
             <p>Large SOS button with silent mode, live location, and alert sending.</p>
-            <Link href="/report" className="csc-mvp-link">Open →</Link>
+            <Link href="/sos" className="csc-mvp-link">Open →</Link>
           </article>
           <article className="csc-mvp-card">
             <div className="csc-mvp-number">02</div>
             <strong>Safety Circle</strong>
             <p>Trusted contacts receive alerts, check-ins, and live status when it matters.</p>
-            <Link href="/chat" className="csc-mvp-link">Open →</Link>
+            <Link href="/safety-circle" className="csc-mvp-link">Open →</Link>
           </article>
           <article className="csc-mvp-card">
             <div className="csc-mvp-number">03</div>
             <strong>Safe Zones</strong>
             <p>Map of verified safe locations — schools, businesses, churches, and partner sites.</p>
-            <Link href="/dashboard" className="csc-mvp-link">Open →</Link>
+            <Link href="/safe-zones" className="csc-mvp-link">Open →</Link>
           </article>
           <article className="csc-mvp-card">
             <div className="csc-mvp-number">04</div>
             <strong>Incident Log</strong>
             <p>Timestamped reports with notes, photos, audio, and location for documentation.</p>
-            <Link href="/report" className="csc-mvp-link">Open →</Link>
+            <Link href="/incident-log" className="csc-mvp-link">Open →</Link>
           </article>
           <article className="csc-mvp-card csc-mvp-card-wide">
             <div className="csc-mvp-number">05</div>
             <strong>Institution Dashboard</strong>
             <p>Admin-only backend for neighborhoods, campuses, and businesses to monitor alerts, approved locations, and activity in real time.</p>
-            <Link href="/access?next=/command-center" className="csc-mvp-link">Access Dashboard →</Link>
+            <Link href="/access?next=/organization-dashboard" className="csc-mvp-link">Access Dashboard →</Link>
           </article>
         </div>
       </section>
@@ -105,7 +105,7 @@ export default function HomePage() {
         <h3>Access Your Portal</h3>
         <p>Select the portal that matches your role, then sign in with your access code.</p>
         <div className="access-chooser-grid">
-          <Link href="/access?next=/dashboard" className="access-chooser-tile">
+          <Link href="/access?next=/organization-dashboard" className="access-chooser-tile">
             <strong>Organization Portal</strong>
             <small>Dashboard, report review, coordination chat, and safe zone management.</small>
           </Link>

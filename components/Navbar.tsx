@@ -12,11 +12,12 @@ export default async function Navbar() {
       <div className="navbar-inner">
         <h1 className="navbar-brand">CommunitySafetyConnect</h1>
         <div className="navbar-links">
-          <Link href="/report">Report</Link>
-          <Link href="/dashboard">Dashboard</Link>
-          <Link href="/chat">Chat</Link>
+          <Link href="/sos">SOS</Link>
+          <Link href="/safe-zones">Safe Zones</Link>
+          <Link href="/safety-circle">Safety Circle</Link>
+          <Link href="/incident-log">Incident Log</Link>
           {isAdmin && <Link href="/command-center">Command Center</Link>}
-          <Link href="/access?next=/dashboard">Sign In</Link>
+          <Link href="/access?next=/organization-dashboard">Sign In</Link>
         </div>
         <div className="session-badges">
           <span className="session-badge">Access: {accessLabel}</span>
