@@ -147,11 +147,11 @@ export default async function CommandCenterOverviewPage() {
 
       <h3 style={{ marginTop: "1rem" }}>Governance Actions</h3>
       <div className="control-room-action-row">
-        <Link href="/command-center/incidents">Mark as resolved</Link>
-        <Link href="/command-center/incidents">Escalate for security review</Link>
+        <Link href="/command-center/escalations">Mark as resolved</Link>
+        <Link href="/command-center/escalations">Escalate for security review</Link>
         <Link href="/command-center/evidence">Export documentation</Link>
-        <Link href="/security-governance">Request restricted access</Link>
-        <Link href="/security-governance">Submit to compliance review</Link>
+        <Link href="/command-center/escalations">Request restricted access</Link>
+        <Link href="/command-center/escalations">Submit to compliance review</Link>
       </div>
     </section>
   );

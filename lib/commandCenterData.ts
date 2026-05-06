@@ -161,3 +161,29 @@ export async function getCommandCenterEvidenceRequests(organizationId: string, q
     error: null,
   };
 }
+
+export async function getCommandCenterEscalations(
+  organizationId: string,
+  query: string,
+  status: "all" | "submitted" | "under_review" | "resolved"
+) {
+  const requests = listEscalationRequests({ organizationId, limit: 200 }).filter((request) => {
+    const matchesStatus = status === "all" ? true : request.status === status;
+    return (
+      matchesStatus && (
+        includesQuery(request.category, query) ||
+        includesQuery(request.reason, query) ||
+        includesQuery(request.contact_name, query) ||
+        includesQuery(request.contact_email, query) ||
+        includesQuery(request.requested_by_role, query) ||
+        includesQuery(request.status, query) ||
+        includesQuery(request.resolution_notes, query)
+      )
+    );
+  });
+
+  return {
+    requests,
+    error: null,
+  };
+}
