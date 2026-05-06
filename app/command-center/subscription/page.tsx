@@ -1,17 +1,20 @@
 import { getCurrentAccessContext } from "@/lib/access";
 import { getCommandCenterSubscription } from "@/lib/commandCenterData";
+import SubscriptionPlanner from "@/components/SubscriptionPlanner";
 
 export default async function CommandCenterSubscriptionPage() {
   const context = await getCurrentAccessContext();
   const organizationId = context?.organizationId || "metro-city-university";
-  const { organization, usage, invoiceEvents } = await getCommandCenterSubscription(organizationId);
+  const { organization, usage, invoiceEvents, billingPlans, currentBillingPlan } = await getCommandCenterSubscription(organizationId);
 
   return (
     <section>
       <h3>Subscription and Usage</h3>
       <p className="control-meta" style={{ marginTop: "-0.2rem" }}>
-        {organization?.name || organizationId} | plan={usage.plan} | month={usage.month}
+        {organization?.name || organizationId} | operational plan={usage.plan} | billing plan={currentBillingPlan} | month={usage.month}
       </p>
+
+      <SubscriptionPlanner billingPlans={billingPlans} currentBillingPlan={currentBillingPlan} />
 
       <div className="ops-metrics-grid">
         <article className="control-card ops-metric-card">

@@ -16,6 +16,17 @@ export interface PlanLimits {
   maxAnalysts: number;
 }
 
+export type BillingPlanCode = "basic" | "premium" | "elite";
+
+export interface BillingPlanProfile {
+  code: BillingPlanCode;
+  label: string;
+  monthlyBaseUsd: number;
+  reportUnitUsd: number;
+  messageUnitUsd: number;
+  includes: string[];
+}
+
 function getRequiredAccessCode(name: string, fallbackName: "ORGANIZATION_ACCESS_CODE" | "ADMIN_ACCESS_CODE") {
   const value = process.env[name] || process.env[fallbackName];
 
@@ -46,6 +57,33 @@ const planLimits: Record<OrganizationPlanTier, PlanLimits> = {
     maxAnalysts: 250,
   },
 };
+
+const billingPlans: BillingPlanProfile[] = [
+  {
+    code: "basic",
+    label: "Basic",
+    monthlyBaseUsd: 199,
+    reportUnitUsd: 1.25,
+    messageUnitUsd: 0.08,
+    includes: ["Core reporting", "Org dashboard", "Standard chat"],
+  },
+  {
+    code: "premium",
+    label: "Premium",
+    monthlyBaseUsd: 699,
+    reportUnitUsd: 0.95,
+    messageUnitUsd: 0.06,
+    includes: ["Advanced moderation", "Incident queue", "Evidence workflow"],
+  },
+  {
+    code: "elite",
+    label: "Elite",
+    monthlyBaseUsd: 1499,
+    reportUnitUsd: 0.65,
+    messageUnitUsd: 0.04,
+    includes: ["Command center suite", "Priority support", "Compliance exports"],
+  },
+];
 
 const organizations: OrganizationProfile[] = [
   {
@@ -88,4 +126,24 @@ export function getOrganizationById(organizationId: string) {
 
 export function getPlanLimits(tier: OrganizationPlanTier) {
   return planLimits[tier];
+}
+
+export function listBillingPlans() {
+  return billingPlans;
+}
+
+export function getBillingPlanByCode(code: BillingPlanCode) {
+  return billingPlans.find((plan) => plan.code === code) || null;
+}
+
+export function mapOrganizationPlanToBilling(plan: OrganizationPlanTier): BillingPlanCode {
+  if (plan === "starter") {
+    return "basic";
+  }
+
+  if (plan === "professional") {
+    return "premium";
+  }
+
+  return "elite";
 }

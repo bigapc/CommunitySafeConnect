@@ -10,7 +10,7 @@ import {
   listReports,
 } from "@/lib/localDataStore";
 import type { CommandCenterEventRow } from "@/lib/localDataStore";
-import { getOrganizationById } from "@/lib/tenancy";
+import { getOrganizationById, listBillingPlans, mapOrganizationPlanToBilling } from "@/lib/tenancy";
 
 function includesQuery(value: string | null | undefined, query: string) {
   if (!query) {
@@ -129,11 +129,15 @@ export async function getCommandCenterSubscription(organizationId: string) {
   const organization = getOrganizationById(organizationId);
   const usage = getOrganizationUsageSnapshot(organizationId);
   const invoiceEvents = listInvoiceEvents({ organizationId, ascending: false, limit: 20 });
+  const billingPlans = listBillingPlans();
+  const currentBillingPlan = organization ? mapOrganizationPlanToBilling(organization.plan) : "basic";
 
   return {
     organization,
     usage,
     invoiceEvents,
+    billingPlans,
+    currentBillingPlan,
     error: null,
   };
 }
