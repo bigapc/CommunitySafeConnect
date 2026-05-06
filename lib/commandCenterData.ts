@@ -11,7 +11,7 @@ import {
   listReports,
 } from "@/lib/localDataStore";
 import type { CommandCenterEventRow } from "@/lib/localDataStore";
-import { summarizeEscalationSla } from "@/lib/escalationSla";
+import { sortEscalationsByUrgency, summarizeEscalationPriority, summarizeEscalationSla } from "@/lib/escalationSla";
 import { getOrganizationById, listBillingPlans, mapOrganizationPlanToBilling } from "@/lib/tenancy";
 
 function includesQuery(value: string | null | undefined, query: string) {
@@ -67,9 +67,10 @@ export async function getCommandCenterOverview() {
 export async function getCommandCenterOverviewByOrganization(organizationId: string) {
   const metrics = getCommandCenterMetrics(organizationId);
   const recentEvents = listCommandCenterEvents({ organizationId, ascending: false, limit: 8 });
-  const allEscalations = listEscalationRequests({ organizationId, limit: 200 });
+  const allEscalations = sortEscalationsByUrgency(listEscalationRequests({ organizationId, limit: 200 }));
   const recentEscalations = allEscalations.slice(0, 6);
   const escalationSla = summarizeEscalationSla(allEscalations);
+  const escalationPriority = summarizeEscalationPriority(allEscalations.filter((request) => request.status !== "resolved"));
   const usage = getOrganizationUsageSnapshot(organizationId);
   const organization = getOrganizationById(organizationId);
 
@@ -80,6 +81,7 @@ export async function getCommandCenterOverviewByOrganization(organizationId: str
     recentEvents,
     recentEscalations,
     escalationSla,
+    escalationPriority,
     error: null,
   };
 }
@@ -171,20 +173,22 @@ export async function getCommandCenterEscalations(
   query: string,
   status: "all" | "submitted" | "under_review" | "resolved"
 ) {
-  const requests = listEscalationRequests({ organizationId, limit: 200 }).filter((request) => {
-    const matchesStatus = status === "all" ? true : request.status === status;
-    return (
-      matchesStatus && (
-        includesQuery(request.category, query) ||
-        includesQuery(request.reason, query) ||
-        includesQuery(request.contact_name, query) ||
-        includesQuery(request.contact_email, query) ||
-        includesQuery(request.requested_by_role, query) ||
-        includesQuery(request.status, query) ||
-        includesQuery(request.resolution_notes, query)
-      )
-    );
-  });
+  const requests = sortEscalationsByUrgency(
+    listEscalationRequests({ organizationId, limit: 200 }).filter((request) => {
+      const matchesStatus = status === "all" ? true : request.status === status;
+      return (
+        matchesStatus && (
+          includesQuery(request.category, query) ||
+          includesQuery(request.reason, query) ||
+          includesQuery(request.contact_name, query) ||
+          includesQuery(request.contact_email, query) ||
+          includesQuery(request.requested_by_role, query) ||
+          includesQuery(request.status, query) ||
+          includesQuery(request.resolution_notes, query)
+        )
+      );
+    })
+  );
 
   return {
     requests,

@@ -1,6 +1,6 @@
 import { getCurrentAccessContext } from "@/lib/access";
 import { getCommandCenterEscalations } from "@/lib/commandCenterData";
-import { getEscalationSlaState, summarizeEscalationSla } from "@/lib/escalationSla";
+import { getEscalationPriorityState, getEscalationSlaState, summarizeEscalationPriority, summarizeEscalationSla } from "@/lib/escalationSla";
 
 interface CommandCenterEscalationsPageProps {
   searchParams: Promise<{
@@ -38,6 +38,7 @@ export default async function CommandCenterEscalationsPage({ searchParams }: Com
   const activeRequests = requests.filter((request) => request.status !== "resolved");
   const resolvedRequests = requests.filter((request) => request.status === "resolved");
   const slaSummary = summarizeEscalationSla(requests);
+  const prioritySummary = summarizeEscalationPriority(activeRequests);
 
   return (
     <section>
@@ -59,6 +60,9 @@ export default async function CommandCenterEscalationsPage({ searchParams }: Com
       {error && <p style={{ color: "#ffb3bf" }}>Could not load escalation requests.</p>}
 
       <div className="escalation-sla-summary">
+        <span className="priority-pill priority-critical">Critical {prioritySummary.critical}</span>
+        <span className="priority-pill priority-high">High {prioritySummary.high}</span>
+        <span className="priority-pill priority-standard">Standard {prioritySummary.standard}</span>
         <span className="sla-pill sla-overdue">Overdue {slaSummary.overdue}</span>
         <span className="sla-pill sla-due_soon">Due soon {slaSummary.dueSoon}</span>
         <span className="sla-pill sla-awaiting_schedule">Awaiting schedule {slaSummary.awaitingSchedule}</span>
@@ -72,8 +76,14 @@ export default async function CommandCenterEscalationsPage({ searchParams }: Com
           {activeRequests.map((request) => (
             <article key={request.id} className="control-card" style={{ padding: "0.75rem" }}>
               {(() => {
+                const priority = getEscalationPriorityState(request);
                 const sla = getEscalationSlaState(request);
-                return <span className={`sla-pill sla-${sla.level}`}>{sla.label}</span>;
+                return (
+                  <div className="escalation-pill-row">
+                    <span className={`priority-pill priority-${priority.level}`}>{priority.label}</span>
+                    <span className={`sla-pill sla-${sla.level}`}>{sla.label}</span>
+                  </div>
+                );
               })()}
               <p style={{ margin: 0 }}>
                 <strong>{request.category.replaceAll("_", " ")}</strong>

@@ -1120,6 +1120,14 @@ code {
   margin-top: 1rem;
 }
 
+.escalation-pill-row {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.45rem;
+}
+
+.priority-pill,
 .sla-pill {
   display: inline-flex;
   align-items: center;
@@ -1130,6 +1138,24 @@ code {
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.priority-critical {
+  background: #3b1217;
+  color: #fecaca;
+  border: 1px solid #991b1b;
+}
+
+.priority-high {
+  background: #422006;
+  color: #fde68a;
+  border: 1px solid #b45309;
+}
+
+.priority-standard {
+  background: #1f2937;
+  color: #e5e7eb;
+  border: 1px solid #4b5563;
 }
 
 .sla-overdue {

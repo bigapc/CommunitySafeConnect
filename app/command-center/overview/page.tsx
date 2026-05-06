@@ -1,12 +1,12 @@
 import { getCurrentAccessContext } from "@/lib/access";
 import { getCommandCenterOverviewByOrganization } from "@/lib/commandCenterData";
-import { getEscalationSlaState } from "@/lib/escalationSla";
+import { getEscalationPriorityState, getEscalationSlaState } from "@/lib/escalationSla";
 import Link from "next/link";
 
 export default async function CommandCenterOverviewPage() {
   const context = await getCurrentAccessContext();
   const organizationId = context?.organizationId || "metro-city-university";
-  const { organization, metrics, usage, recentEvents, recentEscalations, escalationSla } = await getCommandCenterOverviewByOrganization(organizationId);
+  const { organization, metrics, usage, recentEvents, recentEscalations, escalationSla, escalationPriority } = await getCommandCenterOverviewByOrganization(organizationId);
 
   return (
     <section>
@@ -68,6 +68,13 @@ export default async function CommandCenterOverviewPage() {
             {metrics.pendingEscalationRequests > 0 ? "Leadership review required" : "No active escalations"}
           </small>
         </article>
+        <article className="control-card ops-metric-card" style={escalationPriority.critical > 0 ? { borderLeft: "3px solid #991b1b" } : escalationPriority.high > 0 ? { borderLeft: "3px solid #b45309" } : {}}>
+          <small className="control-meta">Priority Escalations</small>
+          <strong>{escalationPriority.critical + escalationPriority.high}</strong>
+          <small className="control-meta">
+            Critical: {escalationPriority.critical} | High: {escalationPriority.high} | Standard: {escalationPriority.standard}
+          </small>
+        </article>
         <article className="control-card ops-metric-card" style={escalationSla.overdue > 0 ? { borderLeft: "3px solid #b91c1c" } : escalationSla.dueSoon > 0 ? { borderLeft: "3px solid #f59e0b" } : {}}>
           <small className="control-meta">Escalation SLA</small>
           <strong>{escalationSla.overdue}</strong>
@@ -87,9 +94,13 @@ export default async function CommandCenterOverviewPage() {
           recentEscalations.map((request) => (
             <article key={request.id} className="control-card" style={{ padding: "0.75rem" }}>
               {(() => {
+                const priority = getEscalationPriorityState(request);
                 const sla = getEscalationSlaState(request);
                 return (
-                  <span className={`sla-pill sla-${sla.level}`}>{sla.label}</span>
+                  <div className="escalation-pill-row">
+                    <span className={`priority-pill priority-${priority.level}`}>{priority.label}</span>
+                    <span className={`sla-pill sla-${sla.level}`}>{sla.label}</span>
+                  </div>
                 );
               })()}
               <p style={{ margin: 0 }}>
