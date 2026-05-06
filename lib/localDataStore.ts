@@ -1060,6 +1060,114 @@ export interface EscalationRequestRow {
 
 const escalationRequests: EscalationRequestRow[] = [];
 
+// Seed test data for escalation review workflow testing
+if (escalationRequests.length === 0) {
+  const defaultOrgId = getDefaultOrganizationId();
+  const now = Date.now();
+
+  // Critical priority: Legal coordination case (should surface first)
+  escalationRequests.push({
+    id: createId("esc"),
+    organization_id: defaultOrgId,
+    category: "legal_coordination",
+    reason: "Legal counsel needed for ongoing investigation into suspicious activity",
+    contact_name: "Margaret Chen",
+    contact_email: "m.chen@example.com",
+    requested_by_role: "administrator",
+    status: "submitted",
+    assigned_to: null,
+    verification_call_at: null,
+    created_at: new Date(now - 1000 * 60 * 120).toISOString(),
+    resolved_at: null,
+    resolution_notes: null,
+  });
+
+  // Critical priority: Sensitive compliance case
+  escalationRequests.push({
+    id: createId("esc"),
+    organization_id: defaultOrgId,
+    category: "sensitive_compliance",
+    reason: "GDPR data deletion request requires immediate action",
+    contact_name: "James Rodriguez",
+    contact_email: "j.rodriguez@example.com",
+    requested_by_role: "community_lead",
+    status: "submitted",
+    assigned_to: null,
+    verification_call_at: null,
+    created_at: new Date(now - 1000 * 60 * 90).toISOString(),
+    resolved_at: null,
+    resolution_notes: null,
+  });
+
+  // High priority: Exceptional data review
+  escalationRequests.push({
+    id: createId("esc"),
+    organization_id: defaultOrgId,
+    category: "exceptional_data_review",
+    reason: "Request for access to archived messages from restricted zone",
+    contact_name: "Patricia Wilson",
+    contact_email: "p.wilson@example.com",
+    requested_by_role: "community_lead",
+    status: "submitted",
+    assigned_to: null,
+    verification_call_at: null,
+    created_at: new Date(now - 1000 * 60 * 45).toISOString(),
+    resolved_at: null,
+    resolution_notes: null,
+  });
+
+  // High priority: Redaction review (already assigned to test review workflow)
+  escalationRequests.push({
+    id: createId("esc"),
+    organization_id: defaultOrgId,
+    category: "redaction_review",
+    reason: "Sensitive content redaction needed before report release",
+    contact_name: "Michael Torres",
+    contact_email: "m.torres@example.com",
+    requested_by_role: "administrator",
+    status: "under_review",
+    assigned_to: "Sarah_Kim_ComplianceLead",
+    verification_call_at: new Date(now + 1000 * 60 * 60 * 2).toISOString(),
+    created_at: new Date(now - 1000 * 60 * 30).toISOString(),
+    resolved_at: null,
+    resolution_notes: null,
+  });
+
+  // Standard priority: Restricted access (already resolved)
+  escalationRequests.push({
+    id: createId("esc"),
+    organization_id: defaultOrgId,
+    category: "restricted_access_review",
+    reason: "Access to secure zone for maintenance work approved",
+    contact_name: "David Kim",
+    contact_email: "d.kim@example.com",
+    requested_by_role: "operations_staff",
+    status: "resolved",
+    assigned_to: "James_Wong_OpsDirector",
+    verification_call_at: new Date(now - 1000 * 60 * 480).toISOString(),
+    created_at: new Date(now - 1000 * 60 * 600).toISOString(),
+    resolved_at: new Date(now - 1000 * 60 * 120).toISOString(),
+    resolution_notes: "Access approved for 8-hour window, verified and revoked.",
+  });
+
+  // Standard priority: Restricted access (submitted, no owner)
+  escalationRequests.push({
+    id: createId("esc"),
+    organization_id: defaultOrgId,
+    category: "restricted_access_review",
+    reason: "Temporary elevated access needed for incident investigation",
+    contact_name: "Emily Jackson",
+    contact_email: "e.jackson@example.com",
+    requested_by_role: "community_member",
+    status: "submitted",
+    assigned_to: null,
+    verification_call_at: null,
+    created_at: new Date(now - 1000 * 60 * 15).toISOString(),
+    resolved_at: null,
+    resolution_notes: null,
+  });
+}
+
 export function createEscalationRequest(
   organizationId: string,
   input: {
