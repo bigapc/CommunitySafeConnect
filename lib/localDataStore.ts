@@ -32,6 +32,7 @@ export interface CommandChannelRow {
   organization_id: string;
   name: string;
   kind: CommandChannelKind;
+  task_state: "open" | "in_progress" | "resolved" | null;
   is_emergency: boolean;
   created_at: string;
   created_by: string;
@@ -205,6 +206,7 @@ const commandChannels: CommandChannelRow[] = [
     organization_id: getDefaultOrganizationId(),
     name: "Emergency Coordination",
     kind: "emergency",
+    task_state: null,
     is_emergency: true,
     created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
     created_by: "org_admin",
@@ -215,6 +217,7 @@ const commandChannels: CommandChannelRow[] = [
     organization_id: getDefaultOrganizationId(),
     name: "Safety Drill Ops",
     kind: "drill",
+    task_state: null,
     is_emergency: false,
     created_at: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
     created_by: "moderator",
@@ -700,6 +703,7 @@ export function createCommandChannel(
     organization_id: scopedOrgId,
     name: normalizedName,
     kind: input.kind,
+    task_state: input.kind === "tasks" ? "open" : null,
     is_emergency: input.isEmergency ?? template.isEmergencyByDefault,
     created_at: new Date().toISOString(),
     created_by: input.createdBy,
@@ -714,6 +718,43 @@ export function createCommandChannel(
     target_type: "channel",
     target_id: channel.id,
     details: `kind=${channel.kind} createdBy=${channel.created_by}`,
+  });
+
+  return channel;
+}
+
+export function updateCommandChannelTaskState(
+  organizationId: string,
+  channelId: string,
+  input: {
+    state: "open" | "in_progress" | "resolved";
+    updatedBy: string;
+  }
+) {
+  const scopedOrgId = getScopedOrgId(organizationId);
+  const channel = commandChannels.find(
+    (item) => item.id === channelId && item.organization_id === scopedOrgId
+  );
+
+  if (!channel) {
+    return null;
+  }
+
+  if (channel.kind !== "tasks") {
+    return {
+      error: "Task state can only be changed for task channels.",
+    };
+  }
+
+  channel.task_state = input.state;
+  channel.last_message_at = new Date().toISOString();
+
+  createCommandCenterEvent({
+    organization_id: scopedOrgId,
+    action: "command_channel_task_state_updated",
+    target_type: "channel",
+    target_id: channelId,
+    details: `state=${input.state} updatedBy=${input.updatedBy}`,
   });
 
   return channel;
@@ -1296,20 +1337,7 @@ export function getCommandCenterMetrics(organizationId: string) {
     return message.priority === "critical" && new Date(message.created_at).getTime() >= cutoff24hMs;
   }).length;
   const unresolvedTaskChannels = scopedChannels.filter((channel) => {
-    if (channel.kind !== "tasks") {
-      return false;
-    }
-
-    const latestMessage = scopedChannelMessages
-      .filter((message) => message.channel_id === channel.id)
-      .sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
-
-    if (!latestMessage) {
-      return true;
-    }
-
-    const normalizedBody = latestMessage.body.toLowerCase();
-    return !normalizedBody.includes("resolved") && !normalizedBody.includes("closed") && !normalizedBody.includes("done");
+    return channel.kind === "tasks" && channel.task_state !== "resolved";
   }).length;
 
   return {

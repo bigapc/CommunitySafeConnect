@@ -76,6 +76,10 @@
 	- `analyst`: read-only visibility.
 	- `moderator`: post channel updates.
 	- `org_admin` and `super_admin`: create channels and post updates.
+- Task-channel workflow:
+	- Task channels now have explicit state: `open`, `in_progress`, `resolved`.
+	- Only `org_admin` and `super_admin` can change task state.
+	- Task state updates are logged as command center events.
 - Channel templates:
 	- `alerts`, `tasks`, `emergency`, `debrief`, `drill` templates define default names and allowed priorities.
 	- Task/debrief/drill channels allow `normal` and `high` priorities.
@@ -89,7 +93,7 @@
 	- Total command channels
 	- Active channels in last 24 hours
 	- Critical channel messages in last 24 hours
-	- Unresolved task channels
+	- Unresolved task channels (state not `resolved`)
 
 ## Incident Operations
 

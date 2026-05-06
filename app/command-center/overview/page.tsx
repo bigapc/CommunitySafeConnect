@@ -74,7 +74,7 @@ export default async function CommandCenterOverviewPage() {
         <article className="control-card ops-metric-card" style={metrics.unresolvedTaskChannels > 0 ? { borderLeft: "3px solid #b45309" } : {}}>
           <small className="control-meta">Unresolved Task Channels</small>
           <strong>{metrics.unresolvedTaskChannels}</strong>
-          <small className="control-meta">Task channels missing done/resolved state</small>
+          <small className="control-meta">Task channels with state open or in_progress</small>
         </article>
         <article className="control-card ops-metric-card" style={metrics.pendingEscalationRequests > 0 ? { borderLeft: "3px solid #d1495b" } : {}}>
           <small className="control-meta">Security Escalations</small>

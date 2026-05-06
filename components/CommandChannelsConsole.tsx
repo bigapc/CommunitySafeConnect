@@ -351,11 +351,107 @@ export default function CommandChannelsConsole({
               <small className="control-meta" style={{ display: "block" }}>
                 createdBy={channel.created_by} | last={new Date(channel.last_message_at || channel.created_at).toLocaleString()}
               </small>
+              {channel.kind === "tasks" && (
+                <small className="control-meta" style={{ display: "block" }}>
+                  task state={channel.task_state || "open"}
+                </small>
+              )}
 
               <div style={{ marginTop: "0.5rem", display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
                 <button type="button" onClick={() => setActiveChannelId(channel.id)}>
                   {isActive ? "Selected" : "Select"}
                 </button>
+                {isActive && channel.kind === "tasks" && channelPermissions.canManage && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setIsLoading(true);
+                        setErrorMessage("");
+                        try {
+                          const response = await fetch(`/api/command-center/channels/${channel.id}/state`, {
+                            method: "PATCH",
+                            headers: {
+                              "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({ state: "in_progress" }),
+                          });
+
+                          if (!response.ok) {
+                            const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+                            setErrorMessage(payload?.error || "Unable to set task channel in progress.");
+                            return;
+                          }
+
+                          await refreshChannels();
+                        } finally {
+                          setIsLoading(false);
+                        }
+                      }}
+                      disabled={isLoading || isPosting}
+                    >
+                      Mark In Progress
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setIsLoading(true);
+                        setErrorMessage("");
+                        try {
+                          const response = await fetch(`/api/command-center/channels/${channel.id}/state`, {
+                            method: "PATCH",
+                            headers: {
+                              "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({ state: "resolved" }),
+                          });
+
+                          if (!response.ok) {
+                            const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+                            setErrorMessage(payload?.error || "Unable to resolve task channel.");
+                            return;
+                          }
+
+                          await refreshChannels();
+                        } finally {
+                          setIsLoading(false);
+                        }
+                      }}
+                      disabled={isLoading || isPosting}
+                    >
+                      Mark Resolved
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setIsLoading(true);
+                        setErrorMessage("");
+                        try {
+                          const response = await fetch(`/api/command-center/channels/${channel.id}/state`, {
+                            method: "PATCH",
+                            headers: {
+                              "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({ state: "open" }),
+                          });
+
+                          if (!response.ok) {
+                            const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+                            setErrorMessage(payload?.error || "Unable to reopen task channel.");
+                            return;
+                          }
+
+                          await refreshChannels();
+                        } finally {
+                          setIsLoading(false);
+                        }
+                      }}
+                      disabled={isLoading || isPosting}
+                    >
+                      Reopen
+                    </button>
+                  </>
+                )}
               </div>
 
               {isActive && (
