@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRoleForApi } from "@/lib/access";
+import { hasMinimumRole, requireRoleForApi } from "@/lib/access";
 import { createCommandChannelMessage } from "@/lib/localDataStore";
 import { getOrganizationById, mapOrganizationPlanToBilling } from "@/lib/tenancy";
 
@@ -20,7 +20,7 @@ export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const access = await requireRoleForApi("moderator");
+  const access = await requireRoleForApi("analyst");
 
   if (!access) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
@@ -28,6 +28,10 @@ export async function POST(
 
   if (!isEliteOrganization(access.organizationId)) {
     return NextResponse.json({ error: "Organization Command Channels require Elite billing." }, { status: 403 });
+  }
+
+  if (!hasMinimumRole(access.role, "moderator")) {
+    return NextResponse.json({ error: "Analyst role is read-only for command channels." }, { status: 403 });
   }
 
   const { id } = await context.params;
@@ -46,17 +50,27 @@ export async function POST(
       return NextResponse.json({ error: "Sender and message body are required." }, { status: 400 });
     }
 
-    const message = createCommandChannelMessage(access.organizationId, id, {
+    const result = createCommandChannelMessage(access.organizationId, id, {
       sender,
       body: messageBody,
       priority: parsePriority(body.priority),
     });
 
-    if (!message) {
+    if (!result) {
       return NextResponse.json({ error: "Channel not found." }, { status: 404 });
     }
 
-    return NextResponse.json({ message }, { status: 201 });
+    if ("error" in result) {
+      return NextResponse.json(
+        {
+          error: result.error,
+          allowedPriorities: result.allowedPriorities,
+        },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json({ message: result }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to post channel message.";
     return NextResponse.json({ error: message }, { status: 500 });

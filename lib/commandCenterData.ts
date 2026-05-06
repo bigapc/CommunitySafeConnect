@@ -1,6 +1,7 @@
 import {
   listCommandChannels,
   listCommandChannelMessages,
+  listCommandChannelTemplates,
   getOrganizationUsageSnapshot,
   getCommandCenterMetrics,
   listIncidents,
@@ -63,6 +64,7 @@ export async function getCommandCenterChannels(organizationId: string, query: st
   return {
     channels,
     channelMessagesById,
+    templates: listCommandChannelTemplates(),
     error: null,
   };
 }

@@ -1,5 +1,6 @@
 import { createHash, createHmac } from "node:crypto";
 import { BillingPlanCode, getDefaultOrganizationId, getOrganizationById, getPlanLimits } from "@/lib/tenancy";
+import type { UserRole } from "@/lib/access";
 
 export interface ReportRow {
   id: string;
@@ -45,6 +46,15 @@ export interface CommandChannelMessageRow {
   body: string;
   priority: "normal" | "high" | "critical";
   created_at: string;
+}
+
+export interface CommandChannelTemplate {
+  kind: CommandChannelKind;
+  label: string;
+  defaultName: string;
+  defaultPriority: "normal" | "high" | "critical";
+  allowedPriorities: Array<"normal" | "high" | "critical">;
+  isEmergencyByDefault: boolean;
 }
 
 export interface AccessAuditLogRow {
@@ -230,6 +240,49 @@ const commandChannelMessages: CommandChannelMessageRow[] = [
     body: "Fire drill debrief starts in 10 minutes in briefing room B.",
     priority: "normal",
     created_at: new Date(Date.now() - 1000 * 60 * 22).toISOString(),
+  },
+];
+
+const commandChannelTemplates: CommandChannelTemplate[] = [
+  {
+    kind: "alerts",
+    label: "Alerts",
+    defaultName: "Operations Alerts",
+    defaultPriority: "high",
+    allowedPriorities: ["normal", "high", "critical"],
+    isEmergencyByDefault: false,
+  },
+  {
+    kind: "tasks",
+    label: "Task Dispatch",
+    defaultName: "Task Dispatch",
+    defaultPriority: "normal",
+    allowedPriorities: ["normal", "high"],
+    isEmergencyByDefault: false,
+  },
+  {
+    kind: "emergency",
+    label: "Emergency",
+    defaultName: "Emergency Coordination",
+    defaultPriority: "critical",
+    allowedPriorities: ["normal", "high", "critical"],
+    isEmergencyByDefault: true,
+  },
+  {
+    kind: "debrief",
+    label: "Debrief",
+    defaultName: "Debrief Thread",
+    defaultPriority: "normal",
+    allowedPriorities: ["normal", "high"],
+    isEmergencyByDefault: false,
+  },
+  {
+    kind: "drill",
+    label: "Drill Coordination",
+    defaultName: "Safety Drill Ops",
+    defaultPriority: "high",
+    allowedPriorities: ["normal", "high"],
+    isEmergencyByDefault: false,
   },
 ];
 
@@ -611,23 +664,43 @@ export function listCommandChannels(options?: {
   ).slice(0, limit);
 }
 
+export function listCommandChannelTemplates() {
+  return commandChannelTemplates;
+}
+
+export function getCommandChannelTemplate(kind: CommandChannelKind) {
+  return commandChannelTemplates.find((template) => template.kind === kind) || commandChannelTemplates[0];
+}
+
+export function getCommandChannelPermissions(role: UserRole) {
+  return {
+    canRead: true,
+    canPost: role !== "analyst",
+    canCreate: role === "org_admin" || role === "super_admin",
+    canManage: role === "org_admin" || role === "super_admin",
+  };
+}
+
 export function createCommandChannel(
   organizationId: string,
   input: {
-    name: string;
+    name?: string;
     kind: CommandChannelKind;
-    isEmergency: boolean;
+    isEmergency?: boolean;
     createdBy: string;
   }
 ) {
   const scopedOrgId = getScopedOrgId(organizationId);
+  const template = getCommandChannelTemplate(input.kind);
+  const defaultNameSuffix = new Date().toISOString().slice(0, 10);
+  const normalizedName = input.name?.trim() || `${template.defaultName} ${defaultNameSuffix}`;
 
   const channel: CommandChannelRow = {
     id: createId("chn"),
     organization_id: scopedOrgId,
-    name: input.name,
+    name: normalizedName,
     kind: input.kind,
-    is_emergency: input.isEmergency,
+    is_emergency: input.isEmergency ?? template.isEmergencyByDefault,
     created_at: new Date().toISOString(),
     created_by: input.createdBy,
     last_message_at: null,
@@ -679,6 +752,14 @@ export function createCommandChannelMessage(
 
   if (!channel) {
     return null;
+  }
+
+  const template = getCommandChannelTemplate(channel.kind);
+  if (!template.allowedPriorities.includes(input.priority)) {
+    return {
+      error: `Priority ${input.priority} is not allowed for ${channel.kind} channels.`,
+      allowedPriorities: template.allowedPriorities,
+    };
   }
 
   const message: CommandChannelMessageRow = {
@@ -1171,6 +1252,9 @@ export function getCommandCenterMetrics(organizationId: string) {
   const scopedReports = reports.filter((report) => report.organization_id === scopedOrgId);
   const scopedMessages = chatMessages.filter((message) => message.organization_id === scopedOrgId);
   const scopedChannels = commandChannels.filter((channel) => channel.organization_id === scopedOrgId);
+  const scopedChannelMessages = commandChannelMessages.filter(
+    (message) => message.organization_id === scopedOrgId
+  );
   const scopedAudits = auditLogs.filter((log) => log.organization_id === scopedOrgId);
   const scopedEvents = commandCenterEvents.filter((event) => event.organization_id === scopedOrgId);
   const scopedIncidents = incidents.filter((incident) => incident.organization_id === scopedOrgId);
@@ -1201,6 +1285,32 @@ export function getCommandCenterMetrics(organizationId: string) {
   const pendingEscalationRequests = scopedEscalationRequests.filter(
     (request) => request.status !== "resolved"
   ).length;
+  const cutoff24hMs = Date.now() - 24 * 60 * 60 * 1000;
+  const activeCommandChannels24h = scopedChannels.filter((channel) => {
+    if (!channel.last_message_at) {
+      return false;
+    }
+    return new Date(channel.last_message_at).getTime() >= cutoff24hMs;
+  }).length;
+  const criticalChannelMessages24h = scopedChannelMessages.filter((message) => {
+    return message.priority === "critical" && new Date(message.created_at).getTime() >= cutoff24hMs;
+  }).length;
+  const unresolvedTaskChannels = scopedChannels.filter((channel) => {
+    if (channel.kind !== "tasks") {
+      return false;
+    }
+
+    const latestMessage = scopedChannelMessages
+      .filter((message) => message.channel_id === channel.id)
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
+
+    if (!latestMessage) {
+      return true;
+    }
+
+    const normalizedBody = latestMessage.body.toLowerCase();
+    return !normalizedBody.includes("resolved") && !normalizedBody.includes("closed") && !normalizedBody.includes("done");
+  }).length;
 
   return {
     totalReports: scopedReports.length,
@@ -1209,6 +1319,9 @@ export function getCommandCenterMetrics(organizationId: string) {
     totalMessages: scopedMessages.length,
     flaggedMessages,
     totalCommandChannels: scopedChannels.length,
+    activeCommandChannels24h,
+    criticalChannelMessages24h,
+    unresolvedTaskChannels,
     totalIncidents: scopedIncidents.length,
     openIncidents,
     escalatedIncidents,

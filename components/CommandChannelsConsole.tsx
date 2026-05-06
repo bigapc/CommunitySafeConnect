@@ -1,18 +1,27 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
-import type { CommandChannelKind, CommandChannelMessageRow, CommandChannelRow } from "@/lib/localDataStore";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import type {
+  CommandChannelKind,
+  CommandChannelMessageRow,
+  CommandChannelRow,
+  CommandChannelTemplate,
+} from "@/lib/localDataStore";
 
 type PriorityLevel = "normal" | "high" | "critical";
 
 interface CommandChannelsConsoleProps {
   initialChannels: CommandChannelRow[];
   initialChannelMessagesById: Record<string, CommandChannelMessageRow[]>;
+  templates: CommandChannelTemplate[];
+  permissions: {
+    canRead: boolean;
+    canPost: boolean;
+    canCreate: boolean;
+    canManage: boolean;
+  };
   initialQuery: string;
 }
-
-const channelKinds: CommandChannelKind[] = ["alerts", "tasks", "emergency", "debrief", "drill"];
-const priorityLevels: PriorityLevel[] = ["normal", "high", "critical"];
 
 function sortByLatestMessage(channels: CommandChannelRow[]) {
   return [...channels].sort((a, b) => {
@@ -25,16 +34,20 @@ function sortByLatestMessage(channels: CommandChannelRow[]) {
 export default function CommandChannelsConsole({
   initialChannels,
   initialChannelMessagesById,
+  templates,
+  permissions,
   initialQuery,
 }: CommandChannelsConsoleProps) {
   const [channels, setChannels] = useState<CommandChannelRow[]>(sortByLatestMessage(initialChannels));
   const [channelMessagesById, setChannelMessagesById] = useState<Record<string, CommandChannelMessageRow[]>>(
     initialChannelMessagesById
   );
+  const [channelTemplates, setChannelTemplates] = useState<CommandChannelTemplate[]>(templates);
+  const [channelPermissions, setChannelPermissions] = useState(permissions);
   const [query, setQuery] = useState(initialQuery);
 
   const [channelName, setChannelName] = useState("");
-  const [channelKind, setChannelKind] = useState<CommandChannelKind>("alerts");
+  const [channelKind, setChannelKind] = useState<CommandChannelKind>(templates[0]?.kind || "alerts");
   const [isEmergency, setIsEmergency] = useState(false);
 
   const [activeChannelId, setActiveChannelId] = useState<string>(initialChannels[0]?.id || "");
@@ -45,6 +58,56 @@ export default function CommandChannelsConsole({
   const [isLoading, setIsLoading] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  const channelKinds = useMemo(() => {
+    return channelTemplates.map((template) => template.kind);
+  }, [channelTemplates]);
+
+  const activeChannel = useMemo(() => {
+    return channels.find((channel) => channel.id === activeChannelId) || null;
+  }, [activeChannelId, channels]);
+
+  const currentTemplate = useMemo(() => {
+    return channelTemplates.find((template) => template.kind === channelKind) || channelTemplates[0] || null;
+  }, [channelKind, channelTemplates]);
+
+  const allowedPriorityLevels = useMemo(() => {
+    const fallback: PriorityLevel[] = ["normal", "high", "critical"];
+
+    if (!activeChannel) {
+      return (currentTemplate?.allowedPriorities as PriorityLevel[] | undefined) || fallback;
+    }
+
+    const template = channelTemplates.find((item) => item.kind === activeChannel.kind);
+    return (template?.allowedPriorities as PriorityLevel[] | undefined) || fallback;
+  }, [activeChannel, channelTemplates, currentTemplate]);
+
+  useEffect(() => {
+    if (!allowedPriorityLevels.includes(priority)) {
+      setPriority(allowedPriorityLevels[0]);
+    }
+  }, [allowedPriorityLevels, priority]);
+
+  useEffect(() => {
+    if (!currentTemplate) {
+      return;
+    }
+
+    setIsEmergency(currentTemplate.isEmergencyByDefault);
+  }, [currentTemplate]);
+
+  function applyTemplateDefaults() {
+    if (!currentTemplate) {
+      return;
+    }
+
+    if (!channelName.trim()) {
+      setChannelName(currentTemplate.defaultName);
+    }
+
+    setIsEmergency(currentTemplate.isEmergencyByDefault);
+    setPriority(currentTemplate.defaultPriority);
+  }
 
   const filteredChannels = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -71,6 +134,8 @@ export default function CommandChannelsConsole({
         | {
             channels?: CommandChannelRow[];
             channelMessagesById?: Record<string, CommandChannelMessageRow[]>;
+            templates?: CommandChannelTemplate[];
+            permissions?: typeof permissions;
             error?: string;
           }
         | null;
@@ -83,6 +148,12 @@ export default function CommandChannelsConsole({
       const sorted = sortByLatestMessage(payload.channels);
       setChannels(sorted);
       setChannelMessagesById(payload.channelMessagesById);
+      if (payload.templates) {
+        setChannelTemplates(payload.templates);
+      }
+      if (payload.permissions) {
+        setChannelPermissions(payload.permissions);
+      }
       if (!activeChannelId && sorted.length > 0) {
         setActiveChannelId(sorted[0].id);
       }
@@ -101,6 +172,12 @@ export default function CommandChannelsConsole({
 
     setIsLoading(true);
     setErrorMessage("");
+
+    if (!channelPermissions.canCreate) {
+      setErrorMessage("Your role cannot create channels.");
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const response = await fetch("/api/command-center/channels", {
@@ -123,8 +200,8 @@ export default function CommandChannelsConsole({
       }
 
       setChannelName("");
-      setChannelKind("alerts");
-      setIsEmergency(false);
+      setChannelKind(channelTemplates[0]?.kind || "alerts");
+      setIsEmergency(channelTemplates[0]?.isEmergencyByDefault || false);
       await refreshChannels();
       setActiveChannelId(payload.channel.id);
     } finally {
@@ -147,6 +224,12 @@ export default function CommandChannelsConsole({
 
     setIsPosting(true);
     setErrorMessage("");
+
+    if (!channelPermissions.canPost) {
+      setErrorMessage("Analyst mode is read-only. Upgrade role to post updates.");
+      setIsPosting(false);
+      return;
+    }
 
     try {
       const response = await fetch(`/api/command-center/channels/${activeChannelId}/messages`, {
@@ -189,41 +272,56 @@ export default function CommandChannelsConsole({
         />
       </form>
 
-      <form onSubmit={createChannel} className="control-card channel-create-form" style={{ marginTop: "0.8rem" }}>
-        <h3 style={{ marginTop: 0 }}>Create Command Channel</h3>
-        <div className="incident-grid">
-          <input
-            type="text"
-            value={channelName}
-            onChange={(event) => setChannelName(event.target.value)}
-            placeholder="Channel name"
-            required
-          />
-          <select value={channelKind} onChange={(event) => setChannelKind(event.target.value as CommandChannelKind)}>
-            {channelKinds.map((kind) => (
-              <option key={kind} value={kind}>
-                {kind}
-              </option>
-            ))}
-          </select>
-          <label className="incident-checkbox">
+      {channelPermissions.canCreate ? (
+        <form onSubmit={createChannel} className="control-card channel-create-form" style={{ marginTop: "0.8rem" }}>
+          <h3 style={{ marginTop: 0 }}>Create Command Channel</h3>
+          <div className="incident-grid">
             <input
-              type="checkbox"
-              checked={isEmergency}
-              onChange={(event) => setIsEmergency(event.target.checked)}
+              type="text"
+              value={channelName}
+              onChange={(event) => setChannelName(event.target.value)}
+              placeholder={currentTemplate ? `Default: ${currentTemplate.defaultName}` : "Channel name"}
             />
-            Emergency channel
-          </label>
-        </div>
-        <div style={{ marginTop: "0.6rem", display: "flex", gap: "0.5rem" }}>
-          <button type="submit" disabled={isLoading || isPosting}>
-            {isLoading ? "Creating..." : "Create Channel"}
-          </button>
-          <button type="button" onClick={() => void refreshChannels()} disabled={isLoading || isPosting}>
-            Refresh
-          </button>
-        </div>
-      </form>
+            <select value={channelKind} onChange={(event) => setChannelKind(event.target.value as CommandChannelKind)}>
+              {channelKinds.map((kind) => (
+                <option key={kind} value={kind}>
+                  {kind}
+                </option>
+              ))}
+            </select>
+            <label className="incident-checkbox">
+              <input
+                type="checkbox"
+                checked={isEmergency}
+                onChange={(event) => setIsEmergency(event.target.checked)}
+              />
+              Emergency channel
+            </label>
+          </div>
+          {currentTemplate && (
+            <small className="control-meta" style={{ display: "block", marginTop: "0.45rem" }}>
+              Template: {currentTemplate.label} | default priority={currentTemplate.defaultPriority} | allowed priorities={currentTemplate.allowedPriorities.join(", ")}
+            </small>
+          )}
+          <div style={{ marginTop: "0.6rem", display: "flex", gap: "0.5rem" }}>
+            <button type="submit" disabled={isLoading || isPosting}>
+              {isLoading ? "Creating..." : "Create Channel"}
+            </button>
+            <button type="button" onClick={applyTemplateDefaults} disabled={isLoading || isPosting}>
+              Apply Template Defaults
+            </button>
+            <button type="button" onClick={() => void refreshChannels()} disabled={isLoading || isPosting}>
+              Refresh
+            </button>
+          </div>
+        </form>
+      ) : (
+        <article className="control-card channel-card" style={{ marginTop: "0.8rem" }}>
+          <p style={{ margin: 0 }}>
+            Analyst and moderator roles can view channels. Only org_admin or super_admin can create new channels.
+          </p>
+        </article>
+      )}
 
       {errorMessage && <p style={{ color: "#ffb3bf" }}>{errorMessage}</p>}
 
@@ -262,34 +360,40 @@ export default function CommandChannelsConsole({
 
               {isActive && (
                 <>
-                  <form onSubmit={postMessage} className="channel-post-form">
-                    <div className="incident-grid">
-                      <input
-                        type="text"
-                        value={sender}
-                        onChange={(event) => setSender(event.target.value)}
-                        placeholder="Sender handle"
+                  {channelPermissions.canPost ? (
+                    <form onSubmit={postMessage} className="channel-post-form">
+                      <div className="incident-grid">
+                        <input
+                          type="text"
+                          value={sender}
+                          onChange={(event) => setSender(event.target.value)}
+                          placeholder="Sender handle"
+                          required
+                        />
+                        <select value={priority} onChange={(event) => setPriority(event.target.value as PriorityLevel)}>
+                          {allowedPriorityLevels.map((level) => (
+                            <option key={level} value={level}>
+                              {level}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <textarea
+                        rows={2}
+                        value={messageBody}
+                        onChange={(event) => setMessageBody(event.target.value)}
+                        placeholder="Post an internal operations update"
                         required
                       />
-                      <select value={priority} onChange={(event) => setPriority(event.target.value as PriorityLevel)}>
-                        {priorityLevels.map((level) => (
-                          <option key={level} value={level}>
-                            {level}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <textarea
-                      rows={2}
-                      value={messageBody}
-                      onChange={(event) => setMessageBody(event.target.value)}
-                      placeholder="Post an internal operations update"
-                      required
-                    />
-                    <button type="submit" disabled={isPosting || isLoading}>
-                      {isPosting ? "Posting..." : "Post Update"}
-                    </button>
-                  </form>
+                      <button type="submit" disabled={isPosting || isLoading}>
+                        {isPosting ? "Posting..." : "Post Update"}
+                      </button>
+                    </form>
+                  ) : (
+                    <small className="control-meta" style={{ display: "block", marginTop: "0.55rem" }}>
+                      Analyst mode is read-only for channel updates.
+                    </small>
+                  )}
 
                   <div className="incident-history">
                     <small className="control-meta" style={{ display: "block" }}>Recent channel activity</small>

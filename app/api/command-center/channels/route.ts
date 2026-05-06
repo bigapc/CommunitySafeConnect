@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRoleForApi } from "@/lib/access";
+import { hasMinimumRole, requireRoleForApi } from "@/lib/access";
 import {
   createCommandChannel,
+  getCommandChannelPermissions,
+  getCommandChannelTemplate,
+  listCommandChannelTemplates,
   type CommandChannelKind,
   listCommandChannels,
   listCommandChannelMessages,
@@ -22,7 +25,7 @@ function parseChannelKind(value: unknown): CommandChannelKind {
 }
 
 export async function GET() {
-  const access = await requireRoleForApi("moderator");
+  const access = await requireRoleForApi("analyst");
 
   if (!access) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
@@ -45,11 +48,13 @@ export async function GET() {
   return NextResponse.json({
     channels,
     channelMessagesById,
+    templates: listCommandChannelTemplates(),
+    permissions: getCommandChannelPermissions(access.role),
   });
 }
 
 export async function POST(request: NextRequest) {
-  const access = await requireRoleForApi("moderator");
+  const access = await requireRoleForApi("analyst");
 
   if (!access) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
@@ -59,6 +64,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Organization Command Channels require Elite billing." }, { status: 403 });
   }
 
+  if (!hasMinimumRole(access.role, "org_admin")) {
+    return NextResponse.json({ error: "Only org_admin and super_admin can create channels." }, { status: 403 });
+  }
+
   try {
     const body = (await request.json()) as {
       name?: string;
@@ -66,16 +75,13 @@ export async function POST(request: NextRequest) {
       isEmergency?: boolean;
     };
 
-    const name = body.name?.trim();
-
-    if (!name) {
-      return NextResponse.json({ error: "Channel name is required." }, { status: 400 });
-    }
+    const kind = parseChannelKind(body.kind);
+    const template = getCommandChannelTemplate(kind);
 
     const channel = createCommandChannel(access.organizationId, {
-      name,
-      kind: parseChannelKind(body.kind),
-      isEmergency: body.isEmergency === true,
+      name: body.name?.trim(),
+      kind,
+      isEmergency: body.isEmergency ?? template.isEmergencyByDefault,
       createdBy: access.role,
     });
 

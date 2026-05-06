@@ -72,11 +72,24 @@
 ## Organization Command Channels
 
 - `/command-center/channels` provides internal safety operations channels for organizations.
-- Moderators and higher can:
-  - Create emergency, alerts, tasks, debrief, and drill channels.
-  - Post prioritized channel updates (`normal`, `high`, `critical`).
+- Role permissions:
+	- `analyst`: read-only visibility.
+	- `moderator`: post channel updates.
+	- `org_admin` and `super_admin`: create channels and post updates.
+- Channel templates:
+	- `alerts`, `tasks`, `emergency`, `debrief`, `drill` templates define default names and allowed priorities.
+	- Task/debrief/drill channels allow `normal` and `high` priorities.
+	- Emergency/alerts channels allow `normal`, `high`, and `critical` priorities.
 - Channel creation and posts are logged as command center events.
 - This capability is gated to Elite billing plans.
+
+## Channel Analytics
+
+- Command center overview now includes channel operational analytics:
+	- Total command channels
+	- Active channels in last 24 hours
+	- Critical channel messages in last 24 hours
+	- Unresolved task channels
 
 ## Incident Operations
 

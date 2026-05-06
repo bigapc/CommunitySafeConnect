@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { hasMinimumRole } from "@/lib/access";
 import { getCurrentAccessContext } from "@/lib/access";
 import { getCommandCenterChannels } from "@/lib/commandCenterData";
+import { getCommandChannelPermissions } from "@/lib/localDataStore";
 import { getOrganizationById, mapOrganizationPlanToBilling } from "@/lib/tenancy";
 import CommandChannelsConsole from "@/components/CommandChannelsConsole";
 
@@ -14,6 +16,7 @@ export default async function CommandCenterChannelsPage({ searchParams }: Comman
   const params = await searchParams;
   const context = await getCurrentAccessContext();
   const organizationId = context?.organizationId || "metro-city-university";
+  const role = context?.role || "analyst";
   const query = (params.q || "").trim().toLowerCase();
 
   const organization = getOrganizationById(organizationId);
@@ -39,14 +42,22 @@ export default async function CommandCenterChannelsPage({ searchParams }: Comman
     );
   }
 
-  const { channels, channelMessagesById, error } = await getCommandCenterChannels(organizationId, query);
+  const { channels, channelMessagesById, templates, error } = await getCommandCenterChannels(organizationId, query);
+  const permissions = getCommandChannelPermissions(role);
 
   return (
     <section>
+      {!hasMinimumRole(role, "moderator") && (
+        <p className="control-meta" style={{ marginTop: 0.2 }}>
+          You are viewing channels in read-only analyst mode.
+        </p>
+      )}
       {error && <p style={{ color: "#ffb3bf" }}>Could not load command channels.</p>}
       <CommandChannelsConsole
         initialChannels={channels}
         initialChannelMessagesById={channelMessagesById}
+        templates={templates}
+        permissions={permissions}
         initialQuery={params.q || ""}
       />
     </section>
