@@ -1023,3 +1023,76 @@ export function getCommandCenterMetrics(organizationId: string) {
     pendingPlanChangeRequests,
   };
 }
+
+// ─── Escalation Requests ──────────────────────────────────────────────────
+
+export type EscalationCategory =
+  | "restricted_access_review"
+  | "exceptional_data_review"
+  | "redaction_review"
+  | "sensitive_compliance"
+  | "legal_coordination";
+
+export type EscalationStatus = "submitted" | "under_review" | "resolved";
+
+export interface EscalationRequestRow {
+  id: string;
+  organization_id: string;
+  category: EscalationCategory;
+  reason: string;
+  contact_name: string;
+  contact_email: string;
+  requested_by_role: string;
+  status: EscalationStatus;
+  created_at: string;
+  resolved_at: string | null;
+  resolution_notes: string | null;
+}
+
+const escalationRequests: EscalationRequestRow[] = [];
+
+export function createEscalationRequest(
+  organizationId: string,
+  input: {
+    category: EscalationCategory;
+    reason: string;
+    contactName: string;
+    contactEmail: string;
+    requestedByRole: string;
+  }
+): EscalationRequestRow {
+  const scopedOrgId = getScopedOrgId(organizationId);
+  const request: EscalationRequestRow = {
+    id: createId("esc"),
+    organization_id: scopedOrgId,
+    category: input.category,
+    reason: input.reason,
+    contact_name: input.contactName,
+    contact_email: input.contactEmail,
+    requested_by_role: input.requestedByRole,
+    status: "submitted",
+    created_at: new Date().toISOString(),
+    resolved_at: null,
+    resolution_notes: null,
+  };
+  escalationRequests.push(request);
+
+  createCommandCenterEvent({
+    organization_id: scopedOrgId,
+    action: "escalation_request_submitted",
+    target_type: "system",
+    target_id: request.id,
+    details: `category=${input.category} contactName=${input.contactName} requestedByRole=${input.requestedByRole}`,
+  });
+
+  return request;
+}
+
+export function listEscalationRequests(options?: { organizationId?: string; limit?: number }) {
+  const organizationId = getScopedOrgId(options?.organizationId);
+  const limit = options?.limit ?? 50;
+  return [...escalationRequests]
+    .filter((r) => r.organization_id === organizationId)
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    .slice(0, limit);
+}

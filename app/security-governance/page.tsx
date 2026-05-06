@@ -88,7 +88,7 @@ export default function SecurityGovernancePage() {
       <section className="org-quick-actions" style={{ marginTop: "1rem" }}>
         <Link href="/organization-dashboard">Open Organization Dashboard</Link>
         <Link href="/command-center/overview">Open Command Center Overview</Link>
-        <Link href="/access?next=/command-center">Request Restricted Access Review</Link>
+        <Link href="/escalation-request" className="csc-btn csc-btn-primary" style={{ fontSize: "0.88rem", padding: "0.5rem 1rem" }}>Submit Escalation Request →</Link>
       </section>
     </main>
   );

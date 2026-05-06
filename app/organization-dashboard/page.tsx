@@ -7,6 +7,7 @@ import {
 import { buildJourneyQuery, createJourneyContext, getJourneyContext } from "@/lib/journey";
 import Link from "next/link";
 import { listReports } from "@/lib/localDataStore";
+import { GOVERNANCE_ROLES } from "@/lib/securityGovernance";
 
 interface OrganizationDashboardPageProps {
   searchParams?: {
@@ -67,7 +68,33 @@ export default async function OrganizationDashboardPage({ searchParams }: Organi
         <Link href={`/safety-circle${buildJourneyQuery(journey)}`}>Open Safety Circle</Link>
         <Link href={`/safe-zones${buildJourneyQuery(journey)}`}>View Safe Zones</Link>
         <Link href="/access?next=/command-center/evidence">Request Historical Evidence</Link>
+        <Link href="/escalation-request">Request Restricted Access</Link>
       </div>
+
+      <h3 style={{ marginTop: "1.5rem" }}>Role and Capability Matrix</h3>
+      <p style={{ color: "#94a3b8", fontSize: "0.88rem", marginTop: "-0.2rem" }}>
+        CommunitySafetyConnect follows a strict non-deletable documentation model.
+        Roles determine what you can see and do, never what can be removed.
+      </p>
+      <div className="capability-matrix">
+        {GOVERNANCE_ROLES.map((role) => (
+          <article key={role.key} className={`capability-row capability-cat-${role.category}`}>
+            <div className="capability-role">
+              <strong>{role.label}</strong>
+              <span className={`capability-badge cap-cat-${role.category}`}>{role.category}</span>
+            </div>
+            <ul className="capability-list">
+              {role.permissions.map((perm) => (
+                <li key={perm}>{perm.replaceAll("_", " ")}</li>
+              ))}
+            </ul>
+          </article>
+        ))}
+      </div>
+      <p style={{ color: "#64748b", fontSize: "0.82rem", marginTop: "0.5rem" }}>
+        Exceptional access, redaction review, and legal coordination require direct coordination with
+        Armstrong Pack Company senior security leadership. <Link href="/escalation-request">Submit an escalation request →</Link>
+      </p>
       {reports.length === 0 ? (
         <p style={{ color: "#94a3b8" }}>No reports found.</p>
       ) : (

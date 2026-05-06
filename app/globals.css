@@ -1002,13 +1002,83 @@ code {
       background: #0f172a;
     }
 
-    .csc-footer {
-      border-top: 1px solid var(--line, #e2e8f0);
-      padding: 1.5rem 0;
-      text-align: center;
-      margin-top: 2rem;
-    }
-    .csc-footer p {
+/* ─── Capability Matrix ─── */
+.capability-matrix {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.capability-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  border: 1px solid #1e293b;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  background: #0f172a;
+}
+
+.capability-role {
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.capability-badge {
+  font-size: 0.68rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+  width: fit-content;
+}
+
+.cap-cat-user      { background: #422006; color: #fbbf24; }
+.cap-cat-organization { background: #1e3a5f; color: #93c5fd; }
+.cap-cat-armstrong { background: #1c2a1e; color: #86efac; }
+
+.capability-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  list-style: disc;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  line-height: 1.75;
+}
+
+/* ─── Escalation Request Form ─── */
+.escalation-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.escalation-policy-note {
+  margin: 0.75rem 0;
+  font-size: 0.82rem;
+  color: #f5d08a;
+  line-height: 1.55;
+  border-left: 3px solid #854d0e;
+  padding-left: 0.75rem;
+}
+
+.escalation-success {
+  background: #0f2a1c;
+  border: 1px solid #14532d;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+}
+
+.escalation-success h4 { margin: 0 0 0.4rem; color: #86efac; }
+.escalation-success p  { margin: 0.2rem 0; font-size: 0.9rem; color: #bbf7d0; }
+
+@media (max-width: 600px) {
+  .capability-row { flex-direction: column; }
+  .capability-role { min-width: unset; }
+}
       font-size: 0.8rem;
       color: var(--muted, #94a3b8);
       margin: 0;
@@ -1048,6 +1118,3 @@ code {
       .csc-mvp-card-wide { grid-column: span 1; }
       .csc-definition { padding: 1rem 1.25rem; }
     }
-    width: 100%;
-  }
-}
