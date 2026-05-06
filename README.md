@@ -80,6 +80,7 @@
 	- Task channels now have explicit state: `open`, `in_progress`, `resolved`.
 	- Only `org_admin` and `super_admin` can change task state.
 	- Task assignee and due date can be managed in channel controls.
+	- Overdue unresolved task channels automatically raise a `command_channel_sla_breached` event after a 15-minute grace period.
 	- Task state updates are logged as command center events.
 - Channel templates:
 	- `alerts`, `tasks`, `emergency`, `debrief`, `drill` templates define default names and allowed priorities.
@@ -97,6 +98,7 @@
 	- Unresolved task channels (state not `resolved`)
 	- Task SLA due soon count (within 2 hours)
 	- Task SLA overdue count
+	- Task SLA escalation count (overdue past grace period)
 
 ## Incident Operations
 

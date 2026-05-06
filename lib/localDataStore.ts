@@ -35,6 +35,7 @@ export interface CommandChannelRow {
   task_state: "open" | "in_progress" | "resolved" | null;
   task_assignee: string | null;
   task_due_at: string | null;
+  task_sla_alerted_at: string | null;
   is_emergency: boolean;
   created_at: string;
   created_by: string;
@@ -211,6 +212,7 @@ const commandChannels: CommandChannelRow[] = [
     task_state: null,
     task_assignee: null,
     task_due_at: null,
+    task_sla_alerted_at: null,
     is_emergency: true,
     created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
     created_by: "org_admin",
@@ -224,6 +226,7 @@ const commandChannels: CommandChannelRow[] = [
     task_state: null,
     task_assignee: null,
     task_due_at: null,
+    task_sla_alerted_at: null,
     is_emergency: false,
     created_at: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
     created_by: "moderator",
@@ -237,6 +240,7 @@ const commandChannels: CommandChannelRow[] = [
     task_state: "open",
     task_assignee: "ops-shift-bravo",
     task_due_at: new Date(Date.now() + 1000 * 60 * 90).toISOString(),
+    task_sla_alerted_at: null,
     is_emergency: false,
     created_at: new Date(Date.now() - 1000 * 60 * 95).toISOString(),
     created_by: "org_admin",
@@ -415,6 +419,44 @@ function createSlaDueAt(severity: IncidentSeverity) {
 
 function createTaskDueAt(hoursFromNow = 8) {
   return new Date(Date.now() + hoursFromNow * 60 * 60 * 1000).toISOString();
+}
+
+const TASK_CHANNEL_SLA_ESCALATION_GRACE_MINUTES = 15;
+
+function syncTaskChannelSlaAlerts(organizationId: string) {
+  const scopedOrgId = getScopedOrgId(organizationId);
+  const nowMs = Date.now();
+  const graceMs = TASK_CHANNEL_SLA_ESCALATION_GRACE_MINUTES * 60 * 1000;
+
+  for (const channel of commandChannels) {
+    if (channel.organization_id !== scopedOrgId || channel.kind !== "tasks") {
+      continue;
+    }
+
+    const dueAtMs = channel.task_due_at ? new Date(channel.task_due_at).getTime() : null;
+    const isResolved = channel.task_state === "resolved";
+    const isEscalationEligible =
+      !isResolved && typeof dueAtMs === "number" && nowMs - dueAtMs >= graceMs;
+
+    if (!isEscalationEligible) {
+      channel.task_sla_alerted_at = null;
+      continue;
+    }
+
+    if (channel.task_sla_alerted_at) {
+      continue;
+    }
+
+    channel.task_sla_alerted_at = new Date(nowMs).toISOString();
+
+    createCommandCenterEvent({
+      organization_id: scopedOrgId,
+      action: "command_channel_sla_breached",
+      target_type: "channel",
+      target_id: channel.id,
+      details: `channel=${channel.name} state=${channel.task_state} assignee=${channel.task_assignee || "unassigned"} dueAt=${channel.task_due_at || "none"}`,
+    });
+  }
 }
 
 function getEvidenceSigningSecret() {
@@ -693,6 +735,8 @@ export function listCommandChannels(options?: {
   const ascending = options?.ascending ?? false;
   const limit = options?.limit ?? 50;
 
+  syncTaskChannelSlaAlerts(organizationId);
+
   return sortByCreatedAt(
     commandChannels.filter((channel) => channel.organization_id === organizationId),
     ascending
@@ -738,6 +782,7 @@ export function createCommandChannel(
     task_state: input.kind === "tasks" ? "open" : null,
     task_assignee: null,
     task_due_at: input.kind === "tasks" ? createTaskDueAt() : null,
+    task_sla_alerted_at: null,
     is_emergency: input.isEmergency ?? template.isEmergencyByDefault,
     created_at: new Date().toISOString(),
     created_by: input.createdBy,
@@ -783,6 +828,10 @@ export function updateCommandChannelTaskState(
   channel.task_state = input.state;
   channel.last_message_at = new Date().toISOString();
 
+  if (input.state === "resolved") {
+    channel.task_sla_alerted_at = null;
+  }
+
   createCommandCenterEvent({
     organization_id: scopedOrgId,
     action: "command_channel_task_state_updated",
@@ -824,6 +873,7 @@ export function updateCommandChannelTaskDetails(
 
   if (input.dueAt !== undefined) {
     channel.task_due_at = input.dueAt || null;
+    channel.task_sla_alerted_at = null;
   }
 
   channel.last_message_at = new Date().toISOString();
@@ -1369,6 +1419,7 @@ export function getOrganizationUsageSnapshot(organizationId: string) {
 
 export function getCommandCenterMetrics(organizationId: string) {
   const scopedOrgId = getScopedOrgId(organizationId);
+  syncTaskChannelSlaAlerts(scopedOrgId);
   const scopedReports = reports.filter((report) => report.organization_id === scopedOrgId);
   const scopedMessages = chatMessages.filter((message) => message.organization_id === scopedOrgId);
   const scopedChannels = commandChannels.filter((channel) => channel.organization_id === scopedOrgId);
@@ -1433,6 +1484,9 @@ export function getCommandCenterMetrics(organizationId: string) {
 
     return new Date(channel.task_due_at).getTime() < Date.now();
   }).length;
+  const escalatedTaskChannels = scopedChannels.filter((channel) => {
+    return channel.kind === "tasks" && channel.task_state !== "resolved" && !!channel.task_sla_alerted_at;
+  }).length;
 
   return {
     totalReports: scopedReports.length,
@@ -1446,6 +1500,7 @@ export function getCommandCenterMetrics(organizationId: string) {
     unresolvedTaskChannels,
     dueSoonTaskChannels,
     overdueTaskChannels,
+    escalatedTaskChannels,
     totalIncidents: scopedIncidents.length,
     openIncidents,
     escalatedIncidents,
