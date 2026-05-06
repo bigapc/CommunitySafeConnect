@@ -970,6 +970,30 @@ code {
       margin: 0;
     }
 
+    .response-journey {
+      display: flex;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+    }
+
+    .response-step {
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #94a3b8;
+      border: 1px solid #334155;
+      border-radius: 999px;
+      padding: 0.25rem 0.6rem;
+      background: #0f172a;
+    }
+
+    .response-step.active {
+      color: #0f172a;
+      background: #67e8f9;
+      border-color: #67e8f9;
+      font-weight: 700;
+    }
+
     @media (max-width: 600px) {
       .csc-hero { padding: 2.5rem 0.75rem 2rem; }
       .csc-mvp-card-wide { grid-column: span 1; }

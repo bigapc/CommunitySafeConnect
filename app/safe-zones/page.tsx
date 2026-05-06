@@ -27,6 +27,13 @@ export default async function SafeZonesPage() {
 
   return (
     <main className="container">
+      <div className="response-journey" style={{ marginBottom: "0.8rem" }}>
+        <span className="response-step">1. SOS</span>
+        <span className="response-step">2. Safety Circle</span>
+        <span className="response-step">3. Incident Log</span>
+        <span className="response-step active">4. Safe Zones</span>
+        <span className="response-step">5. Organization Dashboard</span>
+      </div>
       <h2>Safe Zones</h2>
       <p style={{ color: "#94a3b8", marginTop: "-0.2rem" }}>
         Verified locations for trusted shelter, response coordination, and resource support.
@@ -49,9 +56,9 @@ export default async function SafeZonesPage() {
       </div>
 
       <div className="org-quick-actions" style={{ marginTop: "1rem" }}>
-        <Link href="/sos">Activate SOS</Link>
-        <Link href="/incident-log">Create Incident Log</Link>
-        <Link href="/organization-dashboard">Organization Dashboard</Link>
+        <Link href="/organization-dashboard">Next: Organization Dashboard</Link>
+        <Link href="/incident-log">Back: Incident Log</Link>
+        <Link href="/sos">Restart Journey</Link>
       </div>
     </main>
   );

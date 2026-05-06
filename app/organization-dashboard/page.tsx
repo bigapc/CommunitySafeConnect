@@ -23,6 +23,13 @@ export default async function OrganizationDashboardPage() {
 
   return (
     <main className="container">
+      <div className="response-journey" style={{ marginBottom: "0.8rem" }}>
+        <span className="response-step">1. SOS</span>
+        <span className="response-step">2. Safety Circle</span>
+        <span className="response-step">3. Incident Log</span>
+        <span className="response-step">4. Safe Zones</span>
+        <span className="response-step active">5. Organization Dashboard</span>
+      </div>
       <h2>Organization Dashboard</h2>
       <p style={{ color: "#f5d08a", marginTop: "-0.2rem" }}>
         Policy: only recent records from the last {historyWindowHours} hours are shown. For historical
@@ -43,6 +50,7 @@ export default async function OrganizationDashboardPage() {
         </article>
       </div>
       <div className="org-quick-actions">
+        <Link href="/sos">New Emergency Journey</Link>
         <Link href="/incident-log">Submit New Incident Log</Link>
         <Link href="/safety-circle">Open Safety Circle</Link>
         <Link href="/safe-zones">View Safe Zones</Link>

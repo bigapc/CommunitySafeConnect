@@ -22,6 +22,13 @@ export default async function IncidentLogPage() {
 
   return (
     <main className="container">
+      <div className="response-journey" style={{ marginBottom: "0.8rem" }}>
+        <span className="response-step">1. SOS</span>
+        <span className="response-step">2. Safety Circle</span>
+        <span className="response-step active">3. Incident Log</span>
+        <span className="response-step">4. Safe Zones</span>
+        <span className="response-step">5. Organization Dashboard</span>
+      </div>
       <h2>Incident Log</h2>
       <p style={{ color: "#f5d08a", marginTop: "-0.2rem" }}>
         Timestamped incident records stay visible for the last {historyWindowHours} hours in the
@@ -52,9 +59,9 @@ export default async function IncidentLogPage() {
       )}
 
       <div className="org-quick-actions">
-        <Link href="/sos">Back to SOS</Link>
-        <Link href="/safe-zones">View Safe Zones</Link>
-        <Link href="/safety-circle">Open Safety Circle</Link>
+        <Link href="/safe-zones">Next: View Safe Zones</Link>
+        <Link href="/organization-dashboard">Then: Open Organization Dashboard</Link>
+        <Link href="/sos">Restart Journey</Link>
       </div>
     </main>
   );
