@@ -85,6 +85,7 @@
 		- A critical incident is auto-created.
 		- A critical message is posted to the emergency command channel when available.
 		- Operators can jump directly from the task channel card to the routed incident triage view.
+		- Incident cards include a backlink to the source task channel context.
 	- Task state updates are logged as command center events.
 - Channel templates:
 	- `alerts`, `tasks`, `emergency`, `debrief`, `drill` templates define default names and allowed priorities.

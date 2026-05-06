@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import type {
   CommandCenterEventRow,
@@ -497,6 +498,13 @@ export default function IncidentsConsole({
                 <small className="control-meta" style={{ display: "block" }}>
                   id={incident.id} created={new Date(incident.created_at).toLocaleString()} updated={new Date(incident.updated_at).toLocaleString()}
                 </small>
+                {incident.source_task_channel_id && (
+                  <small className="control-meta" style={{ display: "block" }}>
+                    <Link href={`/command-center/channels?q=${encodeURIComponent(incident.source_task_channel_id)}`}>
+                      Source task channel: {incident.source_task_channel_id.slice(0, 12)}
+                    </Link>
+                  </small>
+                )}
                 <p style={{ marginTop: "0.5rem", marginBottom: "0.6rem" }}>{incident.description}</p>
 
                 <div className="incident-grid">

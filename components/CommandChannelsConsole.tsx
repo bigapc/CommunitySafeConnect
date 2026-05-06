@@ -164,6 +164,7 @@ export default function CommandChannelsConsole({
 
     return channels.filter((channel) => {
       return (
+        channel.id.toLowerCase().includes(normalizedQuery) ||
         channel.name.toLowerCase().includes(normalizedQuery) ||
         channel.kind.toLowerCase().includes(normalizedQuery) ||
         channel.created_by.toLowerCase().includes(normalizedQuery)

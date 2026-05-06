@@ -93,6 +93,7 @@ export interface IncidentRow {
   organization_id: string;
   title: string;
   description: string;
+  source_task_channel_id: string | null;
   severity: IncidentSeverity;
   status: IncidentStatus;
   assignee: string | null;
@@ -331,6 +332,7 @@ const incidents: IncidentRow[] = [
     organization_id: getDefaultOrganizationId(),
     title: "Campus perimeter lighting outage",
     description: "Multiple cameras and lights offline on the east perimeter.",
+    source_task_channel_id: null,
     severity: "critical",
     status: "in_progress",
     assignee: "ops-shift-alpha",
@@ -345,6 +347,7 @@ const incidents: IncidentRow[] = [
     organization_id: getDefaultOrganizationId(),
     title: "Event crowd control complaint",
     description: "North entrance bottleneck reported by two volunteers.",
+    source_task_channel_id: null,
     severity: "medium",
     status: "triaged",
     assignee: "ops-moderation",
@@ -461,6 +464,7 @@ function syncTaskChannelSlaAlerts(organizationId: string) {
         `state=${channel.task_state} assignee=${channel.task_assignee || "unassigned"} dueAt=${channel.task_due_at || "none"}`,
       severity: "critical",
       assignee: channel.task_assignee || "ops-sla-response",
+      sourceTaskChannelId: channel.id,
     });
 
     if (emergencyChannel) {
@@ -1060,6 +1064,7 @@ export function createIncident(
     severity: IncidentSeverity;
     assignee?: string | null;
     sourceReportId?: string | null;
+    sourceTaskChannelId?: string | null;
   }
 ) {
   const scopedOrgId = getScopedOrgId(organizationId);
@@ -1068,6 +1073,7 @@ export function createIncident(
     organization_id: scopedOrgId,
     title: input.title,
     description: input.description,
+    source_task_channel_id: input.sourceTaskChannelId || null,
     severity: input.severity,
     status: "new",
     assignee: input.assignee || null,
@@ -1087,7 +1093,9 @@ export function createIncident(
     target_id: incident.id,
     details: input.sourceReportId
       ? `Incident created from report ${input.sourceReportId}.`
-      : `Incident created at severity ${input.severity}.`,
+      : input.sourceTaskChannelId
+        ? `Incident created from task channel ${input.sourceTaskChannelId}.`
+        : `Incident created at severity ${input.severity}.`,
   });
 
   return incident;

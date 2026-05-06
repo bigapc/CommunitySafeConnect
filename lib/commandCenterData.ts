@@ -49,7 +49,12 @@ export async function getCommandCenterMessages(organizationId: string, query: st
 
 export async function getCommandCenterChannels(organizationId: string, query: string) {
   const channels = listCommandChannels({ organizationId, ascending: false, limit: 100 }).filter((channel) => {
-    return includesQuery(channel.name, query) || includesQuery(channel.kind, query) || includesQuery(channel.created_by, query);
+    return (
+      includesQuery(channel.id, query) ||
+      includesQuery(channel.name, query) ||
+      includesQuery(channel.kind, query) ||
+      includesQuery(channel.created_by, query)
+    );
   });
 
   const channelMessagesById: Record<string, ReturnType<typeof listCommandChannelMessages>> = {};
