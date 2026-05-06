@@ -70,45 +70,71 @@ export default function AccessForm({ nextPath, organizations }: AccessFormProps)
 
   return (
     <main className="container">
-      <h2>{scope === "admin" ? "Admin Access" : "Organization Access"}</h2>
-      <p>
-        Enter the {scope === "admin" ? "admin" : "organization"} access code to continue.
-      </p>
-      <form onSubmit={handleSubmit} className="access-form-row">
-        <select
-          value={organizationId}
-          onChange={(event) => setOrganizationId(event.target.value)}
-          aria-label="Organization"
-        >
-          {organizations.map((organization) => (
-            <option key={organization.id} value={organization.id}>
-              {organization.name}
-            </option>
-          ))}
-        </select>
-        <select
-          value={role}
-          onChange={(event) => setRole(event.target.value as typeof role)}
-          aria-label="Role"
-        >
-          {roleOptions.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-        <input
-          type="password"
-          value={accessCode}
-          onChange={(event) => setAccessCode(event.target.value)}
-          placeholder="Access code"
-          required
-        />
-        <button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Checking..." : "Continue"}
-        </button>
-      </form>
-      {errorMessage && <p className="report-feedback error">{errorMessage}</p>}
+      <div className="access-panel">
+        <h2>{scope === "admin" ? "Admin Access" : "Organization Access"}</h2>
+        <p className="access-subtitle">
+          Sign in to continue to
+          {" "}
+          <strong>{nextPath}</strong>
+          .
+        </p>
+        <p className="access-hint">
+          Use an
+          {" "}
+          {scope === "admin" ? "admin" : "organization"}
+          {" "}
+          code for the selected organization.
+        </p>
+
+        <form onSubmit={handleSubmit} className="access-form-grid">
+          <label>
+            <span>Organization</span>
+            <select
+              value={organizationId}
+              onChange={(event) => setOrganizationId(event.target.value)}
+              aria-label="Organization"
+            >
+              {organizations.map((organization) => (
+                <option key={organization.id} value={organization.id}>
+                  {organization.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            <span>Role</span>
+            <select
+              value={role}
+              onChange={(event) => setRole(event.target.value as typeof role)}
+              aria-label="Role"
+            >
+              {roleOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="access-code-row">
+            <span>Access code</span>
+            <input
+              type="password"
+              value={accessCode}
+              onChange={(event) => setAccessCode(event.target.value)}
+              placeholder="Enter access code"
+              required
+            />
+          </label>
+
+          <button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Checking..." : "Continue"}
+          </button>
+        </form>
+
+        {errorMessage && <p className="report-feedback error">{errorMessage}</p>}
+      </div>
     </main>
   );
 }

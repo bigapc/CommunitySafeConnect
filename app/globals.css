@@ -302,6 +302,46 @@ form {
   flex: 1;
 }
 
+.access-panel {
+  max-width: 640px;
+}
+
+.access-subtitle {
+  margin-top: -0.2rem;
+  margin-bottom: 0.3rem;
+}
+
+.access-hint {
+  margin-top: 0;
+  margin-bottom: 0.9rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 10px;
+  background: #fff4de;
+  border: 1px solid #e8ce9f;
+  color: #6f5836;
+}
+
+.access-form-grid {
+  display: grid;
+  gap: 0.7rem;
+  max-width: 560px;
+}
+
+.access-form-grid label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.access-form-grid label span {
+  font-size: 0.85rem;
+  color: #6f5a3d;
+  font-weight: 600;
+}
+
+.access-code-row input {
+  letter-spacing: 0.02em;
+}
+
 .session-controls {
   display: flex;
   align-items: center;
