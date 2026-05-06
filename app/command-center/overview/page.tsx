@@ -53,6 +53,13 @@ export default async function CommandCenterOverviewPage() {
             Approved: {metrics.approvedEvidenceRequests} | Exported: {metrics.exportedEvidenceRequests}
           </small>
         </article>
+        <article className="control-card ops-metric-card" style={metrics.pendingPlanChangeRequests > 0 ? { borderLeft: "3px solid var(--warning, #f59e0b)" } : {}}>
+          <small className="control-meta">Plan Change Requests</small>
+          <strong>{metrics.pendingPlanChangeRequests}</strong>
+          <small className="control-meta">
+            {metrics.pendingPlanChangeRequests > 0 ? "⚠ Awaiting approval" : "No pending requests"}
+          </small>
+        </article>
       </div>
 
       <h3 style={{ marginTop: "1rem" }}>Recent Operational Events</h3>

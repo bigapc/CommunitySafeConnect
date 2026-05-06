@@ -1001,6 +1001,9 @@ export function getCommandCenterMetrics(organizationId: string) {
   const exportedEvidenceRequests = scopedEvidenceRequests.filter(
     (request) => request.status === "exported"
   ).length;
+  const pendingPlanChangeRequests = scopedEvents.filter(
+    (event) => event.action === "subscription_plan_change_requested"
+  ).length;
 
   return {
     totalReports: scopedReports.length,
@@ -1017,5 +1020,6 @@ export function getCommandCenterMetrics(organizationId: string) {
     exportedEvidenceRequests,
     accessAuditEvents: scopedAudits.length,
     commandCenterEvents: scopedEvents.length,
+    pendingPlanChangeRequests,
   };
 }
