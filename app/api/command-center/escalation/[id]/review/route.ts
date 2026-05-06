@@ -14,10 +14,10 @@ export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const access = await requireRoleForApi("super_admin");
+  const access = await requireRoleForApi("moderator");
 
   if (!access) {
-    return NextResponse.json({ error: "Project authority authorization required." }, { status: 403 });
+    return NextResponse.json({ error: "Moderator authorization required." }, { status: 403 });
   }
 
   const { id } = await context.params;

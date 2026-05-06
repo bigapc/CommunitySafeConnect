@@ -276,7 +276,7 @@ Six escalation requests have been seeded with different categories and statuses:
    - Reassignment capability (transfer owner)
    - Client-side notifications on status change
 3. 📊 **Performance**: Test with 50+ escalations to verify sort performance
-4. 🔒 **Access control**: Verify only super_admin can review/assign
+4. 🔒 **Access control**: Verify moderator (and above) can review/assign
 
 ---
 
