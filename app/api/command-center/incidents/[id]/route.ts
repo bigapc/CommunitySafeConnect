@@ -27,6 +27,7 @@ export async function PATCH(
       assignee: body.assignee,
       escalated: body.escalated,
       expectedVersion: body.version,
+      updatedBy: access.role,
     });
 
     if (!updated) {

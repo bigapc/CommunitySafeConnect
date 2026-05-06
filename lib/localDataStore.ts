@@ -640,6 +640,7 @@ export function updateIncident(
     assignee?: string | null;
     escalated?: boolean;
     expectedVersion?: number;
+    updatedBy?: string;
   }
 ) {
   const scopedOrgId = getScopedOrgId(organizationId);
@@ -662,27 +663,40 @@ export function updateIncident(
     };
   }
 
-  if (updates.status) {
+  const changes: string[] = [];
+
+  if (updates.status && updates.status !== incident.status) {
+    changes.push(`status:${incident.status}->${updates.status}`);
     incident.status = updates.status;
   }
 
-  if (updates.assignee !== undefined) {
+  if (updates.assignee !== undefined && updates.assignee !== incident.assignee) {
+    const previousAssignee = incident.assignee || "unassigned";
+    const nextAssignee = updates.assignee || "unassigned";
+    changes.push(`assignee:${previousAssignee}->${nextAssignee}`);
     incident.assignee = updates.assignee;
   }
 
-  if (updates.escalated !== undefined) {
+  if (updates.escalated !== undefined && updates.escalated !== incident.escalated) {
+    changes.push(`escalated:${incident.escalated}->${updates.escalated}`);
     incident.escalated = updates.escalated;
+  }
+
+  if (changes.length === 0) {
+    return incident;
   }
 
   incident.version += 1;
   incident.updated_at = new Date().toISOString();
+
+  const updatedBy = updates.updatedBy?.trim() || "moderator";
 
   createCommandCenterEvent({
     organization_id: scopedOrgId,
     action: "incident_updated",
     target_type: "incident",
     target_id: incident.id,
-    details: `status=${incident.status} escalated=${incident.escalated}`,
+    details: `${updatedBy} updated ${changes.join(" | ")}`,
   });
 
   return incident;

@@ -590,6 +590,38 @@ code {
   padding: 0.75rem;
 }
 
+.incident-queue-controls {
+  margin-top: 0.6rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.incident-queue-controls label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #c4d8e8;
+  font-size: 0.9rem;
+}
+
+.incident-queue-controls input[type="text"] {
+  min-width: 180px;
+  background: #0c1f2e;
+  border: 1px solid #3f5b75;
+  color: #eef8ff;
+  border-radius: 8px;
+}
+
+.incident-quick-actions {
+  margin-top: 0.55rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
 .incident-checkbox {
   display: inline-flex;
   align-items: center;

@@ -44,6 +44,70 @@ function sortByUpdatedAtDesc(items: IncidentRow[]) {
   });
 }
 
+function getIncidentPriorityScore(incident: IncidentRow, nowMs: number) {
+  const severityScore: Record<IncidentSeverity, number> = {
+    critical: 45,
+    high: 35,
+    medium: 25,
+    low: 15,
+  };
+
+  const statusScore: Record<IncidentStatus, number> = {
+    new: 25,
+    triaged: 15,
+    in_progress: 10,
+    resolved: -50,
+  };
+
+  const slaDueMs = incident.sla_due_at ? new Date(incident.sla_due_at).getTime() : null;
+  const isOverdue = incident.status !== "resolved" && typeof slaDueMs === "number" && slaDueMs < nowMs;
+  const isAtRisk =
+    incident.status !== "resolved" &&
+    typeof slaDueMs === "number" &&
+    slaDueMs >= nowMs &&
+    slaDueMs - nowMs <= 30 * 60 * 1000;
+
+  return (
+    severityScore[incident.severity] +
+    statusScore[incident.status] +
+    (incident.escalated ? 15 : 0) +
+    (incident.assignee ? 0 : 10) +
+    (isAtRisk ? 30 : 0) +
+    (isOverdue ? 60 : 0)
+  );
+}
+
+function sortIncidentsByPriority(items: IncidentRow[]) {
+  const nowMs = Date.now();
+  return [...items].sort((a, b) => {
+    const scoreDiff = getIncidentPriorityScore(b, nowMs) - getIncidentPriorityScore(a, nowMs);
+    if (scoreDiff !== 0) {
+      return scoreDiff;
+    }
+
+    return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+  });
+}
+
+function getSlaState(incident: IncidentRow) {
+  if (!incident.sla_due_at || incident.status === "resolved") {
+    return "none" as const;
+  }
+
+  const nowMs = Date.now();
+  const dueMs = new Date(incident.sla_due_at).getTime();
+
+  if (dueMs < nowMs) {
+    return "overdue" as const;
+  }
+
+  if (dueMs - nowMs <= 30 * 60 * 1000) {
+    return "risk" as const;
+  }
+
+  return "healthy" as const;
+}
+
 export default function IncidentsConsole({
   initialIncidents,
   initialIncidentEventsById,
@@ -54,6 +118,10 @@ export default function IncidentsConsole({
     initialIncidentEventsById
   );
   const [query, setQuery] = useState(initialQuery);
+  const [onlyOpen, setOnlyOpen] = useState(true);
+  const [onlyUnassigned, setOnlyUnassigned] = useState(false);
+  const [onlySlaRisk, setOnlySlaRisk] = useState(false);
+  const [operatorHandle, setOperatorHandle] = useState("moderator-on-duty");
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -72,11 +140,26 @@ export default function IncidentsConsole({
   const filteredIncidents = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
-    if (!normalizedQuery) {
-      return incidents;
-    }
+    const filtered = incidents.filter((incident) => {
+      if (onlyOpen && incident.status === "resolved") {
+        return false;
+      }
 
-    return incidents.filter((incident) => {
+      if (onlyUnassigned && !!incident.assignee) {
+        return false;
+      }
+
+      if (onlySlaRisk) {
+        const slaState = getSlaState(incident);
+        if (slaState !== "risk" && slaState !== "overdue") {
+          return false;
+        }
+      }
+
+      if (!normalizedQuery) {
+        return true;
+      }
+
       return (
         incident.title.toLowerCase().includes(normalizedQuery) ||
         incident.description.toLowerCase().includes(normalizedQuery) ||
@@ -85,7 +168,9 @@ export default function IncidentsConsole({
         (incident.assignee || "").toLowerCase().includes(normalizedQuery)
       );
     });
-  }, [incidents, query]);
+
+    return sortIncidentsByPriority(filtered);
+  }, [incidents, onlyOpen, onlySlaRisk, onlyUnassigned, query]);
 
   function syncDraft(incident: IncidentRow) {
     setDrafts((current) => ({
@@ -174,8 +259,8 @@ export default function IncidentsConsole({
     }
   }
 
-  async function saveIncident(id: string, forceUpdate = false) {
-    const draft = drafts[id];
+  async function saveIncident(id: string, forceUpdate = false, draftOverride?: IncidentDraft) {
+    const draft = draftOverride || drafts[id];
 
     if (!draft) {
       return;
@@ -243,6 +328,48 @@ export default function IncidentsConsole({
     } finally {
       setSavingId(null);
     }
+  }
+
+  function claimIncident(id: string) {
+    const incident = incidents.find((item) => item.id === id);
+    if (!incident) {
+      return;
+    }
+
+    const currentDraft = drafts[id] || defaultDraft(incident);
+    const claimedBy = operatorHandle.trim() || "moderator-on-duty";
+    const nextDraft: IncidentDraft = {
+      ...currentDraft,
+      assignee: claimedBy,
+      status: currentDraft.status === "new" ? "triaged" : currentDraft.status,
+    };
+
+    setDrafts((current) => ({
+      ...current,
+      [id]: nextDraft,
+    }));
+
+    void saveIncident(id, false, nextDraft);
+  }
+
+  function resolveIncident(id: string) {
+    const incident = incidents.find((item) => item.id === id);
+    if (!incident) {
+      return;
+    }
+
+    const currentDraft = drafts[id] || defaultDraft(incident);
+    const nextDraft: IncidentDraft = {
+      ...currentDraft,
+      status: "resolved",
+    };
+
+    setDrafts((current) => ({
+      ...current,
+      [id]: nextDraft,
+    }));
+
+    void saveIncident(id, false, nextDraft);
   }
 
   useEffect(() => {
@@ -313,8 +440,37 @@ export default function IncidentsConsole({
           aria-label="Search incidents"
         />
       </form>
+      <div className="incident-queue-controls">
+        <label>
+          <input type="checkbox" checked={onlyOpen} onChange={(event) => setOnlyOpen(event.target.checked)} />
+          Open only
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={onlyUnassigned}
+            onChange={(event) => setOnlyUnassigned(event.target.checked)}
+          />
+          Unassigned only
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={onlySlaRisk}
+            onChange={(event) => setOnlySlaRisk(event.target.checked)}
+          />
+          SLA risk only
+        </label>
+        <input
+          type="text"
+          value={operatorHandle}
+          onChange={(event) => setOperatorHandle(event.target.value)}
+          placeholder="My handle"
+          aria-label="My moderator handle"
+        />
+      </div>
       <small className="control-meta" style={{ display: "block", marginTop: "0.45rem" }}>
-        Live updates are enabled. Incident data refreshes every 10 seconds.
+        Queue is priority-sorted with SLA-aware ordering. Incident data refreshes every 10 seconds.
       </small>
 
       {errorMessage && <p style={{ color: "#ffb3bf" }}>{errorMessage}</p>}
@@ -327,9 +483,13 @@ export default function IncidentsConsole({
           {filteredIncidents.map((incident) => {
             const draft = drafts[incident.id] || defaultDraft(incident);
             const isSaving = savingId === incident.id;
+            const slaState = getSlaState(incident);
 
             return (
-              <article key={incident.id} className="control-card incident-card">
+              <article
+                key={incident.id}
+                className={`control-card incident-card ${conflicts[incident.id] ? "has-conflict" : ""}`}
+              >
                 <p style={{ margin: 0 }}>
                   <strong>{incident.title}</strong>
                 </p>
@@ -402,6 +562,17 @@ export default function IncidentsConsole({
                   <span className={`status-pill ${draft.escalated ? "flagged" : "clean"}`}>
                     {draft.escalated ? "Escalated" : "Normal"}
                   </span>
+                  {slaState === "risk" && <span className="status-pill pending">SLA risk</span>}
+                  {slaState === "overdue" && <span className="status-pill flagged">SLA overdue</span>}
+                </div>
+
+                <div className="incident-quick-actions">
+                  <button type="button" onClick={() => claimIncident(incident.id)} disabled={isSaving || isSubmitting}>
+                    {isSaving ? "Saving..." : "Claim"}
+                  </button>
+                  <button type="button" onClick={() => resolveIncident(incident.id)} disabled={isSaving || isSubmitting}>
+                    {isSaving ? "Saving..." : "Resolve"}
+                  </button>
                   {conflicts[incident.id] ? (
                     <button
                       type="button"
