@@ -958,6 +958,50 @@ code {
       color: var(--text, #0f172a);
     }
 
+    .csc-trust {
+      border: 1px solid var(--line, #e2e8f0);
+      border-radius: 14px;
+      padding: 1.25rem;
+      background: rgba(15, 23, 42, 0.03);
+      margin-bottom: 2.5rem;
+    }
+
+    .csc-trust p {
+      margin: 0.4rem 0;
+      color: var(--muted, #475569);
+      line-height: 1.6;
+    }
+
+    .governance-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.9rem;
+    }
+
+    .governance-grid h4 {
+      margin-bottom: 0.4rem;
+    }
+
+    .governance-grid ul {
+      margin: 0;
+      padding-left: 1rem;
+    }
+
+    .governance-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+
+    .governance-tag {
+      border: 1px solid #334155;
+      border-radius: 999px;
+      padding: 0.3rem 0.8rem;
+      font-size: 0.82rem;
+      color: #cbd5e1;
+      background: #0f172a;
+    }
+
     .csc-footer {
       border-top: 1px solid var(--line, #e2e8f0);
       padding: 1.5rem 0;

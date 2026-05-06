@@ -12,11 +12,20 @@ interface AccessFormProps {
   }>;
 }
 
+type AccessRole = "analyst" | "moderator" | "org_admin" | "super_admin";
+
+const roleDisplayLabels: Record<AccessRole, string> = {
+  analyst: "Community member",
+  moderator: "Verified responder",
+  org_admin: "Organization leader",
+  super_admin: "Project authority",
+};
+
 export default function AccessForm({ nextPath, organizations }: AccessFormProps) {
   const router = useRouter();
   const [accessCode, setAccessCode] = useState("");
   const [organizationId, setOrganizationId] = useState(organizations[0]?.id || "metro-city-university");
-  const [role, setRole] = useState<"analyst" | "moderator" | "org_admin" | "super_admin">("analyst");
+  const [role, setRole] = useState<AccessRole>("analyst");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -132,7 +141,7 @@ export default function AccessForm({ nextPath, organizations }: AccessFormProps)
             >
               {roleOptions.map((option) => (
                 <option key={option} value={option}>
-                  {option}
+                  {roleDisplayLabels[option]}
                 </option>
               ))}
             </select>

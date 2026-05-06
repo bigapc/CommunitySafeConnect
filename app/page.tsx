@@ -100,6 +100,21 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className="csc-trust">
+        <h3 className="csc-section-label">Documentation Integrity and Access Protection</h3>
+        <p>
+          CommunitySafetyConnect is built for high-trust environments. Incident records,
+          response activity, and organizational safety documentation are preserved by default to
+          support accountability, transparency, and compliance.
+        </p>
+        <p>
+          Due to institutional and legal requirements, deletion access is restricted. Extended
+          access requests must be coordinated directly with Armstrong Pack Company senior
+          security leadership.
+        </p>
+        <Link href="/security-governance" className="csc-mvp-link">Read Access and Governance Policy →</Link>
+      </section>
+
       {/* ── Portal access ── */}
       <section className="access-chooser">
         <h3>Access Your Portal</h3>

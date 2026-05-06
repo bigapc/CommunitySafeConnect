@@ -34,11 +34,11 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const access = await requireRoleForApi("org_admin");
+  const access = await requireRoleForApi("super_admin");
 
   if (!access) {
     return NextResponse.json(
-      { error: "Only organization authority can request limited data removal review." },
+      { error: "Deletion is restricted. Only project authority can submit escalation for Armstrong senior security review." },
       { status: 403 }
     );
   }
@@ -60,7 +60,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       deleted: false,
-      message: "Data was not deleted. Command center review has been requested.",
+      message: "Data was preserved. Escalation request submitted for Armstrong Pack Company senior security review.",
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to submit removal request.";

@@ -16,6 +16,7 @@ export default async function Navbar() {
           <Link href="/safe-zones">Safe Zones</Link>
           <Link href="/safety-circle">Safety Circle</Link>
           <Link href="/incident-log">Incident Log</Link>
+          <Link href="/security-governance">Governance</Link>
           {isAdmin && <Link href="/command-center">Command Center</Link>}
           <Link href="/access?next=/organization-dashboard">Sign In</Link>
         </div>
