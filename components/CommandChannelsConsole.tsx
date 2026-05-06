@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import type {
   CommandChannelKind,
@@ -402,6 +403,11 @@ export default function CommandChannelsConsole({
                   task state={channel.task_state || "open"} | assignee={channel.task_assignee || "unassigned"}
                 </small>
               )}
+              {channel.kind === "tasks" && channel.task_sla_incident_id && (
+                <small className="control-meta" style={{ display: "block" }}>
+                  routed incident={channel.task_sla_incident_id.slice(0, 12)}
+                </small>
+              )}
 
               <div style={{ marginTop: "0.5rem", display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
                 <button type="button" onClick={() => setActiveChannelId(channel.id)}>
@@ -540,6 +546,13 @@ export default function CommandChannelsConsole({
                       Save Task Details
                     </button>
                   </>
+                )}
+                {channel.kind === "tasks" && channel.task_sla_incident_id && (
+                  <Link
+                    href={`/command-center/incidents?q=${encodeURIComponent(channel.task_sla_incident_id)}`}
+                  >
+                    Open Routed Incident
+                  </Link>
                 )}
               </div>
 

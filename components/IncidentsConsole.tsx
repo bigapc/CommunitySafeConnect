@@ -161,6 +161,7 @@ export default function IncidentsConsole({
       }
 
       return (
+        incident.id.toLowerCase().includes(normalizedQuery) ||
         incident.title.toLowerCase().includes(normalizedQuery) ||
         incident.description.toLowerCase().includes(normalizedQuery) ||
         incident.status.toLowerCase().includes(normalizedQuery) ||
@@ -494,7 +495,7 @@ export default function IncidentsConsole({
                   <strong>{incident.title}</strong>
                 </p>
                 <small className="control-meta" style={{ display: "block" }}>
-                  created={new Date(incident.created_at).toLocaleString()} updated={new Date(incident.updated_at).toLocaleString()}
+                  id={incident.id} created={new Date(incident.created_at).toLocaleString()} updated={new Date(incident.updated_at).toLocaleString()}
                 </small>
                 <p style={{ marginTop: "0.5rem", marginBottom: "0.6rem" }}>{incident.description}</p>
 
