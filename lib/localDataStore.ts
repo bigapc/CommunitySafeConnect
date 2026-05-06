@@ -33,6 +33,8 @@ export interface CommandChannelRow {
   name: string;
   kind: CommandChannelKind;
   task_state: "open" | "in_progress" | "resolved" | null;
+  task_assignee: string | null;
+  task_due_at: string | null;
   is_emergency: boolean;
   created_at: string;
   created_by: string;
@@ -207,6 +209,8 @@ const commandChannels: CommandChannelRow[] = [
     name: "Emergency Coordination",
     kind: "emergency",
     task_state: null,
+    task_assignee: null,
+    task_due_at: null,
     is_emergency: true,
     created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
     created_by: "org_admin",
@@ -218,10 +222,25 @@ const commandChannels: CommandChannelRow[] = [
     name: "Safety Drill Ops",
     kind: "drill",
     task_state: null,
+    task_assignee: null,
+    task_due_at: null,
     is_emergency: false,
     created_at: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
     created_by: "moderator",
     last_message_at: new Date(Date.now() - 1000 * 60 * 22).toISOString(),
+  },
+  {
+    id: createId("chn"),
+    organization_id: getDefaultOrganizationId(),
+    name: "Evening Patrol Tasking",
+    kind: "tasks",
+    task_state: "open",
+    task_assignee: "ops-shift-bravo",
+    task_due_at: new Date(Date.now() + 1000 * 60 * 90).toISOString(),
+    is_emergency: false,
+    created_at: new Date(Date.now() - 1000 * 60 * 95).toISOString(),
+    created_by: "org_admin",
+    last_message_at: new Date(Date.now() - 1000 * 60 * 6).toISOString(),
   },
 ];
 
@@ -243,6 +262,15 @@ const commandChannelMessages: CommandChannelMessageRow[] = [
     body: "Fire drill debrief starts in 10 minutes in briefing room B.",
     priority: "normal",
     created_at: new Date(Date.now() - 1000 * 60 * 22).toISOString(),
+  },
+  {
+    id: createId("chmsg"),
+    organization_id: getDefaultOrganizationId(),
+    channel_id: commandChannels[2].id,
+    sender: "ops-lead",
+    body: "Assign two patrol units to west parking perimeter and confirm completion.",
+    priority: "high",
+    created_at: new Date(Date.now() - 1000 * 60 * 6).toISOString(),
   },
 ];
 
@@ -383,6 +411,10 @@ function createSlaDueAt(severity: IncidentSeverity) {
   };
 
   return new Date(now + minutesBySeverity[severity] * 60 * 1000).toISOString();
+}
+
+function createTaskDueAt(hoursFromNow = 8) {
+  return new Date(Date.now() + hoursFromNow * 60 * 60 * 1000).toISOString();
 }
 
 function getEvidenceSigningSecret() {
@@ -704,6 +736,8 @@ export function createCommandChannel(
     name: normalizedName,
     kind: input.kind,
     task_state: input.kind === "tasks" ? "open" : null,
+    task_assignee: null,
+    task_due_at: input.kind === "tasks" ? createTaskDueAt() : null,
     is_emergency: input.isEmergency ?? template.isEmergencyByDefault,
     created_at: new Date().toISOString(),
     created_by: input.createdBy,
@@ -755,6 +789,51 @@ export function updateCommandChannelTaskState(
     target_type: "channel",
     target_id: channelId,
     details: `state=${input.state} updatedBy=${input.updatedBy}`,
+  });
+
+  return channel;
+}
+
+export function updateCommandChannelTaskDetails(
+  organizationId: string,
+  channelId: string,
+  input: {
+    assignee?: string | null;
+    dueAt?: string | null;
+    updatedBy: string;
+  }
+) {
+  const scopedOrgId = getScopedOrgId(organizationId);
+  const channel = commandChannels.find(
+    (item) => item.id === channelId && item.organization_id === scopedOrgId
+  );
+
+  if (!channel) {
+    return null;
+  }
+
+  if (channel.kind !== "tasks") {
+    return {
+      error: "Task details can only be changed for task channels.",
+    };
+  }
+
+  if (input.assignee !== undefined) {
+    channel.task_assignee = input.assignee?.trim() || null;
+  }
+
+  if (input.dueAt !== undefined) {
+    channel.task_due_at = input.dueAt || null;
+  }
+
+  channel.last_message_at = new Date().toISOString();
+
+  createCommandCenterEvent({
+    organization_id: scopedOrgId,
+    action: "command_channel_task_details_updated",
+    target_type: "channel",
+    target_id: channelId,
+    details: `assignee=${channel.task_assignee || "unassigned"} dueAt=${channel.task_due_at || "none"} updatedBy=${input.updatedBy}`,
   });
 
   return channel;
@@ -1339,6 +1418,21 @@ export function getCommandCenterMetrics(organizationId: string) {
   const unresolvedTaskChannels = scopedChannels.filter((channel) => {
     return channel.kind === "tasks" && channel.task_state !== "resolved";
   }).length;
+  const dueSoonTaskChannels = scopedChannels.filter((channel) => {
+    if (channel.kind !== "tasks" || channel.task_state === "resolved" || !channel.task_due_at) {
+      return false;
+    }
+
+    const dueMs = new Date(channel.task_due_at).getTime();
+    return dueMs >= Date.now() && dueMs - Date.now() <= 2 * 60 * 60 * 1000;
+  }).length;
+  const overdueTaskChannels = scopedChannels.filter((channel) => {
+    if (channel.kind !== "tasks" || channel.task_state === "resolved" || !channel.task_due_at) {
+      return false;
+    }
+
+    return new Date(channel.task_due_at).getTime() < Date.now();
+  }).length;
 
   return {
     totalReports: scopedReports.length,
@@ -1350,6 +1444,8 @@ export function getCommandCenterMetrics(organizationId: string) {
     activeCommandChannels24h,
     criticalChannelMessages24h,
     unresolvedTaskChannels,
+    dueSoonTaskChannels,
+    overdueTaskChannels,
     totalIncidents: scopedIncidents.length,
     openIncidents,
     escalatedIncidents,

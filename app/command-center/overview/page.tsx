@@ -76,6 +76,16 @@ export default async function CommandCenterOverviewPage() {
           <strong>{metrics.unresolvedTaskChannels}</strong>
           <small className="control-meta">Task channels with state open or in_progress</small>
         </article>
+        <article className="control-card ops-metric-card" style={metrics.dueSoonTaskChannels > 0 ? { borderLeft: "3px solid #f59e0b" } : {}}>
+          <small className="control-meta">Task SLA Due Soon</small>
+          <strong>{metrics.dueSoonTaskChannels}</strong>
+          <small className="control-meta">Due within 2 hours</small>
+        </article>
+        <article className="control-card ops-metric-card" style={metrics.overdueTaskChannels > 0 ? { borderLeft: "3px solid #b91c1c" } : {}}>
+          <small className="control-meta">Task SLA Overdue</small>
+          <strong>{metrics.overdueTaskChannels}</strong>
+          <small className="control-meta">Unresolved tasks beyond due date</small>
+        </article>
         <article className="control-card ops-metric-card" style={metrics.pendingEscalationRequests > 0 ? { borderLeft: "3px solid #d1495b" } : {}}>
           <small className="control-meta">Security Escalations</small>
           <strong>{metrics.pendingEscalationRequests}</strong>

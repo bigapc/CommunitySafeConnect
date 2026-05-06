@@ -10,6 +10,39 @@ import type {
 
 type PriorityLevel = "normal" | "high" | "critical";
 
+function toLocalDateTimeInputValue(iso: string | null) {
+  if (!iso) {
+    return "";
+  }
+
+  const date = new Date(iso);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+function getTaskSlaState(channel: CommandChannelRow) {
+  if (channel.kind !== "tasks" || channel.task_state === "resolved" || !channel.task_due_at) {
+    return "none" as const;
+  }
+
+  const dueMs = new Date(channel.task_due_at).getTime();
+  const nowMs = Date.now();
+
+  if (dueMs < nowMs) {
+    return "overdue" as const;
+  }
+
+  if (dueMs - nowMs <= 2 * 60 * 60 * 1000) {
+    return "risk" as const;
+  }
+
+  return "healthy" as const;
+}
+
 interface CommandChannelsConsoleProps {
   initialChannels: CommandChannelRow[];
   initialChannelMessagesById: Record<string, CommandChannelMessageRow[]>;
@@ -54,6 +87,8 @@ export default function CommandChannelsConsole({
   const [sender, setSender] = useState("ops-lead");
   const [messageBody, setMessageBody] = useState("");
   const [priority, setPriority] = useState<PriorityLevel>("normal");
+  const [taskAssignee, setTaskAssignee] = useState("");
+  const [taskDueAt, setTaskDueAt] = useState("");
 
   const [isLoading, setIsLoading] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
@@ -95,6 +130,17 @@ export default function CommandChannelsConsole({
 
     setIsEmergency(currentTemplate.isEmergencyByDefault);
   }, [currentTemplate]);
+
+  useEffect(() => {
+    if (!activeChannel || activeChannel.kind !== "tasks") {
+      setTaskAssignee("");
+      setTaskDueAt("");
+      return;
+    }
+
+    setTaskAssignee(activeChannel.task_assignee || "");
+    setTaskDueAt(toLocalDateTimeInputValue(activeChannel.task_due_at));
+  }, [activeChannel]);
 
   function applyTemplateDefaults() {
     if (!currentTemplate) {
@@ -353,7 +399,7 @@ export default function CommandChannelsConsole({
               </small>
               {channel.kind === "tasks" && (
                 <small className="control-meta" style={{ display: "block" }}>
-                  task state={channel.task_state || "open"}
+                  task state={channel.task_state || "open"} | assignee={channel.task_assignee || "unassigned"}
                 </small>
               )}
 
@@ -450,9 +496,64 @@ export default function CommandChannelsConsole({
                     >
                       Reopen
                     </button>
+                    <input
+                      type="text"
+                      value={taskAssignee}
+                      onChange={(event) => setTaskAssignee(event.target.value)}
+                      placeholder="Task assignee"
+                    />
+                    <input
+                      type="datetime-local"
+                      value={taskDueAt}
+                      onChange={(event) => setTaskDueAt(event.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setIsLoading(true);
+                        setErrorMessage("");
+                        try {
+                          const response = await fetch(`/api/command-center/channels/${channel.id}/state`, {
+                            method: "PATCH",
+                            headers: {
+                              "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                              assignee: taskAssignee.trim() || null,
+                              dueAt: taskDueAt ? new Date(taskDueAt).toISOString() : null,
+                            }),
+                          });
+
+                          if (!response.ok) {
+                            const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+                            setErrorMessage(payload?.error || "Unable to save task details.");
+                            return;
+                          }
+
+                          await refreshChannels();
+                        } finally {
+                          setIsLoading(false);
+                        }
+                      }}
+                      disabled={isLoading || isPosting}
+                    >
+                      Save Task Details
+                    </button>
                   </>
                 )}
               </div>
+
+              {channel.kind === "tasks" && (
+                <div style={{ marginTop: "0.45rem", display: "flex", gap: "0.45rem", flexWrap: "wrap" }}>
+                  {channel.task_due_at && (
+                    <span className="status-pill clean">
+                      due {new Date(channel.task_due_at).toLocaleString()}
+                    </span>
+                  )}
+                  {getTaskSlaState(channel) === "risk" && <span className="status-pill pending">Due soon</span>}
+                  {getTaskSlaState(channel) === "overdue" && <span className="status-pill flagged">Overdue</span>}
+                </div>
+              )}
 
               {isActive && (
                 <>

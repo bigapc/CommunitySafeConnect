@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hasMinimumRole, requireRoleForApi } from "@/lib/access";
-import { updateCommandChannelTaskState } from "@/lib/localDataStore";
+import { updateCommandChannelTaskDetails, updateCommandChannelTaskState } from "@/lib/localDataStore";
 import { getOrganizationById, mapOrganizationPlanToBilling } from "@/lib/tenancy";
 
 function isEliteOrganization(organizationId: string) {
@@ -14,6 +14,23 @@ function parseState(value: unknown): "open" | "in_progress" | "resolved" | null 
   }
 
   return null;
+}
+
+function parseDueAt(value: unknown) {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return undefined;
+  }
+
+  return parsed.toISOString();
 }
 
 export async function PATCH(
@@ -39,18 +56,47 @@ export async function PATCH(
   try {
     const body = (await request.json()) as {
       state?: "open" | "in_progress" | "resolved";
+      assignee?: string | null;
+      dueAt?: string | null;
     };
 
-    const state = parseState(body.state);
+    const state = body.state === undefined ? null : parseState(body.state);
+    const dueAt = body.dueAt === undefined ? undefined : parseDueAt(body.dueAt);
+    const assignee = body.assignee === undefined ? undefined : body.assignee;
 
-    if (!state) {
-      return NextResponse.json({ error: "Valid task state is required." }, { status: 400 });
+    if (body.state !== undefined && !state) {
+      return NextResponse.json({ error: "Valid task state is required when provided." }, { status: 400 });
     }
 
-    const result = updateCommandChannelTaskState(access.organizationId, id, {
-      state,
-      updatedBy: access.role,
-    });
+    if (body.dueAt !== undefined && dueAt === undefined) {
+      return NextResponse.json({ error: "Valid due date is required when provided." }, { status: 400 });
+    }
+
+    if (body.state === undefined && body.assignee === undefined && body.dueAt === undefined) {
+      return NextResponse.json({ error: "At least one task field must be provided." }, { status: 400 });
+    }
+
+    let result:
+      | ReturnType<typeof updateCommandChannelTaskState>
+      | ReturnType<typeof updateCommandChannelTaskDetails>
+      | null = null;
+
+    if (state) {
+      result = updateCommandChannelTaskState(access.organizationId, id, {
+        state,
+        updatedBy: access.role,
+      });
+    }
+
+    if (!result || !("error" in result)) {
+      if (assignee !== undefined || dueAt !== undefined) {
+        result = updateCommandChannelTaskDetails(access.organizationId, id, {
+          assignee,
+          dueAt,
+          updatedBy: access.role,
+        });
+      }
+    }
 
     if (!result) {
       return NextResponse.json({ error: "Channel not found." }, { status: 404 });

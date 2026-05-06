@@ -79,6 +79,7 @@
 - Task-channel workflow:
 	- Task channels now have explicit state: `open`, `in_progress`, `resolved`.
 	- Only `org_admin` and `super_admin` can change task state.
+	- Task assignee and due date can be managed in channel controls.
 	- Task state updates are logged as command center events.
 - Channel templates:
 	- `alerts`, `tasks`, `emergency`, `debrief`, `drill` templates define default names and allowed priorities.
@@ -94,6 +95,8 @@
 	- Active channels in last 24 hours
 	- Critical channel messages in last 24 hours
 	- Unresolved task channels (state not `resolved`)
+	- Task SLA due soon count (within 2 hours)
+	- Task SLA overdue count
 
 ## Incident Operations
 
