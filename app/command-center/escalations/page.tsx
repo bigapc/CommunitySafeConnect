@@ -1,5 +1,6 @@
 import { getCurrentAccessContext } from "@/lib/access";
 import { getCommandCenterEscalations } from "@/lib/commandCenterData";
+import { getEscalationSlaState, summarizeEscalationSla } from "@/lib/escalationSla";
 
 interface CommandCenterEscalationsPageProps {
   searchParams: Promise<{
@@ -36,6 +37,7 @@ export default async function CommandCenterEscalationsPage({ searchParams }: Com
   const { requests, error } = await getCommandCenterEscalations(organizationId, query, status);
   const activeRequests = requests.filter((request) => request.status !== "resolved");
   const resolvedRequests = requests.filter((request) => request.status === "resolved");
+  const slaSummary = summarizeEscalationSla(requests);
 
   return (
     <section>
@@ -56,6 +58,12 @@ export default async function CommandCenterEscalationsPage({ searchParams }: Com
       </form>
       {error && <p style={{ color: "#ffb3bf" }}>Could not load escalation requests.</p>}
 
+      <div className="escalation-sla-summary">
+        <span className="sla-pill sla-overdue">Overdue {slaSummary.overdue}</span>
+        <span className="sla-pill sla-due_soon">Due soon {slaSummary.dueSoon}</span>
+        <span className="sla-pill sla-awaiting_schedule">Awaiting schedule {slaSummary.awaitingSchedule}</span>
+      </div>
+
       <h3 style={{ marginTop: "1rem" }}>Active Escalations ({activeRequests.length})</h3>
       {activeRequests.length === 0 ? (
         <p>No active escalation requests found.</p>
@@ -63,6 +71,10 @@ export default async function CommandCenterEscalationsPage({ searchParams }: Com
         <div className="control-list">
           {activeRequests.map((request) => (
             <article key={request.id} className="control-card" style={{ padding: "0.75rem" }}>
+              {(() => {
+                const sla = getEscalationSlaState(request);
+                return <span className={`sla-pill sla-${sla.level}`}>{sla.label}</span>;
+              })()}
               <p style={{ margin: 0 }}>
                 <strong>{request.category.replaceAll("_", " ")}</strong>
                 {" "}

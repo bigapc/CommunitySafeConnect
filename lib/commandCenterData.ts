@@ -11,6 +11,7 @@ import {
   listReports,
 } from "@/lib/localDataStore";
 import type { CommandCenterEventRow } from "@/lib/localDataStore";
+import { summarizeEscalationSla } from "@/lib/escalationSla";
 import { getOrganizationById, listBillingPlans, mapOrganizationPlanToBilling } from "@/lib/tenancy";
 
 function includesQuery(value: string | null | undefined, query: string) {
@@ -66,7 +67,9 @@ export async function getCommandCenterOverview() {
 export async function getCommandCenterOverviewByOrganization(organizationId: string) {
   const metrics = getCommandCenterMetrics(organizationId);
   const recentEvents = listCommandCenterEvents({ organizationId, ascending: false, limit: 8 });
-  const recentEscalations = listEscalationRequests({ organizationId, limit: 6 });
+  const allEscalations = listEscalationRequests({ organizationId, limit: 200 });
+  const recentEscalations = allEscalations.slice(0, 6);
+  const escalationSla = summarizeEscalationSla(allEscalations);
   const usage = getOrganizationUsageSnapshot(organizationId);
   const organization = getOrganizationById(organizationId);
 
@@ -76,6 +79,7 @@ export async function getCommandCenterOverviewByOrganization(organizationId: str
     usage,
     recentEvents,
     recentEscalations,
+    escalationSla,
     error: null,
   };
 }

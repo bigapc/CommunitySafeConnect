@@ -1113,6 +1113,50 @@ code {
   flex-wrap: wrap;
 }
 
+.escalation-sla-summary {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.sla-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sla-overdue {
+  background: #3b1217;
+  color: #fecaca;
+  border: 1px solid #7f1d1d;
+}
+
+.sla-due_soon {
+  background: #422006;
+  color: #fde68a;
+  border: 1px solid #a16207;
+}
+
+.sla-awaiting_schedule {
+  background: #172554;
+  color: #bfdbfe;
+  border: 1px solid #1d4ed8;
+}
+
+.sla-tracked,
+.sla-resolved {
+  background: #0f2a1c;
+  color: #bbf7d0;
+  border: 1px solid #166534;
+}
+
 @media (max-width: 600px) {
   .capability-row { flex-direction: column; }
   .capability-role { min-width: unset; }
