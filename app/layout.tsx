@@ -1,10 +1,22 @@
+import { Archivo, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import RouteTransition from "@/components/RouteTransition";
 
+const archivo = Archivo({
+  subsets: ["latin"],
+  variable: "--font-archivo",
+});
+
+const ibmPlexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-ibm-plex",
+});
+
 export const metadata = {
-  title: "CommunitySafetyConnect",
-  description: "Real-time safety infrastructure for communities, campuses, and businesses. Powered by Armstrong Pack Company."
+  title: "CommunitySafeConnect - Community Safety Operating System",
+  description: "Next-generation real-time safety infrastructure with realtime mapping, incident command, and community coordination. Premium features for communities, campuses, and businesses."
 };
 
 export default function RootLayout({
@@ -13,9 +25,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${archivo.variable} ${ibmPlexMono.variable}`}>
       <body suppressHydrationWarning>
-        <div className="app-shell">
+        <div className="min-h-screen flex flex-col">
           <Navbar />
           <RouteTransition>{children}</RouteTransition>
         </div>
